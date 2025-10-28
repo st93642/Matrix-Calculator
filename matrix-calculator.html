@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Oct 28 2025 21:16 st93642                                    -->
+<!--  Updated: Oct 28 2025 21:58 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -17,6 +17,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matrix Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -194,14 +195,26 @@
       border-left: 5px solid #667eea;
     }
     
-    .result-section h3 {
+    .result-left, .result-right {
+      min-width: 0;
+      box-sizing: border-box;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .result-left h3, .result-right h3 {
       color: #764ba2;
       margin-bottom: 20px;
     }
     
     .steps {
-      margin-top: 20px;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 10px;
     }
+    
+
     
     .step {
       padding: 15px;
@@ -263,6 +276,13 @@
       background: #f0f0f0;
       border-radius: 5px;
       transition: all 0.3s ease;
+    }
+    
+    .matrix-separator {
+      width: 20px !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
     }
     
     .highlight {
@@ -329,6 +349,7 @@
       gap: 20px;
       margin: 20px 0;
       flex-wrap: wrap;
+      max-width: 100%;
     }
     
     .calc-arrow {
@@ -694,9 +715,16 @@
     </div>
     
     <div class="result-section" id="result" style="display: none;">
-      <h3>Result</h3>
-      <div id="resultContent"></div>
-      <div class="steps" id="steps"></div>
+      <div class="row">
+        <div class="col-md-6 result-left">
+          <h3>Visual Process</h3>
+          <div id="resultContent"></div>
+        </div>
+        <div class="col-md-6 result-right">
+          <h3>Calculation Steps</h3>
+          <div class="steps" id="steps"></div>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -1115,6 +1143,54 @@
       return div;
     }
     
+    function displayAugmented(matrix, label = '') {
+      const div = document.createElement('div');
+      div.className = 'matrix-display';
+      
+      if (label) {
+        const labelDiv = document.createElement('div');
+        labelDiv.style.marginBottom = '10px';
+        labelDiv.style.fontWeight = '600';
+        labelDiv.textContent = label;
+        div.appendChild(labelDiv);
+      }
+      
+      const n = matrix.length; // Size of square matrix A
+      
+      matrix.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'matrix-row';
+        
+        // Left side: original matrix A
+        for (let j = 0; j < n; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-cell';
+          cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
+          rowDiv.appendChild(cell);
+        }
+        
+        // Vertical separator
+        const separator = document.createElement('div');
+        separator.className = 'matrix-cell matrix-separator';
+        separator.textContent = '|';
+        separator.style.fontWeight = 'bold';
+        separator.style.color = '#667eea';
+        rowDiv.appendChild(separator);
+        
+        // Right side: identity matrix I
+        for (let j = n; j < 2 * n; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-cell';
+          cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
+          rowDiv.appendChild(cell);
+        }
+        
+        div.appendChild(rowDiv);
+      });
+      
+      return div;
+    }
+    
     function addStep(title, content, delay = 500) {
       setTimeout(() => {
         const stepsDiv = document.getElementById('steps');
@@ -1137,9 +1213,41 @@
         step.appendChild(titleDiv);
         step.appendChild(contentDiv);
         stepsDiv.appendChild(step);
+        
+        // Auto-scroll to keep the latest step visible
+        setTimeout(() => {
+          step.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
       }, stepDelay);
       
       stepDelay += delay;
+    }
+    
+    function addTheoreticalExplanation(title, content) {
+      setTimeout(() => {
+        const stepsDiv = document.getElementById('steps');
+        const explanation = document.createElement('div');
+        explanation.className = 'theoretical-explanation';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'step-title';
+        titleDiv.textContent = title;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'theoretical-content';
+        contentDiv.textContent = content;
+        
+        explanation.appendChild(titleDiv);
+        explanation.appendChild(contentDiv);
+        stepsDiv.appendChild(explanation);
+        
+        // Auto-scroll to keep the latest explanation visible
+        setTimeout(() => {
+          explanation.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+      }, stepDelay);
+      
+      stepDelay += 1000; // Give more time for theoretical explanations
     }
     
     function calculate(operation) {
@@ -1187,26 +1295,26 @@
     function addMatrices(A, B) {
       const result = addMatricesCalc(A, B);
       
-      addStep('Step 1: Matrix Addition', 'Adding corresponding elements from Matrix A and Matrix B');
+      addStep('Step 1: Matrix Addition', 'Adding corresponding elements from Matrix A and Matrix B', 750);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < A[0].length; j++) {
           addStep(
             `Element [${i+1},${j+1}]`,
             `A[${i+1},${j+1}] + B[${i+1},${j+1}] = ${A[i][j]} + ${B[i][j]} = ${result[i][j]}`,
-            300
+            450
           );
         }
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(result, 'Result: A + B'));
+        addVisualElement(displayMatrix(result, 'Result: A + B'));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Matrix Addition Theory', 
             'Matrix addition is performed element-wise, where each element of the result matrix C is the sum of the corresponding elements from matrices A and B: Cᵢⱼ = Aᵢⱼ + Bᵢⱼ. This operation requires both matrices to have identical dimensions (same number of rows and columns). Matrix addition is commutative (A + B = B + A) and associative ((A + B) + C = A + (B + C)).');
-        }, 500);
+        }, 750);
       }, stepDelay);
       
       return result;
@@ -1215,26 +1323,26 @@
     function subtractMatrices(A, B) {
       const result = subtractMatricesCalc(A, B);
       
-      addStep('Step 1: Matrix Subtraction', 'Subtracting corresponding elements from Matrix B from Matrix A');
+      addStep('Step 1: Matrix Subtraction', 'Subtracting corresponding elements from Matrix B from Matrix A', 750);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < A[0].length; j++) {
           addStep(
             `Element [${i+1},${j+1}]`,
             `A[${i+1},${j+1}] - B[${i+1},${j+1}] = ${A[i][j]} - ${B[i][j]} = ${result[i][j]}`,
-            300
+            450
           );
         }
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(result, 'Result: A - B'));
+        addVisualElement(displayMatrix(result, 'Result: A - B'));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Matrix Subtraction Theory', 
             'Matrix subtraction is performed element-wise, where each element of the result matrix C is the difference of the corresponding elements from matrices A and B: Cᵢⱼ = Aᵢⱼ - Bᵢⱼ. This operation requires both matrices to have identical dimensions (same number of rows and columns). Matrix subtraction is not commutative (A - B ≠ B - A).');
-        }, 500);
+        }, 750);
       }, stepDelay);
       
       return result;
@@ -1244,26 +1352,26 @@
       const scalar = parseFloat(document.getElementById('scalarValue').value) || 0;
       const result = scalarMultiplyCalc(A, scalar);
       
-      addStep('Step 1: Scalar Multiplication', `Multiplying matrix A by scalar ${scalar}`);
+      addStep('Step 1: Scalar Multiplication', `Multiplying matrix A by scalar ${scalar}`, 750);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < A[0].length; j++) {
           addStep(
             `Element [${i+1},${j+1}]`,
             `${scalar} × A[${i+1},${j+1}] = ${scalar} × ${A[i][j]} = ${result[i][j]}`,
-            300
+            450
           );
         }
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(result, `Result: ${scalar}A`));
+        addVisualElement(displayMatrix(result, `Result: ${scalar}A`));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Scalar Multiplication Theory', 
             'Scalar multiplication multiplies each element of the matrix by a scalar value k: (kA)ᵢⱼ = k × Aᵢⱼ. This operation changes the scale of the matrix while preserving its structure. Properties include: k(A + B) = kA + kB, (k + m)A = kA + mA, and (km)A = k(mA). Scalar multiplication is used in transformations, scaling, and solving linear equations.');
-        }, 500);
+        }, 750);
       }, stepDelay);
       
       return result;
@@ -1272,19 +1380,21 @@
     function multiplyMatrices(A, B) {
       const result = multiplyMatricesCalc(A, B);
       
-      addStep('Step 1: Matrix Multiplication Setup', `Multiplying ${A.length}×${A[0].length} matrix with ${B.length}×${B[0].length} matrix`);
+      addStep('Step 1: Matrix Multiplication Setup', `Multiplying ${A.length}×${A[0].length} matrix with ${B.length}×${B[0].length} matrix`, 750);
       
-      // Create visual multiplication display
-      const visualDiv = document.createElement('div');
-      visualDiv.className = 'visual-calculation';
-      visualDiv.innerHTML = `
-        <div id="matrixA-visual">${displayMatrix(A, 'Matrix A').outerHTML}</div>
-        <div class="calc-arrow">×</div>
-        <div id="matrixB-visual">${displayMatrix(B, 'Matrix B').outerHTML}</div>
-        <div class="calc-arrow">=</div>
-        <div id="result-visual">${displayMatrix(result, 'Result C').outerHTML}</div>
-      `;
-      addStep('Visual Setup', visualDiv, 1500);
+      // Create visual multiplication display - synchronized with first step
+      setTimeout(() => {
+        const visualDiv = document.createElement('div');
+        visualDiv.className = 'visual-calculation';
+        visualDiv.innerHTML = `
+          <div id="matrixA-visual">${displayMatrix(A, 'Matrix A').outerHTML}</div>
+          <div class="calc-arrow">×</div>
+          <div id="matrixB-visual">${displayMatrix(B, 'Matrix B').outerHTML}</div>
+          <div class="calc-arrow">=</div>
+          <div id="result-visual">${displayMatrix(result, 'Result C').outerHTML}</div>
+        `;
+        addVisualElement(visualDiv);
+      }, stepDelay);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < B[0].length; j++) {
@@ -1297,7 +1407,7 @@
             highlightCol('matrixB-visual', j);
           }, stepDelay);
           
-          addStep(`Computing C[${i+1},${j+1}]`, `Row ${i+1} of A × Column ${j+1} of B`, 1200);
+          addStep(`Computing C[${i+1},${j+1}]`, `Row ${i+1} of A × Column ${j+1} of B`, 1800);
           
           for (let k = 0; k < A[0].length; k++) {
             calculation += `${A[i][k]}×${B[k][j]}`;
@@ -1312,7 +1422,7 @@
             addStep(
               `Step: A[${i+1},${k+1}] × B[${k+1},${j+1}]`,
               `${A[i][k]} × ${B[k][j]} = ${A[i][k] * B[k][j]}`,
-              1000
+              1500
             );
           }
           
@@ -1325,20 +1435,20 @@
           addStep(
             `C[${i+1},${j+1}] Complete`,
             `${calculation} = ${result[i][j]}`,
-            1200
+            1800
           );
         }
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(result, 'Final Result: A × B'));
+        addVisualElement(displayMatrix(result, 'Final Result: A × B'));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Matrix Multiplication Theory', 
             'Matrix multiplication combines rows from the first matrix with columns from the second matrix using dot products. For element Cᵢⱼ, take row i from matrix A and column j from matrix B, multiply corresponding elements, and sum the results. The inner dimensions must match (columns of A = rows of B). Result dimensions are (rows of A) × (columns of B). Matrix multiplication is not commutative (A × B ≠ B × A in general).');
-        }, 500);
-      }, stepDelay + 1000);
+        }, 750);
+      }, stepDelay + 1500);
       
       return result;
     }
@@ -1346,17 +1456,19 @@
     function transposeMatrix(A) {
       const result = transposeMatrixCalc(A);
       
-      addStep('Step 1: Matrix Transpose Setup', `Transposing ${A.length}×${A[0].length} matrix to ${A[0].length}×${A.length} matrix`);
+      addStep('Step 1: Matrix Transpose Setup', `Transposing ${A.length}×${A[0].length} matrix to ${A[0].length}×${A.length} matrix`, 750);
       
-      // Create visual transpose display
-      const visualDiv = document.createElement('div');
-      visualDiv.className = 'visual-calculation';
-      visualDiv.innerHTML = `
-        <div id="original-matrix">${displayMatrix(A, 'Original A').outerHTML}</div>
-        <div class="calc-arrow">→</div>
-        <div id="transpose-result">${displayMatrix(result, 'Transposed Aᵀ').outerHTML}</div>
-      `;
-      addStep('Visual Setup', visualDiv, 1000);
+      // Create visual transpose display - synchronized with first step
+      setTimeout(() => {
+        const visualDiv = document.createElement('div');
+        visualDiv.className = 'visual-calculation';
+        visualDiv.innerHTML = `
+          <div id="original-matrix">${displayMatrix(A, 'Original A').outerHTML}</div>
+          <div class="calc-arrow">→</div>
+          <div id="transpose-result">${displayMatrix(result, 'Transposed Aᵀ').outerHTML}</div>
+        `;
+        addVisualElement(visualDiv);
+      }, stepDelay);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < A[0].length; j++) {
@@ -1369,25 +1481,25 @@
           addStep(
             `Element Movement`,
             `A[${i+1},${j+1}] = ${A[i][j]} → Aᵀ[${j+1},${i+1}] = ${A[i][j]}`,
-            600
+            900
           );
           
           // Update the result matrix
           setTimeout(() => {
             updateResultCell('transpose-result', j, i, A[i][j]);
-          }, stepDelay + 300);
+          }, stepDelay + 450);
         }
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(result, 'Final Result: Aᵀ'));
+        addVisualElement(displayMatrix(result, 'Final Result: Aᵀ'));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Matrix Transpose Theory', 
             'Matrix transpose swaps rows with columns: element Aᵢⱼ becomes Aᵀⱼᵢ. A matrix of size m×n becomes n×m. Transpose has several important properties: (Aᵀ)ᵀ = A, (A + B)ᵀ = Aᵀ + Bᵀ, and (A × B)ᵀ = Bᵀ × Aᵀ. Transpose is used in solving linear systems, finding orthogonal matrices, and many other applications in linear algebra.');
-        }, 500);
-      }, stepDelay + 1000);
+        }, 750);
+      }, stepDelay + 1500);
       
       return result;
     }
@@ -1396,36 +1508,44 @@
       const det = calculateDeterminantCalc(A);
       
       if (A.length === 2) {
-        // Visual 2x2 determinant calculation
-        const visualDiv = document.createElement('div');
-        visualDiv.className = 'visual-calculation';
-        visualDiv.innerHTML = `
-          <div>${displayMatrix(A, 'Matrix A').outerHTML}</div>
-          <div class="calc-arrow">det</div>
-          <div class="formula-display">
-            (${A[0][0]} × ${A[1][1]}) - (${A[0][1]} × ${A[1][0]}) = ${det}
-          </div>
-        `;
+        addStep('Step 1: 2×2 Determinant Formula', `det([${A[0][0]} ${A[0][1]}; ${A[1][0]} ${A[1][1]}]) = (${A[0][0]} × ${A[1][1]}) - (${A[0][1]} × ${A[1][0]}) = ${det}`, 750);
         
-        addStep('2×2 Determinant Formula', visualDiv, 1000);
+        // Visual 2x2 determinant calculation - synchronized with step
+        setTimeout(() => {
+          const visualDiv = document.createElement('div');
+          visualDiv.className = 'visual-calculation';
+          visualDiv.innerHTML = `
+            <div>${displayMatrix(A, 'Matrix A').outerHTML}</div>
+            <div class="calc-arrow">det</div>
+            <div class="formula-display">
+              (${A[0][0]} × ${A[1][1]}) - (${A[0][1]} × ${A[1][0]}) = ${det}
+            </div>
+          `;
+          
+          addVisualElement(visualDiv);
+        }, stepDelay);
         
         setTimeout(() => {
-          document.getElementById('resultContent').innerHTML = 
-            `<div style="font-size: 24px; font-weight: 600; color: #667eea;">Determinant = ${det}</div>`;
+          const finalResultDiv = document.createElement('div');
+          finalResultDiv.style.fontSize = '24px';
+          finalResultDiv.style.fontWeight = '600';
+          finalResultDiv.style.color = '#667eea';
+          finalResultDiv.textContent = `Determinant = ${det}`;
+          addVisualElement(finalResultDiv);
           
           // Add theoretical explanation
           setTimeout(() => {
             addTheoreticalExplanation('2×2 Determinant Theory', 
               'For a 2×2 matrix [a b; c d], the determinant is ad - bc. This formula comes from the area of the parallelogram formed by the column vectors. A non-zero determinant indicates the matrix is invertible. If determinant is zero, the matrix is singular and has no inverse.');
-          }, 500);
-        }, stepDelay);
+          }, 750);
+        }, stepDelay + 1000);
         return det;
       }
       
-      addStep('Step 1: Cofactor Expansion Setup', `Using cofactor expansion along first row of ${A.length}×${A.length} matrix`);
+      addStep('Step 1: Cofactor Expansion Setup', `Using cofactor expansion along first row of ${A.length}×${A.length} matrix`, 750);
       
       // Show original matrix
-      addStep('Original Matrix', displayMatrix(A, 'Matrix A'), 1000);
+      addStep('Original Matrix', displayMatrix(A, 'Matrix A'), 1500);
       
       for (let j = 0; j < A.length; j++) {
         const minor = getMinor(A, 0, j);
@@ -1433,38 +1553,44 @@
         const minorDet = calculateDeterminantCalc(minor);
         const cofactor = sign * A[0][j] * minorDet;
         
-        // Visual cofactor calculation
-        const visualDiv = document.createElement('div');
-        visualDiv.className = 'visual-calculation';
-        visualDiv.innerHTML = `
-          <div class="formula-display">
-            Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
-          </div>
-          <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
-          <div class="formula-display">
-            ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
-          </div>
-        `;
-        
-        addStep(`Cofactor C₁,${j+1}`, visualDiv, 1500);
+        // Visual cofactor calculation - synchronized with accumulation step
+        setTimeout(() => {
+          const visualDiv = document.createElement('div');
+          visualDiv.className = 'visual-calculation';
+          visualDiv.innerHTML = `
+            <div class="formula-display">
+              Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
+            </div>
+            <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
+            <div class="formula-display">
+              ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
+            </div>
+          `;
+          
+          addVisualElement(visualDiv);
+        }, stepDelay);
         
         addStep(
           `Accumulate Determinant`,
           `det += ${cofactor.toFixed(2)} → Current total: ${det.toFixed(2)}`,
-          800
+          1200
         );
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
-          `<div style="font-size: 24px; font-weight: 600; color: #667eea;">Determinant = ${det.toFixed(2)}</div>`;
+        const finalResultDiv = document.createElement('div');
+        finalResultDiv.style.fontSize = '24px';
+        finalResultDiv.style.fontWeight = '600';
+        finalResultDiv.style.color = '#667eea';
+        finalResultDiv.textContent = `Determinant = ${det.toFixed(2)}`;
+        addVisualElement(finalResultDiv);
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Determinant Theory (Cofactor Expansion)', 
             'The determinant measures the "volume scaling factor" of a linear transformation. For square matrices, it\'s calculated using cofactor expansion along any row or column. Each cofactor is (-1)ⁱ⁺ʲ times the determinant of the minor matrix (original matrix with row i and column j removed). If determinant = 0, the matrix is singular (not invertible). If |det| = 1, the transformation preserves volume. Determinant is used in solving systems of equations, finding matrix inverses, and analyzing linear transformations.');
-        }, 500);
-      }, stepDelay);
+        }, 750);
+      }, stepDelay + 1000);
       
       return det;
     }
@@ -1472,7 +1598,7 @@
     function calculateInverse(A) {
       const inverse = calculateInverseCalc(A);
       
-      addStep('Step 1: Gauss-Jordan Elimination Setup', `Using Gauss-Jordan elimination to find inverse of ${A.length}×${A.length} matrix`);
+      addStep('Step 1: Gauss-Jordan Elimination Setup', `Using Gauss-Jordan elimination to find inverse of ${A.length}×${A.length} matrix`, 750);
       
       // Create augmented matrix [A | I] for display
       const augmented = Array(A.length).fill().map(() => Array(2 * A.length).fill(0));
@@ -1491,70 +1617,30 @@
         }
       }
       
-      // Display initial augmented matrix
-      const displayAugmented = (matrix, label) => {
-        const div = document.createElement('div');
-        div.className = 'matrix-display';
-        
-        if (label) {
-          const labelDiv = document.createElement('div');
-          labelDiv.style.marginBottom = '10px';
-          labelDiv.style.fontWeight = '600';
-          labelDiv.textContent = label;
-          div.appendChild(labelDiv);
-        }
-        
-        matrix.forEach(row => {
-          const rowDiv = document.createElement('div');
-          rowDiv.className = 'matrix-row';
-          
-          // Left part (A)
-          for (let j = 0; j < A.length; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'matrix-cell';
-            cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
-            rowDiv.appendChild(cell);
-          }
-          
-          // Separator
-          const sep = document.createElement('div');
-          sep.className = 'matrix-cell';
-          sep.textContent = '|';
-          sep.style.background = '#ddd';
-          sep.style.fontWeight = 'bold';
-          rowDiv.appendChild(sep);
-          
-          // Right part (I or inverse)
-          for (let j = A.length; j < 2 * A.length; j++) {
-            const cell = document.createElement('div');
-            cell.className = 'matrix-cell';
-            cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
-            rowDiv.appendChild(cell);
-          }
-          
-          div.appendChild(rowDiv);
-        });
-        
-        return div;
-      };
-      
-      addStep('Initial Augmented Matrix', displayAugmented(augmented, '[A | I]'), 1500);
+      // Display initial augmented matrix - synchronized with setup step
+      setTimeout(() => {
+        addVisualElement(displayAugmented(augmented, '[A | I]'));
+      }, stepDelay);
       
       // Simulate Gauss-Jordan elimination for display
       for (let pivot = 0; pivot < A.length; pivot++) {
-        addStep(`Step ${pivot + 2}: Process Column ${pivot + 1}`, `Make column ${pivot + 1} have 1 on diagonal and 0s elsewhere`);
+        addStep(`Step ${pivot + 2}: Process Column ${pivot + 1}`, `Make column ${pivot + 1} have 1 on diagonal and 0s elsewhere`, 750);
         
         // Get pivot value
         const pivotValue = augmented[pivot][pivot];
-        addStep(`Pivot Element`, `Pivot = ${pivotValue.toFixed(2)} at position [${pivot + 1},${pivot + 1}]`, 800);
+        addStep(`Pivot Element`, `Pivot = ${pivotValue.toFixed(2)} at position [${pivot + 1},${pivot + 1}]`, 1200);
         
         // Make pivot 1 by dividing the entire row by pivot value
         if (Math.abs(pivotValue - 1) > 1e-10) {
           for (let j = 0; j < 2 * A.length; j++) {
             augmented[pivot][j] /= pivotValue;
           }
-          addStep(`Normalize Pivot Row`, `Divide row ${pivot + 1} by ${pivotValue.toFixed(2)} to make pivot = 1`, 1000);
-          addStep('After Normalization', displayAugmented(augmented, `[A | I] after normalization`), 1000);
+          addStep(`Normalize Pivot Row`, `Divide row ${pivot + 1} by ${pivotValue.toFixed(2)} to make pivot = 1`, 1500);
+          
+          // Display updated matrix - synchronized with normalization step
+          setTimeout(() => {
+            addVisualElement(displayAugmented(augmented, `[A | I] after normalization`));
+          }, stepDelay);
         }
         
         // Eliminate other entries in this column
@@ -1562,29 +1648,32 @@
           if (i !== pivot) {
             const factor = augmented[i][pivot];
             if (Math.abs(factor) > 1e-10) {
-              addStep(`Eliminate Row ${i + 1}`, `Row ${i + 1} = Row ${i + 1} - (${factor.toFixed(2)}) × Row ${pivot + 1}`, 800);
+              addStep(`Eliminate Row ${i + 1}`, `Row ${i + 1} = Row ${i + 1} - (${factor.toFixed(2)}) × Row ${pivot + 1}`, 1200);
               
               for (let j = 0; j < 2 * A.length; j++) {
                 augmented[i][j] -= factor * augmented[pivot][j];
               }
               
-              addStep(`After Elimination`, displayAugmented(augmented, `[A | I] after eliminating row ${i + 1}`), 1000);
+              // Display updated matrix - synchronized with elimination step
+              setTimeout(() => {
+                addVisualElement(displayAugmented(augmented, `[A | I] after eliminating row ${i + 1}`));
+              }, stepDelay);
             }
           }
         }
         
-        addStep(`Column ${pivot + 1} Complete`, `Column ${pivot + 1} now has 1 on diagonal and 0s elsewhere`, 1200);
+        addStep(`Column ${pivot + 1} Complete`, `Column ${pivot + 1} now has 1 on diagonal and 0s elsewhere`, 1800);
       }
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayMatrix(inverse, 'Inverse Matrix A⁻¹'));
+        addVisualElement(displayMatrix(inverse, 'Inverse Matrix A⁻¹'));
         
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Gauss-Jordan Elimination Theory', 
             'Gauss-Jordan elimination transforms a matrix into its inverse by creating an augmented matrix [A | I] and performing row operations to convert A into the identity matrix I. The operations are: 1) Swap rows for better pivots, 2) Divide rows to create 1s on the diagonal, 3) Subtract multiples of rows to create 0s elsewhere. The right side becomes A⁻¹. This method is numerically stable and efficient for finding matrix inverses, especially for larger matrices.');
-        }, 500);
-      }, stepDelay);
+        }, 750);
+      }, stepDelay + 1500);
       
       return inverse;
     }
@@ -1668,23 +1757,14 @@
       });
     }
     
-    function addTheoreticalExplanation(title, content) {
-      const stepsDiv = document.getElementById('steps');
-      const explanationDiv = document.createElement('div');
-      explanationDiv.className = 'step theoretical-explanation';
-      explanationDiv.style.animationDelay = '0s';
+    function addVisualElement(element) {
+      const resultContent = document.getElementById('resultContent');
+      resultContent.appendChild(element);
       
-      const titleDiv = document.createElement('div');
-      titleDiv.className = 'step-title';
-      titleDiv.textContent = title;
-      
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'step-content theoretical-content';
-      contentDiv.textContent = content;
-      
-      explanationDiv.appendChild(titleDiv);
-      explanationDiv.appendChild(contentDiv);
-      stepsDiv.appendChild(explanationDiv);
+      // Auto-scroll to keep the latest visual element visible
+      setTimeout(() => {
+        element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
     }
     
     function getMinor(matrix, row, col) {
