@@ -1,5 +1,6 @@
 # Matrix & Vector Calculator
-
+![alt text](image.png)
+![alt text](image-1.png)
 An interactive educational web application for matrix and vector operations with step-by-step visualizations and comprehensive testing.
 
 ## Features
