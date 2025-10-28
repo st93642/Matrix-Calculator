@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Oct 28 2025 20:04 st93642                                    -->
+<!--  Updated: Oct 28 2025 21:16 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -280,6 +280,28 @@
     .highlight-col {
       background: #ffd3b6 !important;
       transform: scale(1.1);
+    }
+    
+    .highlight-cell {
+      background: #ff8c69 !important;
+      transform: scale(1.3);
+      animation: pulse-cell 0.6s ease-in-out;
+      box-shadow: 0 0 15px rgba(255, 140, 105, 0.8);
+      z-index: 10;
+      position: relative;
+    }
+    
+    @keyframes pulse-cell {
+      0%, 100% { transform: scale(1.3); }
+      50% { transform: scale(1.5); }
+    }
+    
+    .highlight-processing {
+      background: #ff6b6b !important;
+      animation: pulse 0.8s ease-in-out infinite;
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(255, 107, 107, 0.9);
+      border: 2px solid #ff4757;
     }
     
     @keyframes pulse {
@@ -1262,38 +1284,39 @@
         <div class="calc-arrow">=</div>
         <div id="result-visual">${displayMatrix(result, 'Result C').outerHTML}</div>
       `;
-      addStep('Visual Setup', visualDiv, 1000);
+      addStep('Visual Setup', visualDiv, 1500);
       
       for (let i = 0; i < A.length; i++) {
         for (let j = 0; j < B[0].length; j++) {
           let calculation = '';
           
-          // Highlight current row and column
+          // Start processing this result cell
           setTimeout(() => {
+            highlightResultProcessing('result-visual', i, j);
             highlightRow('matrixA-visual', i);
             highlightCol('matrixB-visual', j);
           }, stepDelay);
           
-          addStep(`Computing C[${i+1},${j+1}]`, `Row ${i+1} of A × Column ${j+1} of B`, 800);
+          addStep(`Computing C[${i+1},${j+1}]`, `Row ${i+1} of A × Column ${j+1} of B`, 1200);
           
           for (let k = 0; k < A[0].length; k++) {
             calculation += `${A[i][k]}×${B[k][j]}`;
             if (k < A[0].length - 1) calculation += ' + ';
             
-            // Animate individual multiplication
+            // Animate individual multiplication - highlight specific cells being multiplied
             setTimeout(() => {
               highlightCell('matrixA-visual', i, k);
-              highlightCell('matrixB-visual', k, j);
+              highlightCell('matrixB-visual', k, j); // This is the specific digit in the column
             }, stepDelay);
             
             addStep(
               `Step: A[${i+1},${k+1}] × B[${k+1},${j+1}]`,
               `${A[i][k]} × ${B[k][j]} = ${A[i][k] * B[k][j]}`,
-              600
+              1000
             );
           }
           
-          // Update result matrix
+          // Update result matrix with final value
           setTimeout(() => {
             updateResultCell('result-visual', i, j, result[i][j]);
             clearHighlights();
@@ -1302,7 +1325,7 @@
           addStep(
             `C[${i+1},${j+1}] Complete`,
             `${calculation} = ${result[i][j]}`,
-            800
+            1200
           );
         }
       }
@@ -1605,8 +1628,21 @@
       if (rows[rowIndex]) {
         const cells = rows[rowIndex].querySelectorAll('.matrix-cell');
         if (cells[colIndex]) {
-          cells[colIndex].classList.add('highlight');
-          setTimeout(() => cells[colIndex].classList.remove('highlight'), 1000);
+          cells[colIndex].classList.add('highlight-cell');
+          setTimeout(() => cells[colIndex].classList.remove('highlight-cell'), 800);
+        }
+      }
+    }
+    
+    function highlightResultProcessing(matrixId, rowIndex, colIndex) {
+      const matrixDiv = document.getElementById(matrixId);
+      if (!matrixDiv) return;
+      
+      const rows = matrixDiv.querySelectorAll('.matrix-row');
+      if (rows[rowIndex]) {
+        const cells = rows[rowIndex].querySelectorAll('.matrix-cell');
+        if (cells[colIndex]) {
+          cells[colIndex].classList.add('highlight-processing');
         }
       }
     }
@@ -1627,8 +1663,8 @@
     }
     
     function clearHighlights() {
-      document.querySelectorAll('.highlight, .highlight-row, .highlight-col').forEach(el => {
-        el.classList.remove('highlight', 'highlight-row', 'highlight-col');
+      document.querySelectorAll('.highlight, .highlight-row, .highlight-col, .highlight-cell, .highlight-processing').forEach(el => {
+        el.classList.remove('highlight', 'highlight-row', 'highlight-col', 'highlight-cell', 'highlight-processing');
       });
     }
     
