@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Oct 28 2025 21:58 st93642                                    -->
+<!--  Updated: Oct 28 2025 22:07 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -1134,7 +1134,11 @@
         row.forEach(val => {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
-          cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          if (isNaN(val) || !isFinite(val)) {
+            cell.textContent = '0.00'; // Handle NaN/Infinity
+          } else {
+            cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          }
           rowDiv.appendChild(cell);
         });
         div.appendChild(rowDiv);
@@ -1165,7 +1169,12 @@
         for (let j = 0; j < n; j++) {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
-          cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
+          const val = row[j];
+          if (isNaN(val) || !isFinite(val)) {
+            cell.textContent = '0.00'; // Handle NaN/Infinity
+          } else {
+            cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          }
           rowDiv.appendChild(cell);
         }
         
@@ -1181,7 +1190,12 @@
         for (let j = n; j < 2 * n; j++) {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
-          cell.textContent = Number.isInteger(row[j]) ? row[j] : row[j].toFixed(2);
+          const val = row[j];
+          if (isNaN(val) || !isFinite(val)) {
+            cell.textContent = '0.00'; // Handle NaN/Infinity
+          } else {
+            cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          }
           rowDiv.appendChild(cell);
         }
         
@@ -1633,7 +1647,11 @@
         // Make pivot 1 by dividing the entire row by pivot value
         if (Math.abs(pivotValue - 1) > 1e-10) {
           for (let j = 0; j < 2 * A.length; j++) {
-            augmented[pivot][j] /= pivotValue;
+            if (isFinite(augmented[pivot][j]) && isFinite(pivotValue) && pivotValue !== 0) {
+              augmented[pivot][j] /= pivotValue;
+            } else {
+              augmented[pivot][j] = 0; // Handle division by zero or invalid values
+            }
           }
           addStep(`Normalize Pivot Row`, `Divide row ${pivot + 1} by ${pivotValue.toFixed(2)} to make pivot = 1`, 1500);
           
@@ -1647,11 +1665,15 @@
         for (let i = 0; i < A.length; i++) {
           if (i !== pivot) {
             const factor = augmented[i][pivot];
-            if (Math.abs(factor) > 1e-10) {
+            if (Math.abs(factor) > 1e-10 && isFinite(factor)) {
               addStep(`Eliminate Row ${i + 1}`, `Row ${i + 1} = Row ${i + 1} - (${factor.toFixed(2)}) × Row ${pivot + 1}`, 1200);
               
               for (let j = 0; j < 2 * A.length; j++) {
-                augmented[i][j] -= factor * augmented[pivot][j];
+                if (isFinite(augmented[i][j]) && isFinite(augmented[pivot][j]) && isFinite(factor)) {
+                  augmented[i][j] -= factor * augmented[pivot][j];
+                } else {
+                  augmented[i][j] = 0; // Handle invalid operations
+                }
               }
               
               // Display updated matrix - synchronized with elimination step
