@@ -716,13 +716,9 @@
     
     <div class="result-section" id="result" style="display: none;">
       <div class="row">
-        <div class="col-md-6 result-left">
-          <h3>Visual Process</h3>
-          <div id="resultContent"></div>
-        </div>
-        <div class="col-md-6 result-right">
-          <h3>Calculation Steps</h3>
-          <div class="steps" id="steps"></div>
+        <div class="col-12">
+          <h3>Step-by-Step Process</h3>
+          <div id="processContainer"></div>
         </div>
       </div>
     </div>
@@ -782,12 +778,10 @@
     function calculateVector(operation) {
       stepDelay = 0;
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       try {
         switch(operation) {
@@ -842,7 +836,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U + V'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U + V'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Addition Theory', 
@@ -866,7 +860,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U - V'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U - V'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Subtraction Theory', 
@@ -890,7 +884,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, `${k}U`));
+        document.getElementById('processContainer').appendChild(displayVector(result, `${k}U`));
         
         setTimeout(() => {
           addTheoreticalExplanation('Scalar Multiplication Theory', 
@@ -913,7 +907,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||U|| = ${norm.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -940,7 +934,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">Distance = ${distance.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -965,7 +959,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(components, 'P1→P2'));
+        document.getElementById('processContainer').appendChild(displayVector(components, 'P1→P2'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Components Theory', 
@@ -989,7 +983,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U + W'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U + W'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Addition Theory', 
@@ -1013,7 +1007,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U - W'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U - W'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Subtraction Theory', 
@@ -1037,7 +1031,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, `${k}W`));
+        document.getElementById('processContainer').appendChild(displayVector(result, `${k}W`));
         
         setTimeout(() => {
           addTheoreticalExplanation('Scalar Multiplication Theory', 
@@ -1060,7 +1054,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||W|| = ${norm.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -1207,7 +1201,7 @@
     
     function addStep(title, content, delay = 500) {
       setTimeout(() => {
-        const stepsDiv = document.getElementById('steps');
+        const container = document.getElementById('processContainer');
         const step = document.createElement('div');
         step.className = 'step';
         step.style.animationDelay = '0s';
@@ -1226,7 +1220,7 @@
         
         step.appendChild(titleDiv);
         step.appendChild(contentDiv);
-        stepsDiv.appendChild(step);
+        container.appendChild(step);
         
         // Auto-scroll to keep the latest step visible
         setTimeout(() => {
@@ -1239,7 +1233,7 @@
     
     function addTheoreticalExplanation(title, content) {
       setTimeout(() => {
-        const stepsDiv = document.getElementById('steps');
+        const container = document.getElementById('processContainer');
         const explanation = document.createElement('div');
         explanation.className = 'theoretical-explanation';
         
@@ -1253,7 +1247,7 @@
         
         explanation.appendChild(titleDiv);
         explanation.appendChild(contentDiv);
-        stepsDiv.appendChild(explanation);
+        container.appendChild(explanation);
         
         // Auto-scroll to keep the latest explanation visible
         setTimeout(() => {
@@ -1267,12 +1261,10 @@
     function calculate(operation) {
       stepDelay = 0;
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const matrixA = getMatrix('matrixA');
       const matrixB = getMatrix('matrixB');
@@ -2039,8 +2031,8 @@
     }
     
     function addVisualElement(element) {
-      const resultContent = document.getElementById('resultContent');
-      resultContent.appendChild(element);
+      const container = document.getElementById('processContainer');
+      container.appendChild(element);
       
       // Auto-scroll to keep the latest visual element visible
       setTimeout(() => {
@@ -2366,12 +2358,10 @@
     
     function runVectorTests() {
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const testResults = [];
       
@@ -2637,7 +2627,7 @@
     }
     
     function displayTestResults(results) {
-      const resultContent = document.getElementById('resultContent');
+      const container = document.getElementById('processContainer');
       
       const resultsDiv = document.createElement('div');
       resultsDiv.className = 'test-results';
@@ -2687,18 +2677,16 @@
       summaryDiv.innerHTML = `Tests Passed: ${passedCount}/${results.length}`;
       resultsDiv.appendChild(summaryDiv);
       
-      resultContent.appendChild(resultsDiv);
+      container.appendChild(resultsDiv);
     }
     
     // Matrix Test Functions
     function runMatrixTests() {
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const testResults = [];
       
@@ -3019,7 +3007,7 @@
     }
     
     function displayMatrixTestResults(results) {
-      const resultContent = document.getElementById('resultContent');
+      const resultContent = document.getElementById('processContainer');
       
       const resultsDiv = document.createElement('div');
       resultsDiv.className = 'test-results';
