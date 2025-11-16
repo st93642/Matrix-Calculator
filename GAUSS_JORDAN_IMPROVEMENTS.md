@@ -1,10 +1,13 @@
 # Gauss-Jordan Inverse Algorithm - Implementation Details
 
 ## Overview
+
 This document details the improvements made to the matrix inverse calculation using Gauss-Jordan elimination.
 
 ## Problem Statement
+
 **Original Issues:**
+
 1. Floating-point arithmetic accumulates rounding errors
 2. No intelligent row swapping strategy
 3. Poor numerical stability with fractional pivots
@@ -12,6 +15,7 @@ This document details the improvements made to the matrix inverse calculation us
 5. Difficult to follow for educational purposes
 
 **Desired Solution:**
+
 - Use exact integer arithmetic (fractions) throughout
 - Interchanging rows to select convenient pivot points
 - Avoid fractions until final steps
@@ -23,6 +27,7 @@ This document details the improvements made to the matrix inverse calculation us
 ### 1. Fraction Class (Lines 1992-2063)
 
 #### Design
+
 ```javascript
 class Fraction {
   constructor(num, den = 1)
@@ -43,6 +48,7 @@ class Fraction {
 #### Key Features
 
 **Automatic Reduction (GCD)**
+
 ```javascript
 constructor(num, den = 1) {
   if (den === 0) throw new Error('Denominator cannot be zero');
@@ -51,10 +57,12 @@ constructor(num, den = 1) {
   this.den = Math.abs(den) / g;              // Reduced denominator
 }
 ```
+
 - Fractions automatically simplify
 - Example: new Fraction(6, 4) becomes Fraction(3, 2)
 
 **Type Conversion**
+
 ```javascript
 static from(val) {
   if (val instanceof Fraction) return val;
@@ -71,6 +79,7 @@ static from(val) {
 ```
 
 **Arithmetic Operations**
+
 ```javascript
 add(other) {
   // (a/b) + (c/d) = (ad + bc) / bd
@@ -143,6 +152,7 @@ divide(other) {
 ```
 
 #### Pseudocode
+
 ```javascript
 function calculateInverseCalc(A) {
   const n = A.length;
@@ -227,23 +237,28 @@ function calculateInverseCalc(A) {
 #### Key Points
 
 **Integer Arithmetic Preservation**
+
 - If pivot is integer (den=1), all operations maintain integers
 - Example: Row with [2, 3, 5] divided by 2 gives [1, 3/2, 5/2]
 - Avoids floating-point errors
 
 **Pivot Selection Strategy**
+
 ```javascript
 let score = Math.abs(val.toFloat());
 if (val.den === 1) score += 1000;  // Strongly prefer integers
 ```
+
 - Integer value: gets +1000 bonus
 - Non-integer: gets its absolute value
 - Result: Always picks integers first, then largest
 
 **Row Swapping Metadata**
+
 ```javascript
 rowSwaps.push({ from: bestRow, to: col });
 ```
+
 - Records all interchanges for display
 - Helps visualize transformation
 - Used for step-by-step animation
@@ -273,6 +288,7 @@ rowSwaps.push({ from: bestRow, to: col });
 #### Display Functions
 
 **New: displayAugmentedFractions (Lines 1747-1807)**
+
 ```javascript
 function displayAugmentedFractions(matrix, label = '') {
   // Create div for augmented matrix
@@ -289,6 +305,7 @@ function displayAugmentedFractions(matrix, label = '') {
 ```
 
 Features:
+
 - Displays Fraction objects as "3/2" not "1.5"
 - Clear vertical separator between A and I parts
 - Readable layout for augmented matrix
@@ -297,9 +314,11 @@ Features:
 ### 4. Cross-Checking with Cofactor Method (Lines 1984-2123)
 
 #### Purpose
+
 Verifies Gauss-Jordan result using independent calculation method
 
 #### Implementation
+
 ```javascript
 function calculateInverseCofactor(A) {
   const n = A.length;
@@ -336,6 +355,7 @@ function calculateInverseCofactor(A) {
 ```
 
 #### Verification in Display
+
 ```javascript
 const inverseCofactor = calculateInverseCofactor(A);
 let matches = true;
@@ -358,6 +378,7 @@ if (matches) {
 #### Steps for 3×3 Example
 
 **Setup**
+
 ```
 Step 1: Gauss-Jordan Elimination Setup
   - Show [A | I]
@@ -368,6 +389,7 @@ Step 2: Pivot Strategy
 ```
 
 **Column 1 Processing**
+
 ```
 Step 3: Column 1: Row Swap (if needed)
   - Show which rows are interchanged
@@ -395,6 +417,7 @@ Step 8: Column 1 Complete
 **Columns 2 and 3 (similar pattern)**
 
 **Verification**
+
 ```
 Final: Inverse Matrix A⁻¹
   - Show as decimals
@@ -409,6 +432,7 @@ Theory
 ## Example: 2×2 Matrix Inverse
 
 ### Input Matrix
+
 ```
 A = [4  7]
     [2  6]
@@ -417,25 +441,31 @@ A = [4  7]
 ### Step-by-Step with Fractions
 
 **Step 1: Augmented Matrix [A | I]**
+
 ```
 [4  7 | 1  0]
 [2  6 | 0  1]
 ```
 
 **Step 2: Column 1 - Choose Pivot**
+
 - Row 1: value = 4 (integer) → score = 4 + 1000 = 1004
 - Row 2: value = 2 (integer) → score = 2 + 1000 = 1002
 - Select Row 1 (best score)
 
 **Step 3: Normalize Pivot**
+
 - Divide Row 1 by 4
+
 ```
 [1   7/4 | 1/4   0 ]
 [2   6   | 0     1 ]
 ```
 
 **Step 4: Eliminate Column 1**
+
 - Row 2 = Row 2 - 2 × Row 1
+
 ```
 [1   7/4  | 1/4     0 ]
 [0   6-7/2| -1/2    1 ]
@@ -445,14 +475,18 @@ A = [4  7]
 ```
 
 **Step 5: Column 2 - Normalize Pivot**
+
 - Divide Row 2 by 5/2
+
 ```
 [1   7/4  | 1/4     0   ]
 [0   1    | -1/5    2/5 ]
 ```
 
 **Step 6: Eliminate Column 2**
+
 - Row 1 = Row 1 - (7/4) × Row 2
+
 ```
 [1   0    | 1/4 + 7/20   -7/10 ]
 [0   1    | -1/5         2/5  ]
@@ -462,6 +496,7 @@ A = [4  7]
 ```
 
 ### Final Result (as decimals)
+
 ```
 A⁻¹ = [1.2    -0.7 ]
       [-0.2    0.4 ]
@@ -470,17 +505,20 @@ A⁻¹ = [1.2    -0.7 ]
 ## Performance Analysis
 
 ### Time Complexity
+
 - Fraction creation: O(1) per value
 - GCD computation: O(log min(numerator, denominator))
 - Matrix elimination: O(n³) iterations
 - Total: **O(n³)** with larger constant than float version
 
 ### Space Complexity
+
 - Augmented matrix: O(2n²) = O(n²)
 - Fraction objects: Similar to float storage
 - Additional metadata: O(n) for row swaps
 
 ### Numerator/Denominator Growth
+
 - Worst case: denominators can grow exponentially
 - Example: 4×4 matrix might have denominators ~10⁶
 - Mitigation: GCD reduction keeps size bounded in practice

@@ -3,6 +3,7 @@
 ## Quick Reference
 
 ### Location of Changes
+
 1. **Fraction Class**: Lines 1992-2063 (NEW)
 2. **calculateInverseCofactor()**: Lines 1984-2123 (NEW)
 3. **calculateInverseCalc()**: Lines 2125-2212 (MODIFIED)
@@ -10,6 +11,7 @@
 5. **displayAugmentedFractions()**: Lines 1747-1807 (NEW)
 
 ### Files Created
+
 - `CODEBASE_ANALYSIS.md` - Overall structure analysis
 - `GAUSS_JORDAN_IMPROVEMENTS.md` - Algorithm documentation
 - `IMPLEMENTATION_GUIDE.md` - This file
@@ -19,6 +21,7 @@
 ### Manual Testing Steps
 
 #### Test 1: Simple 2×2 Integer Matrix
+
 ```javascript
 // Input
 A = [1, 2]
@@ -41,6 +44,7 @@ A = [1, 2]
 ```
 
 #### Test 2: 3×3 Matrix with Fractions
+
 ```javascript
 // Input
 A = [2, 1, 1]
@@ -56,6 +60,7 @@ A = [2, 1, 1]
 ```
 
 #### Test 3: Edge Cases
+
 ```javascript
 // Singular matrix (no inverse)
 A = [1, 2]
@@ -71,6 +76,7 @@ A = [0.001, 1    ]
 ```
 
 ### Automated Testing
+
 ```javascript
 // Browser console - Test Fraction class
 const f1 = new Fraction(3, 4);
@@ -91,29 +97,35 @@ console.log(inv);  // 2D array of numbers
 ### Common Issues
 
 #### 1. Fraction Class Not Found
+
 **Error**: `ReferenceError: Fraction is not defined`
 **Cause**: Fraction class is scoped to the script context
 **Solution**: Ensure class is defined before first use (it is at line 1992)
 
 #### 2. Large Denominator Display
+
 **Issue**: Matrix cells show huge fractions like "123456789/987654321"
 **Cause**: Denominator explosion in complex matrices
-**Solution**: 
+**Solution**:
+
 - For display: Consider rounding to decimal
 - For calculation: Use `toFloat()` earlier
 
 #### 3. Row Swap Not Showing
+
 **Issue**: No "Row Swap" step appears
 **Cause**: Pivot already in correct position
 **Solution**: This is normal - only shows when needed
 
 #### 4. Cross-Check Fails
+
 **Issue**: "Warning: Could not verify with cofactor method"
-**Cause**: 
+**Cause**:
+
 - Matrix is singular
 - Floating-point precision limit exceeded
 - Numerical issues with cofactor calculation
-**Solution**: 
+**Solution**:
 - Check matrix is invertible (determinant ≠ 0)
 - For large matrices, this is expected
 
@@ -327,6 +339,7 @@ toString() {
 ### Current Bottlenecks
 
 1. **GCD Calculation** - O(log max(num, den))
+
    ```javascript
    // Current: Uses Euclidean algorithm (efficient)
    gcd(a, b) {
@@ -335,6 +348,7 @@ toString() {
    ```
 
 2. **Fraction Arithmetic** - Creates new objects
+
    ```javascript
    // Current: Allocates new Fraction per operation
    const result = new Fraction(this.num * other.num, 
@@ -375,6 +389,7 @@ toFloat() {
 ## Browser Compatibility
 
 ### Required Features
+
 - ES6 Classes: ✓ All modern browsers
 - Arrow Functions: ✓ All modern browsers
 - Template Literals: ✓ All modern browsers
@@ -382,36 +397,42 @@ toFloat() {
 - Array methods (fill, map, forEach): ✓ All modern browsers
 
 ### Tested On
+
 - Chrome 120+
 - Firefox 115+
 - Safari 15+
 - Edge 120+
 
 ### Known Limitations
+
 - Very large matrices: Fraction denominators may exceed Number.MAX_SAFE_INTEGER
 - Scientific notation in input: Precision loss when converting
 
 ## Maintenance Notes
 
-### If You Need To...
+### If You Need To
 
 **Change algorithm completely:**
+
 1. Modify `calculateInverseCalc()` - calculation logic
 2. Keep `calculateInverse()` - display logic unchanged
 3. Test with existing test suite
 
 **Add new visualization step:**
+
 1. Add `addStep()` call in `calculateInverse()`
 2. Check timing (stepDelay += duration)
 3. Add corresponding `displayAugmentedFractions()` or similar
 
 **Modify Fraction class:**
+
 1. Test all arithmetic operations
 2. Verify GCD reduction works
 3. Check edge cases: 0/1, 1/1, negative values
 4. Update toString() format carefully
 
 **Add debugging output:**
+
 1. Use `console.log()` with meaningful prefixes
 2. For matrix output, use helper like `printAugmented()`
 3. Remember to remove before production
@@ -419,6 +440,7 @@ toFloat() {
 ## Summary
 
 The implementation consists of:
+
 1. **Fraction class** - Exact rational arithmetic
 2. **calculateInverseCofactor()** - Verification method
 3. **calculateInverseCalc()** - Core Gauss-Jordan algorithm
