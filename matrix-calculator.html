@@ -1569,7 +1569,6 @@
       const initialCopy = deepCopyMatrix(working);
       addStep('Original Matrix', displayMatrix(initialCopy, 'Matrix A'), 1000);
 
-      let det = 1;
       let rowSwaps = 0;
       let useFractions = false;
 
@@ -1609,10 +1608,9 @@
         if (bestRow !== col) {
           [working[col], working[bestRow]] = [working[bestRow], working[col]];
           rowSwaps++;
-          det *= -1; // Row swap negates determinant
 
           addStep(`Column ${col + 1}: Row Swap`,
-            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1} (determinant multiplied by -1)`, 1000);
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1} (determinant sign will flip)`, 1000);
 
           const swapCopy = deepCopyMatrix(working);
           setTimeout(() => {
@@ -1620,115 +1618,104 @@
           }, stepDelay);
         }
 
-        // Normalize pivot row
+        // Check if fractions will be needed for elimination
         const pivotValue = working[col][col];
-        if (useFractions) {
-          det = det.multiply(pivotValue);
-        } else {
-          det *= pivotValue;
-        }
 
-        const pivotIsOne = useFractions ? pivotValue.isOne() : pivotValue === 1;
-        const pivotIsNegativeOne = useFractions
-          ? (pivotValue.num === -pivotValue.den)
-          : pivotValue === -1;
-
-        if (!pivotIsOne && !pivotIsNegativeOne) {
-          if (!useFractions) {
-            let needsFractions = false;
-            for (let j = col + 1; j < n; j++) {
-              if (working[col][j] % pivotValue !== 0) {
-                needsFractions = true;
-                break;
-              }
-            }
-
-            if (needsFractions) {
-              addStep('Introducing Fractions', 'Division creates non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
-              useFractions = true;
-              convertToFractionMatrix(working);
-              det = Fraction.from(det);
+        if (!useFractions) {
+          let needsFractions = false;
+          for (let row = col + 1; row < n; row++) {
+            const factor = working[row][col];
+            if (factor !== 0 && factor % pivotValue !== 0) {
+              needsFractions = true;
+              break;
             }
           }
 
-          const pivotLabel = useFractions ? Fraction.from(pivotValue).toString() : pivotValue;
-          addStep(`Column ${col + 1}: Normalize Pivot`,
-            `Divide Row ${col + 1} by ${pivotLabel} (tracking determinant × ${pivotLabel})`, 1000);
-
-          if (useFractions) {
-            const pivotFraction = Fraction.from(pivotValue);
-            for (let j = 0; j < n; j++) {
-              working[col][j] = working[col][j].divide(pivotFraction);
-            }
-          } else {
-            for (let j = 0; j < n; j++) {
-              working[col][j] = working[col][j] / pivotValue;
-            }
+          if (needsFractions) {
+            addStep('Introducing Fractions', 'Elimination will create non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
+            useFractions = true;
+            convertToFractionMatrix(working);
           }
-
-          const pivotCopy = deepCopyMatrix(working);
-          setTimeout(() => {
-            addVisualElement(displayMatrix(pivotCopy, `Matrix after normalizing Row ${col + 1}`));
-          }, stepDelay);
-        } else {
-          const pivotLabel = useFractions ? Fraction.from(pivotValue).toString() : pivotValue;
-          addStep(`Column ${col + 1}: Pivot Contribution`,
-            `Pivot value ${pivotLabel} multiplies the determinant tracker (no normalization needed)`, 800);
         }
 
         // Eliminate entries below the diagonal (for upper triangular form)
-         for (let row = col + 1; row < n; row++) {
-           const factor = working[row][col];
-           const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
-           if (isNonZero) {
-             let eliminationFactor;
-             let eliminationLabel;
+        for (let row = col + 1; row < n; row++) {
+          const factor = working[row][col];
+          const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
+          if (isNonZero) {
+            let eliminationFactor;
+            let eliminationLabel;
 
-             if (useFractions) {
-               const pivotFraction = Fraction.from(working[col][col]);
-               eliminationFactor = factor.divide(pivotFraction);
-               eliminationLabel = eliminationFactor.toString();
-             } else {
-               const pivotValue = working[col][col];
-               eliminationFactor = factor / pivotValue;
-               eliminationLabel = eliminationFactor;
-             }
+            if (useFractions) {
+              const pivotFraction = Fraction.from(working[col][col]);
+              eliminationFactor = factor.divide(pivotFraction);
+              eliminationLabel = eliminationFactor.toString();
+            } else {
+              const pivotValueElim = working[col][col];
+              eliminationFactor = factor / pivotValueElim;
+              eliminationLabel = eliminationFactor;
+            }
 
-             addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
-               `Row ${row + 1} = Row ${row + 1} - (${eliminationLabel}) × Row ${col + 1}`, 1000);
+            addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
+              `Row ${row + 1} = Row ${row + 1} - (${eliminationLabel}) × Row ${col + 1}`, 1000);
 
-             if (useFractions) {
-               for (let j = col; j < n; j++) {
-                 working[row][j] = working[row][j].subtract(eliminationFactor.multiply(working[col][j]));
-               }
-               working[row][col] = Fraction.from(0);
-             } else {
-               for (let j = col; j < n; j++) {
-                 working[row][j] = working[row][j] - eliminationFactor * working[col][j];
-               }
-               working[row][col] = 0;
-             }
+            if (useFractions) {
+              for (let j = col; j < n; j++) {
+                working[row][j] = working[row][j].subtract(eliminationFactor.multiply(working[col][j]));
+              }
+              working[row][col] = Fraction.from(0);
+            } else {
+              for (let j = col; j < n; j++) {
+                working[row][j] = working[row][j] - eliminationFactor * working[col][j];
+              }
+              working[row][col] = 0;
+            }
 
-             const eliminationCopy = deepCopyMatrix(working);
-             setTimeout(() => {
-               addVisualElement(displayMatrix(eliminationCopy, `Matrix after eliminating Row ${row + 1}, Column ${col + 1}`));
-             }, stepDelay);
-           }
-         }
+            const eliminationCopy = deepCopyMatrix(working);
+            setTimeout(() => {
+              addVisualElement(displayMatrix(eliminationCopy, `Matrix after eliminating Row ${row + 1}, Column ${col + 1}`));
+            }, stepDelay);
+          }
+        }
       }
 
-      // Upper triangular form achieved - determinant is ready
-      addStep('Calculate Determinant', 'Upper triangular form achieved. Determinant = (product of pivots) × (sign from row swaps)', 1500);
+      // Upper triangular form achieved - calculate determinant
+      addStep('Calculate Determinant', 'Upper triangular form achieved. Determinant = (product of diagonal) × (sign from row swaps)', 1500);
 
       const displayCopy = deepCopyMatrix(working);
       setTimeout(() => {
         addVisualElement(displayMatrix(displayCopy, 'Upper Triangular Matrix'));
       }, stepDelay);
 
+      // Multiply diagonal elements
+      let det = useFractions ? Fraction.from(1) : 1;
+      let diagProductStr = '';
+
+      for (let i = 0; i < n; i++) {
+        const val = working[i][i];
+        if (useFractions) {
+          det = det.multiply(val);
+          diagProductStr += (i > 0 ? ' × ' : '') + val.toString();
+        } else {
+          det = det * val;
+          diagProductStr += (i > 0 ? ' × ' : '') + val;
+        }
+      }
+
+      // Apply row swap sign
+      const signFactor = Math.pow(-1, rowSwaps);
       if (useFractions) {
-        addStep('Final Calculation', `det = ${det.toString()}`, 1000);
+        det = det.multiply(Fraction.from(signFactor));
       } else {
-        addStep('Final Calculation', `det = ${det}`, 1000);
+        det = det * signFactor;
+      }
+
+      if (useFractions) {
+        addStep('Final Calculation', 
+          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det.toString()}`, 1000);
+      } else {
+        addStep('Final Calculation', 
+          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det}`, 1000);
       }
 
       const finalValue = useFractions ? det.toFloat() : det;
@@ -1744,7 +1731,7 @@
         // Add theoretical explanation
         setTimeout(() => {
           addTheoreticalExplanation('Determinant Theory (Gaussian Elimination)',
-            'Gaussian elimination calculates determinant by reducing the matrix to upper triangular form. Key properties: (1) Row swaps negate the determinant, (2) Dividing a row by k divides the determinant by k (so we track det × k), (3) Row addition/subtraction does not change determinant, (4) Final determinant = (product of all pivots) × (sign from row swaps). This method is O(n³) and much more efficient than cofactor expansion which is O(n!).');
+            'Gaussian elimination calculates determinant by reducing the matrix to upper triangular form using row swaps and row addition operations. Key properties: (1) Row swaps negate the determinant, (2) Adding a multiple of one row to another leaves the determinant unchanged, (3) Once in triangular form, the determinant equals the product of the diagonal elements times (-1) raised to the number of row swaps. This method is O(n³) and much more efficient than cofactor expansion which is O(n!).');
         }, 750);
 
         // Cross-check with cofactor method
@@ -1795,6 +1782,10 @@
                   1200
                 );
               }
+
+              setTimeout(() => {
+                addStep('Cofactor Final Result', `Cofactor determinant = ${cofactorDet.toFixed(6)}`, 800);
+              }, stepDelay + 200);
 
               setTimeout(() => {
                 addTheoreticalExplanation('Cofactor Expansion Theory',

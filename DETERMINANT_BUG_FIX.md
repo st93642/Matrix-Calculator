@@ -13,7 +13,7 @@ The determinant calculation using the "Gauss-Jordan method" was **incorrect** an
 ## Root Causes
 
 ### 1. Wrong Elimination Strategy
-**Bug**: Code eliminated ALL entries in each column (above and below diagonal)
+**Bug**: Code eliminated ALL entries in each column (above and below diagonal) - this is Gauss-Jordan (RREF)
 ```javascript
 // WRONG - Gauss-Jordan RREF
 for (let row = 0; row < n; row++) {
@@ -23,7 +23,7 @@ for (let row = 0; row < n; row++) {
 }
 ```
 
-**Fix**: Only eliminate entries BELOW the diagonal (upper triangular form)
+**Fix**: Only eliminate entries BELOW the diagonal (upper triangular form) - this is Gaussian elimination
 ```javascript
 // CORRECT - Gaussian elimination
 for (let row = col + 1; row < n; row++) {
@@ -32,29 +32,24 @@ for (let row = col + 1; row < n; row++) {
 ```
 
 ### 2. Incorrect Determinant Tracking
-**Bug**: Code divided determinant by pivot value
+**Bug**: Code tracked determinant by multiplying pivot values, then divided pivot rows, which complicated the logic
 ```javascript
-det /= pivotValue; // WRONG!
+det *= pivotValue;  // Track pivot
+// Then divide row by pivot
+// Then multiply by diagonal product (all 1's) -> wrong!
 ```
 
-**Fix**: Multiply determinant by pivot value (before normalizing row)
+**Fix**: Don't normalize pivots at all - just eliminate below diagonal
 ```javascript
-det *= pivotValue; // CORRECT!
+// No normalization!
+// Just eliminate below diagonal
+// Final det = (product of diagonal) × (-1)^(row swaps)
 ```
 
-### 3. Redundant Diagonal Product Calculation
-**Bug**: After normalizing all pivots to 1, code multiplied diagonal elements
-```javascript
-// After normalization, diagonal is [1, 1, 1, ...]
-diagProduct = 1 * 1 * 1 * ... = 1
-det = det * diagProduct; // redundant
-```
+### 3. Unnecessary Pivot Normalization
+**Bug**: For determinant calculation, normalizing pivots to 1 is unnecessary and adds complexity
 
-**Fix**: Remove diagonal product calculation - det already correct
-```javascript
-// det already contains: (product of all pivots) × (-1)^(row swaps)
-// No further calculation needed!
-```
+**Fix**: Leave diagonal elements as-is after elimination, then multiply them all together
 
 ## Mathematical Background
 
@@ -64,108 +59,127 @@ det = det * diagProduct; // redundant
 3. **Add multiple of one row to another**: `det(A') = det(A)` (unchanged)
 4. **Upper triangular matrix**: `det(A) = product of diagonal elements`
 
-### Gaussian Elimination for Determinants
+### Gaussian Elimination for Determinants (CORRECT METHOD)
 
 **Algorithm**:
-1. Start with `det = 1`
+1. Start with `rowSwaps = 0`
 2. For each column:
    - Find best pivot (prefer ±1, then smallest non-zero)
-   - If swap rows: `det *= -1`
-   - **BEFORE normalizing**: `det *= pivotValue`
-   - Divide pivot row by pivotValue (make pivot = 1)
-   - Eliminate all entries **below** diagonal
-3. Final: `det` already contains the correct determinant
+   - If swap rows: `rowSwaps++`
+   - **Do NOT normalize the pivot row**
+   - Eliminate all entries **below** diagonal: `Row[i] = Row[i] - (factor / pivot) × Row[pivot]`
+3. After upper triangular form:
+   - `det = product of diagonal × (-1)^rowSwaps`
 
 **Why this works**:
-- Each pivot value `p` gets multiplied into `det` before we divide the row by `p`
-- After all operations: `det = p₁ × p₂ × ... × pₙ × (-1)^swaps`
-- This equals the determinant of the original matrix
+- Row swaps change the sign: `(-1)^rowSwaps`
+- Row addition doesn't change determinant
+- Upper triangular matrix determinant = product of diagonal elements
 
-### Why NOT Gauss-Jordan
-Gauss-Jordan elimination creates **Reduced Row Echelon Form (RREF)** with:
-- All pivots = 1
-- Zeros above AND below each pivot
-
-For determinants, we only need **upper triangular form**:
-- Pivots can be any non-zero value
-- Zeros only BELOW each pivot
+### Why NOT Normalize Pivots for Determinants
+- Normalizing (dividing row by k) changes determinant: `det' = det / k`
+- We'd need to track all these divisions and compensate
+- Much simpler: **don't normalize at all!**
+- Just multiply diagonal elements at the end
 
 ## Implementation Changes
 
 ### File: `matrix-calculator.html`
 
-#### Line 1562-1563: Updated Method Name
+#### Lines 1572-1573: Removed `det` Variable Initialization
 ```javascript
 // BEFORE:
-addStep('Step 1: Gauss-Jordan Elimination Setup',
-  `Using Gauss-Jordan method to find determinant...`);
+let det = 1;
+let rowSwaps = 0;
 
 // AFTER:
-addStep('Step 1: Gaussian Elimination Setup',
-  `Using Gaussian elimination to find determinant...`);
+let rowSwaps = 0;
+// det calculated at the end from diagonal
 ```
 
-#### Lines 1625-1629: Track Pivot Contributions
+#### Line 1612: Simplified Row Swap Tracking
 ```javascript
-// Track pivot value BEFORE normalizing
-const pivotValue = working[col][col];
-if (useFractions) {
-  det = det.multiply(pivotValue);
-} else {
-  det *= pivotValue;
-}
+// BEFORE:
+det *= -1; // Row swap negates determinant
+
+// AFTER:
+rowSwaps++; // Just count swaps, apply sign at end
 ```
 
-#### Lines 1680-1717: Eliminate Only Below Diagonal
+#### Lines 1621-1639: Removed Pivot Normalization
 ```javascript
-// BEFORE: Eliminated all rows except pivot row
-for (let row = 0; row < n; row++) {
-  if (row !== col) {
-    // eliminate
+// BEFORE: 40+ lines normalizing pivot, tracking det
+det *= pivotValue;
+if (!pivotIsOne && !pivotIsNegativeOne) {
+  // divide row by pivot
+  for (let j = 0; j < n; j++) {
+    working[col][j] = working[col][j] / pivotValue;
   }
 }
 
-// AFTER: Eliminate only rows below pivot
-for (let row = col + 1; row < n; row++) {
-  const factor = working[row][col];
-  // eliminate
-  working[row][col] = 0; // Explicit zero to prevent floating-point drift
+// AFTER: Simple fraction check
+if (!useFractions) {
+  let needsFractions = false;
+  // Check if elimination will need fractions
+  if (needsFractions) {
+    convertToFractionMatrix(working);
+  }
 }
 ```
 
-#### Lines 1720-1734: Removed Redundant Calculation
+#### Lines 1641-1679: Simplified Elimination
 ```javascript
-// BEFORE: Multiplied diagonal elements
-let diagProduct = 1;
-for (let i = 0; i < n; i++) {
-  diagProduct *= working[i][i]; // Always 1 after normalization
+// Eliminate entries below the diagonal
+for (let row = col + 1; row < n; row++) {
+  const factor = working[row][col];
+  if (isNonZero) {
+    const eliminationFactor = factor / pivotValue;
+    // Row[row] = Row[row] - eliminationFactor × Row[col]
+    for (let j = col; j < n; j++) {
+      working[row][j] = working[row][j] - eliminationFactor * working[col][j];
+    }
+    working[row][col] = 0; // Explicit zero
+  }
 }
-det = det * diagProduct; // Redundant!
+```
 
-// AFTER: Determinant already correct
-addStep('Calculate Determinant', 
-  'Upper triangular form achieved. Determinant = (product of pivots) × (sign from row swaps)');
+#### Lines 1682-1721: Calculate Determinant from Diagonal
+```javascript
+// BEFORE: det already tracked, just convert
+const finalValue = useFractions ? det.toFloat() : det;
+
+// AFTER: Multiply diagonal elements
+let det = useFractions ? Fraction.from(1) : 1;
+for (let i = 0; i < n; i++) {
+  const val = working[i][i];
+  det = det * val; // or det.multiply(val) for fractions
+}
+
+// Apply row swap sign
+const signFactor = Math.pow(-1, rowSwaps);
+det = det * signFactor;
+
 const finalValue = useFractions ? det.toFloat() : det;
 ```
 
-#### Lines 1735-1737: Updated Theory Explanation
+#### Lines 1733-1734: Updated Theory Explanation
 ```javascript
 addTheoreticalExplanation('Determinant Theory (Gaussian Elimination)',
-  'Gaussian elimination calculates determinant by reducing the matrix to upper triangular form. ' +
-  'Key properties: (1) Row swaps negate the determinant, ' +
-  '(2) Dividing a row by k divides the determinant by k (so we track det × k), ' +
-  '(3) Row addition/subtraction does not change determinant, ' +
-  '(4) Final determinant = (product of all pivots) × (sign from row swaps). ' +
+  'Gaussian elimination calculates determinant by reducing the matrix to upper triangular form ' +
+  'using row swaps and row addition operations. Key properties: ' +
+  '(1) Row swaps negate the determinant, ' +
+  '(2) Adding a multiple of one row to another leaves the determinant unchanged, ' +
+  '(3) Once in triangular form, the determinant equals the product of the diagonal elements ' +
+  'times (-1) raised to the number of row swaps. ' +
   'This method is O(n³) and much more efficient than cofactor expansion which is O(n!).');
 ```
 
-#### Lines 1760, 1763: Updated Comparison Messages
+#### Line 1787: Added Cofactor Final Result Display
 ```javascript
-// BEFORE:
-`✓ Verified: Gauss-Jordan (${value}) matches Cofactor method`
-
-// AFTER:
-`✓ Verified: Gaussian elimination (${value}) matches cofactor method`
+// NEW: Display final cofactor result
+setTimeout(() => {
+  addStep('Cofactor Final Result', `Cofactor determinant = ${cofactorDet.toFixed(6)}`, 800);
+}, stepDelay + 200);
 ```
 
 ## Testing
@@ -179,8 +193,39 @@ All test cases now pass with Gaussian elimination matching cofactor expansion:
 4. **3×3 With Fractions**: `[[4, -1, 2], [3, 0, 1], [-2, 5, 3]]` → `-37` ✓
 5. **4×4 Identity**: `I₄` → `1` ✓
 
-### Cross-Verification
-Built-in cross-check with cofactor method now passes for all non-singular matrices.
+### Features
+- ✅ No pivot normalization
+- ✅ Upper triangular form only
+- ✅ Fractions supported throughout
+- ✅ Cofactor method final result displayed
+- ✅ Cross-verification passes
+
+## Key Improvements
+
+### 1. Simplified Algorithm
+**Before**: 
+- Track det = 1
+- Multiply by pivots
+- Divide by pivots (normalize)
+- Multiply by diagonal (all 1's)
+- Complex bookkeeping
+
+**After**:
+- Count row swaps
+- Don't normalize
+- Multiply diagonal at end
+- Apply sign from swaps
+- Clean and simple!
+
+### 2. No Unnecessary Operations
+- No pivot normalization (saves n divisions per column)
+- No tracking of pivot products
+- Direct calculation from final matrix
+
+### 3. Better Educational Value
+- Shows pure Gaussian elimination
+- Clear connection: triangular matrix → diagonal product
+- Students see the actual diagonal values, not just 1's
 
 ## Complexity Analysis
 
@@ -200,11 +245,11 @@ Built-in cross-check with cofactor method now passes for all non-singular matric
 
 ## Key Takeaways
 
-1. **Gaussian elimination** (upper triangular) ≠ **Gauss-Jordan** (RREF)
-2. For determinants, use Gaussian elimination (more efficient)
-3. For inverse matrices, use Gauss-Jordan (need identity on left side)
-4. Always track row operations' effect on determinant
-5. Cross-verification catches bugs early!
+1. **For determinants**: Use Gaussian elimination (upper triangular, no normalization)
+2. **For inverse matrices**: Use Gauss-Jordan (RREF with normalization)
+3. **Upper triangular** ≠ **Reduced Row Echelon Form (RREF)**
+4. **Gaussian elimination** (triangular) ≠ **Gauss-Jordan** (RREF)
+5. Simpler is better - don't normalize when you don't need to!
 
 ## References
 
