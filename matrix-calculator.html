@@ -261,13 +261,14 @@
     
     .matrix-row {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       justify-content: center;
     }
     
     .matrix-cell {
-      width: 50px;
-      height: 40px;
+      width: 85px;
+      min-width: 85px;
+      height: 45px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -276,6 +277,7 @@
       background: #f0f0f0;
       border-radius: 5px;
       transition: all 0.3s ease;
+      font-size: 16px;
     }
     
     .matrix-separator {
@@ -716,13 +718,9 @@
     
     <div class="result-section" id="result" style="display: none;">
       <div class="row">
-        <div class="col-md-6 result-left">
-          <h3>Visual Process</h3>
-          <div id="resultContent"></div>
-        </div>
-        <div class="col-md-6 result-right">
-          <h3>Calculation Steps</h3>
-          <div class="steps" id="steps"></div>
+        <div class="col-12">
+          <h3>Step-by-Step Process</h3>
+          <div id="processContainer"></div>
         </div>
       </div>
     </div>
@@ -782,12 +780,10 @@
     function calculateVector(operation) {
       stepDelay = 0;
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       try {
         switch(operation) {
@@ -842,7 +838,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U + V'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U + V'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Addition Theory', 
@@ -866,7 +862,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U - V'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U - V'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Subtraction Theory', 
@@ -890,7 +886,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, `${k}U`));
+        document.getElementById('processContainer').appendChild(displayVector(result, `${k}U`));
         
         setTimeout(() => {
           addTheoreticalExplanation('Scalar Multiplication Theory', 
@@ -913,7 +909,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||U|| = ${norm.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -940,7 +936,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">Distance = ${distance.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -965,7 +961,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(components, 'P1→P2'));
+        document.getElementById('processContainer').appendChild(displayVector(components, 'P1→P2'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Components Theory', 
@@ -989,7 +985,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U + W'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U + W'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Addition Theory', 
@@ -1013,7 +1009,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, 'U - W'));
+        document.getElementById('processContainer').appendChild(displayVector(result, 'U - W'));
         
         setTimeout(() => {
           addTheoreticalExplanation('Vector Subtraction Theory', 
@@ -1037,7 +1033,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').appendChild(displayVector(result, `${k}W`));
+        document.getElementById('processContainer').appendChild(displayVector(result, `${k}W`));
         
         setTimeout(() => {
           addTheoreticalExplanation('Scalar Multiplication Theory', 
@@ -1060,7 +1056,7 @@
       );
       
       setTimeout(() => {
-        document.getElementById('resultContent').innerHTML = 
+        document.getElementById('processContainer').innerHTML = 
           `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||W|| = ${norm.toFixed(3)}</div>`;
         
         setTimeout(() => {
@@ -1207,7 +1203,7 @@
     
     function addStep(title, content, delay = 500) {
       setTimeout(() => {
-        const stepsDiv = document.getElementById('steps');
+        const container = document.getElementById('processContainer');
         const step = document.createElement('div');
         step.className = 'step';
         step.style.animationDelay = '0s';
@@ -1226,7 +1222,7 @@
         
         step.appendChild(titleDiv);
         step.appendChild(contentDiv);
-        stepsDiv.appendChild(step);
+        container.appendChild(step);
         
         // Auto-scroll to keep the latest step visible
         setTimeout(() => {
@@ -1239,7 +1235,7 @@
     
     function addTheoreticalExplanation(title, content) {
       setTimeout(() => {
-        const stepsDiv = document.getElementById('steps');
+        const container = document.getElementById('processContainer');
         const explanation = document.createElement('div');
         explanation.className = 'theoretical-explanation';
         
@@ -1253,7 +1249,7 @@
         
         explanation.appendChild(titleDiv);
         explanation.appendChild(contentDiv);
-        stepsDiv.appendChild(explanation);
+        container.appendChild(explanation);
         
         // Auto-scroll to keep the latest explanation visible
         setTimeout(() => {
@@ -1267,12 +1263,10 @@
     function calculate(operation) {
       stepDelay = 0;
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const matrixA = getMatrix('matrixA');
       const matrixB = getMatrix('matrixB');
@@ -1609,6 +1603,16 @@
       return det;
     }
     
+    // Helper function to deep copy a matrix (handles both numbers and Fractions)
+    function deepCopyMatrix(matrix) {
+      return matrix.map(row => row.map(val => {
+        if (val instanceof Fraction) {
+          return new Fraction(val.num, val.den);
+        }
+        return val;
+      }));
+    }
+    
     function calculateInverse(A) {
       const n = A.length;
       
@@ -1630,37 +1634,62 @@
       }
 
       // Display initial augmented matrix
+      const initialCopy = deepCopyMatrix(augmented);
       setTimeout(() => {
-        addVisualElement(displayAugmentedMatrix(augmented, '[A | I] Initial Augmented Matrix', useFractions));
+        addVisualElement(displayAugmentedMatrix(initialCopy, '[A | I] Initial Augmented Matrix', useFractions));
       }, stepDelay);
 
-      addStep('Strategy', 'Keep values as integers when possible. Only introduce fractions when division creates non-integer results.', 1000);
+      addStep('Strategy', 'Intelligently select pivots to avoid fractions: (1) Prefer ±1 pivots (no normalization needed), (2) Use smallest values (easier arithmetic), (3) Interchange rows when beneficial. Fractions introduced only when unavoidable.', 1200);
 
       // Gauss-Jordan elimination step by step
       for (let col = 0; col < n; col++) {
-        // Find best pivot (prefer non-zero values)
+        // Find best pivot to avoid fractions
+        // Priority: 1) ±1 (no normalization needed), 2) smallest non-zero absolute value, 3) any non-zero
         let bestRow = col;
+        let bestValue = augmented[col][col];
+        
+        // First pass: look for ±1 pivots (ideal - no normalization needed)
         for (let row = col; row < n; row++) {
-          if (augmented[row][col] !== 0 && Math.abs(augmented[row][col]) > Math.abs(augmented[bestRow][col])) {
+          const val = augmented[row][col];
+          if (Math.abs(val) === 1) {
             bestRow = row;
+            bestValue = val;
+            break; // Found ideal pivot, use it
+          }
+        }
+        
+        // Second pass: if no ±1 found, prefer smallest non-zero absolute value
+        // (easier to work with small numbers and more likely to divide evenly)
+        if (Math.abs(bestValue) !== 1) {
+          for (let row = col; row < n; row++) {
+            const val = augmented[row][col];
+            if (val !== 0 && (bestValue === 0 || Math.abs(val) < Math.abs(bestValue))) {
+              bestRow = row;
+              bestValue = val;
+            }
           }
         }
 
-        if (augmented[bestRow][col] === 0) {
+        if (bestValue === 0) {
           throw new Error('Matrix is singular and has no inverse');
         }
 
         // Report row swap if needed
         if (bestRow !== col) {
+          const pivotVal = augmented[bestRow][col];
+          const reason = Math.abs(pivotVal) === 1 ? ' to avoid normalization (pivot is ±1)' : ' to use smaller pivot and avoid fractions';
           addStep(`Column ${col + 1}: Row Swap`,
-            `Interchanging Row ${col + 1} with Row ${bestRow + 1} (pivot: ${augmented[bestRow][col]})`, 1200);
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1}${reason}. New pivot: ${pivotVal}`, 1200);
           [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
 
+          const swapCopy = deepCopyMatrix(augmented);
           setTimeout(() => {
-            addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after row interchange`, useFractions));
+            addVisualElement(displayAugmentedMatrix(swapCopy, `[A | I] after row interchange`, useFractions));
           }, stepDelay);
         } else {
-          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${augmented[col][col]}`, 800);
+          const pivotVal = augmented[col][col];
+          const note = Math.abs(pivotVal) === 1 ? ' (no normalization needed!)' : '';
+          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${pivotVal}${note}`, 800);
         }
 
         // Normalize pivot row
@@ -1691,8 +1720,9 @@
             }
           }
 
+          const pivotCopy = deepCopyMatrix(augmented);
           setTimeout(() => {
-            addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after normalizing pivot row`, useFractions));
+            addVisualElement(displayAugmentedMatrix(pivotCopy, `[A | I] after normalizing pivot row`, useFractions));
           }, stepDelay);
         }
 
@@ -1718,8 +1748,9 @@
                 }
               }
 
+              const eliminationCopy = deepCopyMatrix(augmented);
               setTimeout(() => {
-                addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after eliminating row ${row + 1}`, useFractions));
+                addVisualElement(displayAugmentedMatrix(eliminationCopy, `[A | I] after eliminating row ${row + 1}`, useFractions));
               }, stepDelay);
             }
           }
@@ -2002,8 +2033,8 @@
     }
     
     function addVisualElement(element) {
-      const resultContent = document.getElementById('resultContent');
-      resultContent.appendChild(element);
+      const container = document.getElementById('processContainer');
+      container.appendChild(element);
       
       // Auto-scroll to keep the latest visual element visible
       setTimeout(() => {
@@ -2329,12 +2360,10 @@
     
     function runVectorTests() {
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const testResults = [];
       
@@ -2600,7 +2629,7 @@
     }
     
     function displayTestResults(results) {
-      const resultContent = document.getElementById('resultContent');
+      const container = document.getElementById('processContainer');
       
       const resultsDiv = document.createElement('div');
       resultsDiv.className = 'test-results';
@@ -2650,18 +2679,16 @@
       summaryDiv.innerHTML = `Tests Passed: ${passedCount}/${results.length}`;
       resultsDiv.appendChild(summaryDiv);
       
-      resultContent.appendChild(resultsDiv);
+      container.appendChild(resultsDiv);
     }
     
     // Matrix Test Functions
     function runMatrixTests() {
       const resultDiv = document.getElementById('result');
-      const resultContent = document.getElementById('resultContent');
-      const stepsDiv = document.getElementById('steps');
+      const container = document.getElementById('processContainer');
       
       resultDiv.style.display = 'block';
-      resultContent.innerHTML = '';
-      stepsDiv.innerHTML = '';
+      container.innerHTML = '';
       
       const testResults = [];
       
@@ -2982,7 +3009,7 @@
     }
     
     function displayMatrixTestResults(results) {
-      const resultContent = document.getElementById('resultContent');
+      const resultContent = document.getElementById('processContainer');
       
       const resultsDiv = document.createElement('div');
       resultsDiv.className = 'test-results';
