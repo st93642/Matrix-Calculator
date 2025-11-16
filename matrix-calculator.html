@@ -1130,7 +1130,9 @@
         row.forEach(val => {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
-          if (isNaN(val) || !isFinite(val)) {
+          if (val instanceof Fraction) {
+            cell.textContent = val.toString();
+          } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0.00'; // Handle NaN/Infinity
           } else {
             cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
@@ -1166,14 +1168,16 @@
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
           const val = row[j];
-          if (isNaN(val) || !isFinite(val)) {
+          if (val instanceof Fraction) {
+            cell.textContent = val.toString();
+          } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0.00'; // Handle NaN/Infinity
           } else {
             cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
           }
           rowDiv.appendChild(cell);
         }
-        
+
         // Vertical separator
         const separator = document.createElement('div');
         separator.className = 'matrix-cell matrix-separator';
@@ -1181,13 +1185,15 @@
         separator.style.fontWeight = 'bold';
         separator.style.color = '#667eea';
         rowDiv.appendChild(separator);
-        
+
         // Right side: identity matrix I
         for (let j = n; j < 2 * n; j++) {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
           const val = row[j];
-          if (isNaN(val) || !isFinite(val)) {
+          if (val instanceof Fraction) {
+            cell.textContent = val.toString();
+          } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0.00'; // Handle NaN/Infinity
           } else {
             cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
@@ -1513,11 +1519,13 @@
     }
     
     function calculateDeterminant(A) {
-      const det = calculateDeterminantCalc(A);
-      
-      if (A.length === 2) {
+      const n = A.length;
+
+      // For 2×2 matrices, use special formula first for quick reference
+      if (n === 2) {
+        const det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
         addStep('Step 1: 2×2 Determinant Formula', `det([${A[0][0]} ${A[0][1]}; ${A[1][0]} ${A[1][1]}]) = (${A[0][0]} × ${A[1][1]}) - (${A[0][1]} × ${A[1][0]}) = ${det}`, 750);
-        
+
         // Visual 2x2 determinant calculation - synchronized with step
         setTimeout(() => {
           const visualDiv = document.createElement('div');
@@ -1529,10 +1537,10 @@
               (${A[0][0]} × ${A[1][1]}) - (${A[0][1]} × ${A[1][0]}) = ${det}
             </div>
           `;
-          
+
           addVisualElement(visualDiv);
         }, stepDelay);
-        
+
         setTimeout(() => {
           const finalResultDiv = document.createElement('div');
           finalResultDiv.style.fontSize = '24px';
@@ -1540,67 +1548,250 @@
           finalResultDiv.style.color = '#667eea';
           finalResultDiv.textContent = `Determinant = ${det}`;
           addVisualElement(finalResultDiv);
-          
+
           // Add theoretical explanation
           setTimeout(() => {
-            addTheoreticalExplanation('2×2 Determinant Theory', 
+            addTheoreticalExplanation('2×2 Determinant Theory',
               'For a 2×2 matrix [a b; c d], the determinant is ad - bc. This formula comes from the area of the parallelogram formed by the column vectors. A non-zero determinant indicates the matrix is invertible. If determinant is zero, the matrix is singular and has no inverse.');
           }, 750);
         }, stepDelay + 1000);
         return det;
       }
-      
-      addStep('Step 1: Cofactor Expansion Setup', `Using cofactor expansion along first row of ${A.length}×${A.length} matrix`, 750);
-      
-      // Show original matrix
-      addStep('Original Matrix', displayMatrix(A, 'Matrix A'), 1500);
-      
-      for (let j = 0; j < A.length; j++) {
-        const minor = getMinor(A, 0, j);
-        const sign = Math.pow(-1, j);
-        const minorDet = calculateDeterminantCalc(minor);
-        const cofactor = sign * A[0][j] * minorDet;
-        
-        // Visual cofactor calculation - synchronized with accumulation step
-        setTimeout(() => {
-          const visualDiv = document.createElement('div');
-          visualDiv.className = 'visual-calculation';
-          visualDiv.innerHTML = `
-            <div class="formula-display">
-              Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
-            </div>
-            <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
-            <div class="formula-display">
-              ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
-            </div>
-          `;
-          
-          addVisualElement(visualDiv);
-        }, stepDelay);
-        
-        addStep(
-          `Accumulate Determinant`,
-          `det += ${cofactor.toFixed(2)} → Current total: ${det.toFixed(2)}`,
-          1200
-        );
+
+      // For larger matrices, use Gauss-Jordan method by default
+      addStep('Step 1: Gauss-Jordan Elimination Setup',
+        `Using Gauss-Jordan method to find determinant of ${n}×${n} matrix via row reduction to triangular form`, 750);
+
+      // Create a copy of the matrix to work with
+      const working = deepCopyMatrix(A);
+
+      // Display original matrix
+      const initialCopy = deepCopyMatrix(working);
+      addStep('Original Matrix', displayMatrix(initialCopy, 'Matrix A'), 1000);
+
+      let det = 1;
+      let rowSwaps = 0;
+      let useFractions = false;
+
+      // Convert to upper triangular form using Gauss-Jordan
+      for (let col = 0; col < n; col++) {
+        // Find best pivot
+        let bestRow = col;
+        let bestValue = working[col][col];
+
+        // First pass: look for ±1 pivots
+        for (let row = col; row < n; row++) {
+          const val = working[row][col];
+          if (Math.abs(val) === 1) {
+            bestRow = row;
+            bestValue = val;
+            break;
+          }
+        }
+
+        // Second pass: if no ±1, prefer smallest non-zero absolute value
+        if (Math.abs(bestValue) !== 1) {
+          for (let row = col; row < n; row++) {
+            const val = working[row][col];
+            if (val !== 0 && (bestValue === 0 || Math.abs(val) < Math.abs(bestValue))) {
+              bestRow = row;
+              bestValue = val;
+            }
+          }
+        }
+
+        if (bestValue === 0) {
+          addStep('Singular Matrix', 'Found zero column - matrix is singular, determinant = 0', 1000);
+          return 0;
+        }
+
+        // Swap rows if needed
+        if (bestRow !== col) {
+          [working[col], working[bestRow]] = [working[bestRow], working[col]];
+          rowSwaps++;
+          det *= -1; // Row swap negates determinant
+
+          addStep(`Column ${col + 1}: Row Swap`,
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1} (determinant multiplied by -1)`, 1000);
+
+          const swapCopy = deepCopyMatrix(working);
+          setTimeout(() => {
+            addVisualElement(displayMatrix(swapCopy, `Matrix after row ${col + 1} ↔ ${bestRow + 1} swap`));
+          }, stepDelay);
+        }
+
+        // Normalize pivot row
+        const pivotValue = working[col][col];
+        if (pivotValue !== 1 && pivotValue !== -1) {
+          det /= pivotValue; // Divide determinant by the pivot value
+
+          // Determine if we need fractions
+          let needsFractions = false;
+          for (let j = col + 1; j < n; j++) {
+            if (working[col][j] % pivotValue !== 0) {
+              needsFractions = true;
+              break;
+            }
+          }
+
+          if (needsFractions && !useFractions) {
+            addStep('Introducing Fractions', 'Division creates non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
+            useFractions = true;
+            convertToFractionMatrix(working);
+            det = Fraction.from(det);
+          }
+
+          addStep(`Column ${col + 1}: Normalize Pivot`,
+            `Divide Row ${col + 1} by ${pivotValue} (determinant divided by ${pivotValue})`, 1000);
+
+          if (useFractions) {
+            const pivotFraction = Fraction.from(pivotValue);
+            for (let j = 0; j < n; j++) {
+              working[col][j] = working[col][j].divide(pivotFraction);
+            }
+          } else {
+            for (let j = 0; j < n; j++) {
+              working[col][j] = working[col][j] / pivotValue;
+            }
+          }
+
+          const pivotCopy = deepCopyMatrix(working);
+          setTimeout(() => {
+            addVisualElement(displayMatrix(pivotCopy, `Matrix after normalizing Row ${col + 1}`));
+          }, stepDelay);
+        }
+
+        // Eliminate all other entries in this column
+         for (let row = 0; row < n; row++) {
+           if (row !== col) {
+             const factor = working[row][col];
+             const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
+             if (isNonZero) {
+               addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
+                 `Row ${row + 1} = Row ${row + 1} - (${useFractions ? factor.toString() : factor}) × Row ${col + 1}`, 1000);
+
+               if (useFractions) {
+                 for (let j = 0; j < n; j++) {
+                   working[row][j] = working[row][j].subtract(factor.multiply(working[col][j]));
+                 }
+               } else {
+                 for (let j = 0; j < n; j++) {
+                   working[row][j] = working[row][j] - factor * working[col][j];
+                 }
+               }
+
+               const eliminationCopy = deepCopyMatrix(working);
+               setTimeout(() => {
+                 addVisualElement(displayMatrix(eliminationCopy, `Matrix after eliminating Row ${row + 1}, Column ${col + 1}`));
+               }, stepDelay);
+             }
+           }
+         }
       }
-      
+
+      // Multiply diagonal elements to get determinant
+      addStep('Calculate Determinant', 'Computing product of diagonal elements (final determinant)', 1500);
+
+      let diagProduct = useFractions ? Fraction.from(1) : 1;
+      let diagProductStr = '';
+
+      for (let i = 0; i < n; i++) {
+        const val = working[i][i];
+        if (useFractions) {
+          diagProduct = diagProduct.multiply(val);
+          diagProductStr += (i > 0 ? ' × ' : '') + val.toString();
+        } else {
+          diagProduct = diagProduct * val;
+          diagProductStr += (i > 0 ? ' × ' : '') + val;
+        }
+      }
+
+      if (useFractions) {
+        det = det.multiply(diagProduct);
+        addStep('Final Calculation', `det = ${det.toString()}`, 1000);
+      } else {
+        det = det * diagProduct;
+        addStep('Final Calculation', `Diagonal product: ${diagProductStr} = ${diagProduct}`, 1000);
+      }
+
+      const finalValue = useFractions ? det.toFloat() : det;
+
       setTimeout(() => {
         const finalResultDiv = document.createElement('div');
         finalResultDiv.style.fontSize = '24px';
         finalResultDiv.style.fontWeight = '600';
         finalResultDiv.style.color = '#667eea';
-        finalResultDiv.textContent = `Determinant = ${det.toFixed(2)}`;
+        finalResultDiv.textContent = `Determinant = ${finalValue.toFixed(6)}`;
         addVisualElement(finalResultDiv);
-        
+
         // Add theoretical explanation
         setTimeout(() => {
-          addTheoreticalExplanation('Determinant Theory (Cofactor Expansion)', 
-            'The determinant measures the "volume scaling factor" of a linear transformation. For square matrices, it\'s calculated using cofactor expansion along any row or column. Each cofactor is (-1)ⁱ⁺ʲ times the determinant of the minor matrix (original matrix with row i and column j removed). If determinant = 0, the matrix is singular (not invertible). If |det| = 1, the transformation preserves volume. Determinant is used in solving systems of equations, finding matrix inverses, and analyzing linear transformations.');
+          addTheoreticalExplanation('Determinant Theory (Gauss-Jordan Method)',
+            'The Gauss-Jordan method calculates determinant by reducing the matrix to row echelon form. Key properties: (1) Row swaps negate the determinant, (2) Dividing a row by k multiplies determinant by 1/k, (3) Row addition does not change determinant, (4) For triangular matrix, det = product of diagonal elements. This method is efficient for large matrices compared to cofactor expansion.');
         }, 750);
+
+        // Cross-check with cofactor method
+        setTimeout(() => {
+          addStep('Cross-Check: Cofactor Method', 'Verifying result using cofactor expansion method', 1500);
+
+          try {
+            const cofactorDet = calculateDeterminantCofactor(A);
+            const matches = Math.abs(finalValue - cofactorDet) < 1e-6;
+
+            if (matches) {
+              addStep('Cross-Check Result',
+                `✓ Verified: Gauss-Jordan (${finalValue.toFixed(6)}) matches Cofactor method (${cofactorDet.toFixed(6)})`, 1200);
+            } else {
+              addStep('Cross-Check Result',
+                `⚠ Mismatch: Gauss-Jordan (${finalValue.toFixed(6)}) vs Cofactor (${cofactorDet.toFixed(6)})`, 1200);
+            }
+
+            // Show cofactor expansion steps
+            setTimeout(() => {
+              addStep('Cofactor Expansion Details', `Using cofactor expansion along first row`, 1000);
+
+              for (let j = 0; j < A.length; j++) {
+                const minor = getMinor(A, 0, j);
+                const sign = Math.pow(-1, j);
+                const minorDet = calculateDeterminantCofactor(minor);
+                const cofactor = sign * A[0][j] * minorDet;
+
+                setTimeout(() => {
+                  const visualDiv = document.createElement('div');
+                  visualDiv.className = 'visual-calculation';
+                  visualDiv.innerHTML = `
+                    <div class="formula-display">
+                      Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
+                    </div>
+                    <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
+                    <div class="formula-display">
+                      ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
+                    </div>
+                  `;
+
+                  addVisualElement(visualDiv);
+                }, stepDelay);
+
+                addStep(
+                  `Cofactor Accumulation`,
+                  `det += ${cofactor.toFixed(2)}`,
+                  1200
+                );
+              }
+
+              setTimeout(() => {
+                addTheoreticalExplanation('Cofactor Expansion Theory',
+                  'Cofactor expansion calculates determinant by expanding along a row or column. Each term is (-1)ⁱ⁺ʲ × element × determinant of minor. While elegant and easy to understand, cofactor expansion becomes computationally expensive for larger matrices (factorial complexity). The Gauss-Jordan method is more efficient for practical calculations.');
+              }, stepDelay + 500);
+            }, stepDelay + 500);
+          } catch (e) {
+            addStep('Cross-Check Result',
+              '✗ Could not verify with cofactor method (likely numerical precision issues)', 1200);
+          }
+        }, stepDelay + 500);
       }, stepDelay + 1000);
-      
-      return det;
+
+      return finalValue;
     }
     
     // Helper function to deep copy a matrix (handles both numbers and Fractions)
