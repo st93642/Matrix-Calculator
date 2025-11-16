@@ -1558,9 +1558,9 @@
         return det;
       }
 
-      // For larger matrices, use Gauss-Jordan method by default
-      addStep('Step 1: Gauss-Jordan Elimination Setup',
-        `Using Gauss-Jordan method to find determinant of ${n}×${n} matrix via row reduction to triangular form`, 750);
+      // For larger matrices, use Gaussian elimination method
+      addStep('Step 1: Gaussian Elimination Setup',
+        `Using Gaussian elimination to find determinant of ${n}×${n} matrix via row reduction to upper triangular form`, 750);
 
       // Create a copy of the matrix to work with
       const working = deepCopyMatrix(A);
@@ -1569,11 +1569,10 @@
       const initialCopy = deepCopyMatrix(working);
       addStep('Original Matrix', displayMatrix(initialCopy, 'Matrix A'), 1000);
 
-      let det = 1;
       let rowSwaps = 0;
       let useFractions = false;
 
-      // Convert to upper triangular form using Gauss-Jordan
+      // Convert to upper triangular form using Gaussian elimination
       for (let col = 0; col < n; col++) {
         // Find best pivot
         let bestRow = col;
@@ -1609,10 +1608,9 @@
         if (bestRow !== col) {
           [working[col], working[bestRow]] = [working[bestRow], working[col]];
           rowSwaps++;
-          det *= -1; // Row swap negates determinant
 
           addStep(`Column ${col + 1}: Row Swap`,
-            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1} (determinant multiplied by -1)`, 1000);
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1} (determinant sign will flip)`, 1000);
 
           const swapCopy = deepCopyMatrix(working);
           setTimeout(() => {
@@ -1620,98 +1618,104 @@
           }, stepDelay);
         }
 
-        // Normalize pivot row
+        // Check if fractions will be needed for elimination
         const pivotValue = working[col][col];
-        if (pivotValue !== 1 && pivotValue !== -1) {
-          det /= pivotValue; // Divide determinant by the pivot value
 
-          // Determine if we need fractions
+        if (!useFractions) {
           let needsFractions = false;
-          for (let j = col + 1; j < n; j++) {
-            if (working[col][j] % pivotValue !== 0) {
+          for (let row = col + 1; row < n; row++) {
+            const factor = working[row][col];
+            if (factor !== 0 && factor % pivotValue !== 0) {
               needsFractions = true;
               break;
             }
           }
 
-          if (needsFractions && !useFractions) {
-            addStep('Introducing Fractions', 'Division creates non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
+          if (needsFractions) {
+            addStep('Introducing Fractions', 'Elimination will create non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
             useFractions = true;
             convertToFractionMatrix(working);
-            det = Fraction.from(det);
           }
-
-          addStep(`Column ${col + 1}: Normalize Pivot`,
-            `Divide Row ${col + 1} by ${pivotValue} (determinant divided by ${pivotValue})`, 1000);
-
-          if (useFractions) {
-            const pivotFraction = Fraction.from(pivotValue);
-            for (let j = 0; j < n; j++) {
-              working[col][j] = working[col][j].divide(pivotFraction);
-            }
-          } else {
-            for (let j = 0; j < n; j++) {
-              working[col][j] = working[col][j] / pivotValue;
-            }
-          }
-
-          const pivotCopy = deepCopyMatrix(working);
-          setTimeout(() => {
-            addVisualElement(displayMatrix(pivotCopy, `Matrix after normalizing Row ${col + 1}`));
-          }, stepDelay);
         }
 
-        // Eliminate all other entries in this column
-         for (let row = 0; row < n; row++) {
-           if (row !== col) {
-             const factor = working[row][col];
-             const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
-             if (isNonZero) {
-               addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
-                 `Row ${row + 1} = Row ${row + 1} - (${useFractions ? factor.toString() : factor}) × Row ${col + 1}`, 1000);
+        // Eliminate entries below the diagonal (for upper triangular form)
+        for (let row = col + 1; row < n; row++) {
+          const factor = working[row][col];
+          const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
+          if (isNonZero) {
+            let eliminationFactor;
+            let eliminationLabel;
 
-               if (useFractions) {
-                 for (let j = 0; j < n; j++) {
-                   working[row][j] = working[row][j].subtract(factor.multiply(working[col][j]));
-                 }
-               } else {
-                 for (let j = 0; j < n; j++) {
-                   working[row][j] = working[row][j] - factor * working[col][j];
-                 }
-               }
+            if (useFractions) {
+              const pivotFraction = Fraction.from(working[col][col]);
+              eliminationFactor = factor.divide(pivotFraction);
+              eliminationLabel = eliminationFactor.toString();
+            } else {
+              const pivotValueElim = working[col][col];
+              eliminationFactor = factor / pivotValueElim;
+              eliminationLabel = eliminationFactor;
+            }
 
-               const eliminationCopy = deepCopyMatrix(working);
-               setTimeout(() => {
-                 addVisualElement(displayMatrix(eliminationCopy, `Matrix after eliminating Row ${row + 1}, Column ${col + 1}`));
-               }, stepDelay);
-             }
-           }
-         }
+            addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
+              `Row ${row + 1} = Row ${row + 1} - (${eliminationLabel}) × Row ${col + 1}`, 1000);
+
+            if (useFractions) {
+              for (let j = col; j < n; j++) {
+                working[row][j] = working[row][j].subtract(eliminationFactor.multiply(working[col][j]));
+              }
+              working[row][col] = Fraction.from(0);
+            } else {
+              for (let j = col; j < n; j++) {
+                working[row][j] = working[row][j] - eliminationFactor * working[col][j];
+              }
+              working[row][col] = 0;
+            }
+
+            const eliminationCopy = deepCopyMatrix(working);
+            setTimeout(() => {
+              addVisualElement(displayMatrix(eliminationCopy, `Matrix after eliminating Row ${row + 1}, Column ${col + 1}`));
+            }, stepDelay);
+          }
+        }
       }
 
-      // Multiply diagonal elements to get determinant
-      addStep('Calculate Determinant', 'Computing product of diagonal elements (final determinant)', 1500);
+      // Upper triangular form achieved - calculate determinant
+      addStep('Calculate Determinant', 'Upper triangular form achieved. Determinant = (product of diagonal) × (sign from row swaps)', 1500);
 
-      let diagProduct = useFractions ? Fraction.from(1) : 1;
+      const displayCopy = deepCopyMatrix(working);
+      setTimeout(() => {
+        addVisualElement(displayMatrix(displayCopy, 'Upper Triangular Matrix'));
+      }, stepDelay);
+
+      // Multiply diagonal elements
+      let det = useFractions ? Fraction.from(1) : 1;
       let diagProductStr = '';
 
       for (let i = 0; i < n; i++) {
         const val = working[i][i];
         if (useFractions) {
-          diagProduct = diagProduct.multiply(val);
+          det = det.multiply(val);
           diagProductStr += (i > 0 ? ' × ' : '') + val.toString();
         } else {
-          diagProduct = diagProduct * val;
+          det = det * val;
           diagProductStr += (i > 0 ? ' × ' : '') + val;
         }
       }
 
+      // Apply row swap sign
+      const signFactor = Math.pow(-1, rowSwaps);
       if (useFractions) {
-        det = det.multiply(diagProduct);
-        addStep('Final Calculation', `det = ${det.toString()}`, 1000);
+        det = det.multiply(Fraction.from(signFactor));
       } else {
-        det = det * diagProduct;
-        addStep('Final Calculation', `Diagonal product: ${diagProductStr} = ${diagProduct}`, 1000);
+        det = det * signFactor;
+      }
+
+      if (useFractions) {
+        addStep('Final Calculation', 
+          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det.toString()}`, 1000);
+      } else {
+        addStep('Final Calculation', 
+          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det}`, 1000);
       }
 
       const finalValue = useFractions ? det.toFloat() : det;
@@ -1726,8 +1730,8 @@
 
         // Add theoretical explanation
         setTimeout(() => {
-          addTheoreticalExplanation('Determinant Theory (Gauss-Jordan Method)',
-            'The Gauss-Jordan method calculates determinant by reducing the matrix to row echelon form. Key properties: (1) Row swaps negate the determinant, (2) Dividing a row by k multiplies determinant by 1/k, (3) Row addition does not change determinant, (4) For triangular matrix, det = product of diagonal elements. This method is efficient for large matrices compared to cofactor expansion.');
+          addTheoreticalExplanation('Determinant Theory (Gaussian Elimination)',
+            'Gaussian elimination calculates determinant by reducing the matrix to upper triangular form using row swaps and row addition operations. Key properties: (1) Row swaps negate the determinant, (2) Adding a multiple of one row to another leaves the determinant unchanged, (3) Once in triangular form, the determinant equals the product of the diagonal elements times (-1) raised to the number of row swaps. This method is O(n³) and much more efficient than cofactor expansion which is O(n!).');
         }, 750);
 
         // Cross-check with cofactor method
@@ -1740,10 +1744,10 @@
 
             if (matches) {
               addStep('Cross-Check Result',
-                `✓ Verified: Gauss-Jordan (${finalValue.toFixed(6)}) matches Cofactor method (${cofactorDet.toFixed(6)})`, 1200);
+                `✓ Verified: Gaussian elimination (${finalValue.toFixed(6)}) matches cofactor method (${cofactorDet.toFixed(6)})`, 1200);
             } else {
               addStep('Cross-Check Result',
-                `⚠ Mismatch: Gauss-Jordan (${finalValue.toFixed(6)}) vs Cofactor (${cofactorDet.toFixed(6)})`, 1200);
+                `⚠ Mismatch: Gaussian elimination (${finalValue.toFixed(6)}) vs Cofactor (${cofactorDet.toFixed(6)})`, 1200);
             }
 
             // Show cofactor expansion steps
@@ -1780,8 +1784,12 @@
               }
 
               setTimeout(() => {
+                addStep('Cofactor Final Result', `Cofactor determinant = ${cofactorDet.toFixed(6)}`, 800);
+              }, stepDelay + 200);
+
+              setTimeout(() => {
                 addTheoreticalExplanation('Cofactor Expansion Theory',
-                  'Cofactor expansion calculates determinant by expanding along a row or column. Each term is (-1)ⁱ⁺ʲ × element × determinant of minor. While elegant and easy to understand, cofactor expansion becomes computationally expensive for larger matrices (factorial complexity). The Gauss-Jordan method is more efficient for practical calculations.');
+                  'Cofactor expansion calculates determinant by expanding along a row or column. Each term is (-1)ⁱ⁺ʲ × element × determinant of minor. While elegant and easy to understand, cofactor expansion becomes computationally expensive for larger matrices (factorial complexity). Gaussian elimination is more efficient for practical calculations.');
               }, stepDelay + 500);
             }, stepDelay + 500);
           } catch (e) {
