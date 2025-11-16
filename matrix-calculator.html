@@ -1645,26 +1645,47 @@
         addVisualElement(displayAugmentedMatrix(initialCopy, '[A | I] Initial Augmented Matrix', useFractions));
       }, stepDelay);
 
-      addStep('Strategy', 'Keep values as integers when possible. Only introduce fractions when division creates non-integer results.', 1000);
+      addStep('Strategy', 'Intelligently select pivots to avoid fractions: (1) Prefer ±1 pivots (no normalization needed), (2) Use smallest values (easier arithmetic), (3) Interchange rows when beneficial. Fractions introduced only when unavoidable.', 1200);
 
       // Gauss-Jordan elimination step by step
       for (let col = 0; col < n; col++) {
-        // Find best pivot (prefer non-zero values)
+        // Find best pivot to avoid fractions
+        // Priority: 1) ±1 (no normalization needed), 2) smallest non-zero absolute value, 3) any non-zero
         let bestRow = col;
+        let bestValue = augmented[col][col];
+        
+        // First pass: look for ±1 pivots (ideal - no normalization needed)
         for (let row = col; row < n; row++) {
-          if (augmented[row][col] !== 0 && Math.abs(augmented[row][col]) > Math.abs(augmented[bestRow][col])) {
+          const val = augmented[row][col];
+          if (Math.abs(val) === 1) {
             bestRow = row;
+            bestValue = val;
+            break; // Found ideal pivot, use it
+          }
+        }
+        
+        // Second pass: if no ±1 found, prefer smallest non-zero absolute value
+        // (easier to work with small numbers and more likely to divide evenly)
+        if (Math.abs(bestValue) !== 1) {
+          for (let row = col; row < n; row++) {
+            const val = augmented[row][col];
+            if (val !== 0 && (bestValue === 0 || Math.abs(val) < Math.abs(bestValue))) {
+              bestRow = row;
+              bestValue = val;
+            }
           }
         }
 
-        if (augmented[bestRow][col] === 0) {
+        if (bestValue === 0) {
           throw new Error('Matrix is singular and has no inverse');
         }
 
         // Report row swap if needed
         if (bestRow !== col) {
+          const pivotVal = augmented[bestRow][col];
+          const reason = Math.abs(pivotVal) === 1 ? ' to avoid normalization (pivot is ±1)' : ' to use smaller pivot and avoid fractions';
           addStep(`Column ${col + 1}: Row Swap`,
-            `Interchanging Row ${col + 1} with Row ${bestRow + 1} (pivot: ${augmented[bestRow][col]})`, 1200);
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1}${reason}. New pivot: ${pivotVal}`, 1200);
           [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
 
           const swapCopy = deepCopyMatrix(augmented);
@@ -1672,7 +1693,9 @@
             addVisualElement(displayAugmentedMatrix(swapCopy, `[A | I] after row interchange`, useFractions));
           }, stepDelay);
         } else {
-          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${augmented[col][col]}`, 800);
+          const pivotVal = augmented[col][col];
+          const note = Math.abs(pivotVal) === 1 ? ' (no normalization needed!)' : '';
+          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${pivotVal}${note}`, 800);
         }
 
         // Normalize pivot row

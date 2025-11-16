@@ -536,3 +536,4 @@ package-lock.json
 debug-inverse.js
 test-deep-copy.js
 test-inverse-fix.html
+test-pivot-selection.js
