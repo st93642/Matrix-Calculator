@@ -529,3 +529,10 @@ $RECYCLE.BIN/
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+# Testing/debugging files (created for local testing only)
+package.json
+package-lock.json
+debug-inverse.js
+test-deep-copy.js
+test-inverse-fix.html

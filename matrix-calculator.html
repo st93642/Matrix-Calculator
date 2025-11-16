@@ -1609,6 +1609,16 @@
       return det;
     }
     
+    // Helper function to deep copy a matrix (handles both numbers and Fractions)
+    function deepCopyMatrix(matrix) {
+      return matrix.map(row => row.map(val => {
+        if (val instanceof Fraction) {
+          return new Fraction(val.num, val.den);
+        }
+        return val;
+      }));
+    }
+    
     function calculateInverse(A) {
       const n = A.length;
       
@@ -1630,8 +1640,9 @@
       }
 
       // Display initial augmented matrix
+      const initialCopy = deepCopyMatrix(augmented);
       setTimeout(() => {
-        addVisualElement(displayAugmentedMatrix(augmented, '[A | I] Initial Augmented Matrix', useFractions));
+        addVisualElement(displayAugmentedMatrix(initialCopy, '[A | I] Initial Augmented Matrix', useFractions));
       }, stepDelay);
 
       addStep('Strategy', 'Keep values as integers when possible. Only introduce fractions when division creates non-integer results.', 1000);
@@ -1656,8 +1667,9 @@
             `Interchanging Row ${col + 1} with Row ${bestRow + 1} (pivot: ${augmented[bestRow][col]})`, 1200);
           [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
 
+          const swapCopy = deepCopyMatrix(augmented);
           setTimeout(() => {
-            addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after row interchange`, useFractions));
+            addVisualElement(displayAugmentedMatrix(swapCopy, `[A | I] after row interchange`, useFractions));
           }, stepDelay);
         } else {
           addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${augmented[col][col]}`, 800);
@@ -1691,8 +1703,9 @@
             }
           }
 
+          const pivotCopy = deepCopyMatrix(augmented);
           setTimeout(() => {
-            addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after normalizing pivot row`, useFractions));
+            addVisualElement(displayAugmentedMatrix(pivotCopy, `[A | I] after normalizing pivot row`, useFractions));
           }, stepDelay);
         }
 
@@ -1718,8 +1731,9 @@
                 }
               }
 
+              const eliminationCopy = deepCopyMatrix(augmented);
               setTimeout(() => {
-                addVisualElement(displayAugmentedMatrix(augmented, `[A | I] after eliminating row ${row + 1}`, useFractions));
+                addVisualElement(displayAugmentedMatrix(eliminationCopy, `[A | I] after eliminating row ${row + 1}`, useFractions));
               }, stepDelay);
             }
           }
