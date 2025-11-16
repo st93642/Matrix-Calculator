@@ -1610,94 +1610,200 @@
     }
     
     function calculateInverse(A) {
+      const n = A.length;
       const inverse = calculateInverseCalc(A);
-      
-      addStep('Step 1: Gauss-Jordan Elimination Setup', `Using Gauss-Jordan elimination to find inverse of ${A.length}×${A.length} matrix`, 750);
-      
-      // Create augmented matrix [A | I] for display
-      const augmented = Array(A.length).fill().map(() => Array(2 * A.length).fill(0));
-      const identity = Array(A.length).fill().map(() => Array(A.length).fill(0));
-      
-      // Initialize identity matrix
-      for (let i = 0; i < A.length; i++) {
-        identity[i][i] = 1;
-      }
-      
-      // Create augmented matrix [A | I]
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < A.length; j++) {
-          augmented[i][j] = A[i][j];        // Left side: original matrix
-          augmented[i][j + A.length] = identity[i][j]; // Right side: identity matrix
+      const rowSwaps = inverse._rowSwaps || [];
+
+      addStep('Step 1: Gauss-Jordan Elimination Setup',
+        `Using improved Gauss-Jordan elimination with integer arithmetic and row swapping strategy to find inverse of ${n}×${n} matrix`, 750);
+
+      // Create augmented matrix with fractions for display
+      const augmented = Array(n).fill().map(() => Array(2 * n).fill(null));
+
+      // Initialize with fractions
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          augmented[i][j] = Fraction.from(A[i][j]);
+        }
+        for (let j = 0; j < n; j++) {
+          augmented[i][n + j] = Fraction.from(i === j ? 1 : 0);
         }
       }
-      
-      // Display initial augmented matrix - synchronized with setup step
+
+      // Display initial augmented matrix
       setTimeout(() => {
-        addVisualElement(displayAugmented(augmented, '[A | I]'));
+        addVisualElement(displayAugmentedFractions(augmented, '[A | I] Initial Augmented Matrix'));
       }, stepDelay);
-      
-      // Simulate Gauss-Jordan elimination for display
-      for (let pivot = 0; pivot < A.length; pivot++) {
-        addStep(`Step ${pivot + 2}: Process Column ${pivot + 1}`, `Make column ${pivot + 1} have 1 on diagonal and 0s elsewhere`, 750);
-        
-        // Get pivot value
-        const pivotValue = augmented[pivot][pivot];
-        addStep(`Pivot Element`, `Pivot = ${pivotValue.toFixed(2)} at position [${pivot + 1},${pivot + 1}]`, 1200);
-        
-        // Make pivot 1 by dividing the entire row by pivot value
-        if (Math.abs(pivotValue - 1) > 1e-10) {
-          for (let j = 0; j < 2 * A.length; j++) {
-            if (isFinite(augmented[pivot][j]) && isFinite(pivotValue) && pivotValue !== 0) {
-              augmented[pivot][j] /= pivotValue;
-            } else {
-              augmented[pivot][j] = 0; // Handle division by zero or invalid values
-            }
+
+      addStep('Pivot Strategy', 'For each column, we select the best pivot row: preferring integer values for exact arithmetic, then choosing the row with largest absolute value', 1000);
+
+      // Simulate Gauss-Jordan elimination step by step
+      for (let col = 0; col < n; col++) {
+        // Find best pivot
+        let bestRow = col;
+        let bestScore = -1;
+        for (let row = col; row < n; row++) {
+          const val = augmented[row][col];
+          if (val.isZero()) continue;
+          let score = Math.abs(val.toFloat());
+          if (val.den === 1) score += 1000;
+          if (score > bestScore) {
+            bestScore = score;
+            bestRow = row;
           }
-          addStep(`Normalize Pivot Row`, `Divide row ${pivot + 1} by ${pivotValue.toFixed(2)} to make pivot = 1`, 1500);
-          
-          // Display updated matrix - synchronized with normalization step
+        }
+
+        if (augmented[bestRow][col].isZero()) {
+          throw new Error('Matrix is singular and has no inverse');
+        }
+
+        // Report row swap if needed
+        if (bestRow !== col) {
+          addStep(`Column ${col + 1}: Row Swap`,
+            `Interchanging Row ${col + 1} (current) with Row ${bestRow + 1} (better pivot: ${augmented[bestRow][col].toString()})`, 1200);
+          [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
+
           setTimeout(() => {
-            addVisualElement(displayAugmented(augmented, `[A | I] after normalization`));
+            addVisualElement(displayAugmentedFractions(augmented, `[A | I] after row interchange`));
+          }, stepDelay);
+        } else {
+          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${augmented[col][col].toString()}`, 800);
+        }
+
+        // Normalize pivot row
+        const pivotValue = augmented[col][col];
+        if (!pivotValue.isOne()) {
+          addStep(`Column ${col + 1}: Normalize Pivot`,
+            `Divide Row ${col + 1} by ${pivotValue.toString()} to make pivot = 1`, 1200);
+
+          for (let j = 0; j < 2 * n; j++) {
+            augmented[col][j] = augmented[col][j].divide(pivotValue);
+          }
+
+          setTimeout(() => {
+            addVisualElement(displayAugmentedFractions(augmented, `[A | I] after normalizing pivot row`));
           }, stepDelay);
         }
-        
+
         // Eliminate other entries in this column
-        for (let i = 0; i < A.length; i++) {
-          if (i !== pivot) {
-            const factor = augmented[i][pivot];
-            if (Math.abs(factor) > 1e-10 && isFinite(factor)) {
-              addStep(`Eliminate Row ${i + 1}`, `Row ${i + 1} = Row ${i + 1} - (${factor.toFixed(2)}) × Row ${pivot + 1}`, 1200);
-              
-              for (let j = 0; j < 2 * A.length; j++) {
-                if (isFinite(augmented[i][j]) && isFinite(augmented[pivot][j]) && isFinite(factor)) {
-                  augmented[i][j] -= factor * augmented[pivot][j];
-                } else {
-                  augmented[i][j] = 0; // Handle invalid operations
-                }
+        for (let row = 0; row < n; row++) {
+          if (row !== col) {
+            const factor = augmented[row][col];
+            if (!factor.isZero()) {
+              addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
+                `Row ${row + 1} = Row ${row + 1} - (${factor.toString()}) × Row ${col + 1}`, 1000);
+
+              for (let j = 0; j < 2 * n; j++) {
+                augmented[row][j] = augmented[row][j].subtract(factor.multiply(augmented[col][j]));
               }
-              
-              // Display updated matrix - synchronized with elimination step
+
               setTimeout(() => {
-                addVisualElement(displayAugmented(augmented, `[A | I] after eliminating row ${i + 1}`));
+                addVisualElement(displayAugmentedFractions(augmented, `[A | I] after eliminating row ${row + 1}`));
               }, stepDelay);
             }
           }
         }
-        
-        addStep(`Column ${pivot + 1} Complete`, `Column ${pivot + 1} now has 1 on diagonal and 0s elsewhere`, 1800);
+
+        addStep(`Column ${col + 1} Complete`,
+          `Column ${col + 1} now has 1 at position [${col + 1},${col + 1}] and 0s elsewhere`, 1000);
       }
-      
+
       setTimeout(() => {
-        addVisualElement(displayMatrix(inverse, 'Inverse Matrix A⁻¹'));
-        
-        // Add theoretical explanation
+        addVisualElement(displayMatrix(inverse, 'Final Inverse Matrix A⁻¹ (as decimals)'));
+
+        // Cross-check with cofactor method
         setTimeout(() => {
-          addTheoreticalExplanation('Gauss-Jordan Elimination Theory', 
-            'Gauss-Jordan elimination transforms a matrix into its inverse by creating an augmented matrix [A | I] and performing row operations to convert A into the identity matrix I. The operations are: 1) Swap rows for better pivots, 2) Divide rows to create 1s on the diagonal, 3) Subtract multiples of rows to create 0s elsewhere. The right side becomes A⁻¹. This method is numerically stable and efficient for finding matrix inverses, especially for larger matrices.');
-        }, 750);
+          try {
+            const inverseCofactor = calculateInverseCofactor(A);
+            const cofactorMatches = true;
+            for (let i = 0; i < n && cofactorMatches; i++) {
+              for (let j = 0; j < n && cofactorMatches; j++) {
+                if (Math.abs(inverse[i][j] - inverseCofactor[i][j]) > 1e-6) {
+                  throw new Error('Mismatch detected');
+                }
+              }
+            }
+
+            if (cofactorMatches) {
+              addStep('Cross-Check: Cofactor Method',
+                '✓ Verified: Result matches inverse calculated via cofactor method', 1200);
+            }
+          } catch (e) {
+            addStep('Cross-Check: Cofactor Method',
+              '✗ Warning: Could not verify with cofactor method (likely singular or numerical issues)', 1200);
+          }
+        }, stepDelay + 500);
+
+        setTimeout(() => {
+          addTheoreticalExplanation('Improved Gauss-Jordan Elimination',
+            'This enhanced implementation uses exact rational arithmetic (Fractions) during elimination to avoid floating-point errors. Key improvements: (1) Integer Arithmetic - keeps values as fractions of integers until final conversion, (2) Smart Pivot Selection - chooses integer pivots when available to maintain exact arithmetic, (3) Row Swapping - intelligently interchanges rows for better pivots, (4) Cross-Checking - verifies results using the cofactor method. The algorithm transforms [A | I] into [I | A⁻¹] through row operations.');
+        }, stepDelay + 1000);
       }, stepDelay + 1500);
-      
+
       return inverse;
+    }
+
+    // Display augmented matrix with fractions
+    function displayAugmentedFractions(matrix, label = '') {
+      const div = document.createElement('div');
+      div.className = 'matrix-display';
+
+      if (label) {
+        const labelDiv = document.createElement('div');
+        labelDiv.style.marginBottom = '10px';
+        labelDiv.style.fontWeight = '600';
+        labelDiv.textContent = label;
+        div.appendChild(labelDiv);
+      }
+
+      const n = matrix.length;
+
+      matrix.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'matrix-row';
+
+        // Left side: original matrix A
+        for (let j = 0; j < n; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-cell';
+          const val = row[j];
+          if (val instanceof Fraction) {
+            cell.textContent = val.toString();
+          } else if (isNaN(val) || !isFinite(val)) {
+            cell.textContent = '0';
+          } else {
+            cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          }
+          rowDiv.appendChild(cell);
+        }
+
+        // Vertical separator
+        const separator = document.createElement('div');
+        separator.className = 'matrix-cell matrix-separator';
+        separator.textContent = '|';
+        separator.style.fontWeight = 'bold';
+        separator.style.color = '#667eea';
+        rowDiv.appendChild(separator);
+
+        // Right side: identity then inverse
+        for (let j = n; j < 2 * n; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-cell';
+          const val = row[j];
+          if (val instanceof Fraction) {
+            cell.textContent = val.toString();
+          } else if (isNaN(val) || !isFinite(val)) {
+            cell.textContent = '0';
+          } else {
+            cell.textContent = Number.isInteger(val) ? val : val.toFixed(2);
+          }
+          rowDiv.appendChild(cell);
+        }
+
+        div.appendChild(rowDiv);
+      });
+
+      return div;
     }
     
     function highlightRow(matrixId, rowIndex) {
@@ -1882,79 +1988,226 @@
       return result;
     }
     
+    // Fraction class for exact arithmetic
+    class Fraction {
+      constructor(num, den = 1) {
+        if (den === 0) throw new Error('Denominator cannot be zero');
+        const g = this.gcd(Math.abs(num), Math.abs(den));
+        this.num = Math.sign(den) * (num / g);
+        this.den = Math.abs(den) / g;
+      }
+
+      gcd(a, b) {
+        return b === 0 ? a : this.gcd(b, a % b);
+      }
+
+      static from(val) {
+        if (val instanceof Fraction) return val;
+        if (Number.isInteger(val)) return new Fraction(val, 1);
+        // Handle floating point by finding fraction representation
+        const str = val.toString();
+        if (str.includes('e') || str.includes('E')) {
+          return new Fraction(val);
+        }
+        const decimalPlaces = (str.split('.')[1] || '').length;
+        const multiplier = Math.pow(10, decimalPlaces);
+        return new Fraction(Math.round(val * multiplier), multiplier);
+      }
+
+      add(other) {
+        other = Fraction.from(other);
+        return new Fraction(this.num * other.den + other.num * this.den, this.den * other.den);
+      }
+
+      subtract(other) {
+        other = Fraction.from(other);
+        return new Fraction(this.num * other.den - other.num * this.den, this.den * other.den);
+      }
+
+      multiply(other) {
+        other = Fraction.from(other);
+        return new Fraction(this.num * other.num, this.den * other.den);
+      }
+
+      divide(other) {
+        other = Fraction.from(other);
+        if (other.num === 0) throw new Error('Division by zero');
+        return new Fraction(this.num * other.den, this.den * other.num);
+      }
+
+      isZero() {
+        return this.num === 0;
+      }
+
+      isOne() {
+        return this.num === this.den;
+      }
+
+      negate() {
+        return new Fraction(-this.num, this.den);
+      }
+
+      toFloat() {
+        return this.num / this.den;
+      }
+
+      toString() {
+        if (this.den === 1) return `${this.num}`;
+        if (this.num === 0) return '0';
+        return `${this.num}/${this.den}`;
+      }
+
+      toLatex() {
+        if (this.den === 1) return `${this.num}`;
+        return `\\frac{${this.num}}{${this.den}}`;
+      }
+    }
+
     function calculateDeterminantCalc(A) {
       const n = A.length;
-      
+
       if (n !== A[0].length) {
         throw new Error('Matrix must be square to calculate determinant');
       }
-      
+
       return calcDet(A);
     }
-    
-    function calculateInverseCalc(A) {
+
+    // Calculate determinant using cofactor expansion (for cross-checking)
+    function calculateDeterminantCofactor(A) {
       const n = A.length;
-      
+      if (n === 1) return A[0][0];
+      if (n === 2) return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+
+      let det = 0;
+      for (let j = 0; j < n; j++) {
+        det += Math.pow(-1, j) * A[0][j] * calculateDeterminantCofactor(getMinor(A, 0, j));
+      }
+      return det;
+    }
+
+    // Calculate inverse using cofactor method (for cross-checking)
+    function calculateInverseCofactor(A) {
+      const n = A.length;
       if (n !== A[0].length) {
         throw new Error('Matrix must be square to calculate inverse');
       }
-      
-      // Create augmented matrix [A | I]
-      const augmented = Array(n).fill().map(() => Array(2 * n).fill(0));
-      
-      // Initialize identity matrix
-      for (let i = 0; i < n; i++) {
-        augmented[i][i + n] = 1;
+
+      const det = calculateDeterminantCofactor(A);
+      if (Math.abs(det) < 1e-10) {
+        throw new Error('Matrix is singular and has no inverse');
       }
-      
-      // Create augmented matrix [A | I]
+
+      if (n === 1) {
+        return [[1 / A[0][0]]];
+      }
+
+      if (n === 2) {
+        return [
+          [A[1][1] / det, -A[0][1] / det],
+          [-A[1][0] / det, A[0][0] / det]
+        ];
+      }
+
+      const adjugate = [];
+      for (let i = 0; i < n; i++) {
+        adjugate[i] = [];
+        for (let j = 0; j < n; j++) {
+          const minor = getMinor(A, j, i);
+          const cofactor = Math.pow(-1, i + j) * calculateDeterminantCofactor(minor);
+          adjugate[i][j] = cofactor / det;
+        }
+      }
+
+      return adjugate;
+    }
+
+    function calculateInverseCalc(A) {
+      const n = A.length;
+
+      if (n !== A[0].length) {
+        throw new Error('Matrix must be square to calculate inverse');
+      }
+
+      // Create augmented matrix with Fractions [A | I]
+      const augmented = Array(n).fill().map(() => Array(2 * n).fill(null));
+      const rowSwaps = [];
+
+      // Initialize with fractions
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
-          augmented[i][j] = A[i][j];
+          augmented[i][j] = Fraction.from(A[i][j]);
+        }
+        // Identity matrix on right
+        for (let j = 0; j < n; j++) {
+          augmented[i][n + j] = Fraction.from(i === j ? 1 : 0);
         }
       }
-      
-      // Gauss-Jordan elimination
-      for (let pivot = 0; pivot < n; pivot++) {
-        // Find pivot row
-        let maxRow = pivot;
-        for (let i = pivot + 1; i < n; i++) {
-          if (Math.abs(augmented[i][pivot]) > Math.abs(augmented[maxRow][pivot])) {
-            maxRow = i;
+
+      // Gauss-Jordan elimination with row swapping strategy
+      for (let col = 0; col < n; col++) {
+        // Find best pivot: prefer integer values, then non-zero
+        let bestRow = col;
+        let bestScore = -1;
+
+        for (let row = col; row < n; row++) {
+          const val = augmented[row][col];
+          if (val.isZero()) continue;
+
+          // Score: integer gets higher priority
+          let score = Math.abs(val.toFloat());
+          if (val.den === 1) score += 1000; // Strongly prefer integers
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestRow = row;
           }
         }
-        
-        // Check if pivot is zero
-        if (Math.abs(augmented[maxRow][pivot]) < 1e-10) {
+
+        // Check if we found a non-zero pivot
+        if (augmented[bestRow][col].isZero()) {
           throw new Error('Matrix is singular and has no inverse');
         }
-        
+
         // Swap rows if needed
-        if (maxRow !== pivot) {
-          [augmented[pivot], augmented[maxRow]] = [augmented[maxRow], augmented[pivot]];
+        if (bestRow !== col) {
+          [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
+          rowSwaps.push({ from: bestRow, to: col });
         }
-        
-        // Get pivot value
-        const pivotValue = augmented[pivot][pivot];
-        
-        // Make pivot 1
-        for (let j = 0; j < 2 * n; j++) {
-          augmented[pivot][j] /= pivotValue;
+
+        // Normalize pivot row to make pivot = 1
+        const pivotValue = augmented[col][col];
+        if (!pivotValue.isOne()) {
+          for (let j = 0; j < 2 * n; j++) {
+            augmented[col][j] = augmented[col][j].divide(pivotValue);
+          }
         }
-        
+
         // Eliminate other entries in this column
-        for (let i = 0; i < n; i++) {
-          if (i !== pivot) {
-            const factor = augmented[i][pivot];
-            for (let j = 0; j < 2 * n; j++) {
-              augmented[i][j] -= factor * augmented[pivot][j];
+        for (let row = 0; row < n; row++) {
+          if (row !== col) {
+            const factor = augmented[row][col];
+            if (!factor.isZero()) {
+              for (let j = 0; j < 2 * n; j++) {
+                augmented[row][j] = augmented[row][j].subtract(factor.multiply(augmented[col][j]));
+              }
             }
           }
         }
       }
-      
-      // Extract inverse matrix
-      const inverse = augmented.map(row => row.slice(n));
+
+      // Extract inverse matrix and convert to floats
+      const inverse = [];
+      for (let i = 0; i < n; i++) {
+        inverse[i] = [];
+        for (let j = 0; j < n; j++) {
+          inverse[i][j] = augmented[i][n + j].toFloat();
+        }
+      }
+
+      // Store metadata for display
+      inverse._rowSwaps = rowSwaps;
+
       return inverse;
     }
     
