@@ -326,7 +326,7 @@
       <br><br>
       <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
       <br><br>
-      <strong>📊 Visualization:</strong> Click "Coordinate System" to see an interactive right-handed coordinate system with your vectors plotted.
+      <strong>📊 Visualization:</strong> Click "Plot Vectors" to see your vectors plotted in an external graphing calculator (GeoGebra). Opens in new tab.
     </div>
     
     <!-- Dimension Control -->
@@ -408,7 +408,7 @@
     
     <div class="section-header">Visualization</div>
     <div class="buttons">
-      <button class="btn-operation btn-viz" onclick="showCoordinateSystem()">📊 Coordinate System</button>
+      <button class="btn-operation btn-viz" onclick="plotVectors()">📊 Plot Vectors</button>
     </div>
     
     <!-- Results Section -->
@@ -1252,184 +1252,77 @@
       }
     }
     
-    function showCoordinateSystem() {
+    function plotVectors() {
       const dim = parseInt(document.getElementById('dimension').value);
       const A = getVectorInput('vecA');
       const B = getVectorInput('vecB');
       const C = getVectorInput('vecC');
       
-      const steps = [];
-      const title = 'Right-Handed Coordinate System';
-      
-      if (dim === 2) {
-        steps.push({
-          title: '2D Coordinate System',
-          content: `
-            <div style="text-align: center; margin: 20px 0;">
-              <svg width="300" height="300" viewBox="-150 -150 300 300">
-                <!-- Grid -->
-                <defs>
-                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
-                  </pattern>
-                </defs>
-                <rect x="-150" y="-150" width="300" height="300" fill="url(#grid)" />
-                
-                <!-- Axes -->
-                <line x1="-140" y1="0" x2="140" y2="0" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                <line x1="0" y1="140" x2="0" y2="-140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
-                
-                <!-- Arrow markers -->
-                <defs>
-                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-                  </marker>
-                </defs>
-                
-                <!-- Labels -->
-                <text x="130" y="-10" font-size="14" font-weight="bold" fill="#333">x</text>
-                <text x="10" y="-130" font-size="14" font-weight="bold" fill="#333">y</text>
-                <text x="5" y="15" font-size="12" fill="#666">O</text>
-                
-                <!-- Vectors if provided -->
-                ${A ? `<line x1="0" y1="0" x2="${A[0]*30}" y2="${-A[1]*30}" stroke="#f5576c" stroke-width="3" marker-end="url(#arrowhead-red)"/>
-                         <text x="${A[0]*30+10}" y="${-A[1]*30-10}" font-size="12" fill="#f5576c" font-weight="bold">A</text>
-                         <defs><marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                         <polygon points="0 0, 10 3.5, 0 7" fill="#f5576c"/></marker></defs>` : ''}
-                ${B ? `<line x1="0" y1="0" x2="${B[0]*30}" y2="${-B[1]*30}" stroke="#00f2fe" stroke-width="3" marker-end="url(#arrowhead-blue)"/>
-                         <text x="${B[0]*30+10}" y="${-B[1]*30-10}" font-size="12" fill="#00f2fe" font-weight="bold">B</text>
-                         <defs><marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                         <polygon points="0 0, 10 3.5, 0 7" fill="#00f2fe"/></marker></defs>` : ''}
-              </svg>
-            </div>
-            <p><strong>2D Right-Handed System:</strong> X-axis points right, Y-axis points up. This follows the standard mathematical convention where positive rotation is counterclockwise.</p>
-          `
-        });
-      } else {
-        steps.push({
-          title: '3D Coordinate System',
-          content: `
-            <div style="text-align: center; margin: 20px 0;">
-              <svg width="400" height="400" viewBox="-200 -200 400 400">
-                <!-- 3D Axes using proper isometric projection -->
-                <!-- X-axis: (1, 0, 0) -> projection -->
-                <line x1="0" y1="0" x2="120" y2="0" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-x)"/>
-                <!-- Y-axis: (0, 1, 0) -> projection -->
-                <line x1="0" y1="0" x2="-60" y2="-104" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-y)"/>
-                <!-- Z-axis: (0, 0, 1) -> projection -->
-                <line x1="0" y1="0" x2="0" y2="-120" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-z)"/>
-                
-                <!-- Arrow markers for each axis -->
-                <defs>
-                  <marker id="arrowhead-x" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-                  </marker>
-                  <marker id="arrowhead-y" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-                  </marker>
-                  <marker id="arrowhead-z" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
-                  </marker>
-                </defs>
-                
-                <!-- Axis labels -->
-                <text x="125" y="5" font-size="14" font-weight="bold" fill="#333">x</text>
-                <text x="-70" y="-105" font-size="14" font-weight="bold" fill="#333">y</text>
-                <text x="5" y="-125" font-size="14" font-weight="bold" fill="#333">z</text>
-                <text x="8" y="15" font-size="12" fill="#666">O</text>
-                
-                <!-- Helper lines to show 3D structure -->
-                <line x1="0" y1="0" x2="-60" y2="0" stroke="#ccc" stroke-width="1" stroke-dasharray="2,2"/>
-                <line x1="0" y1="0" x2="0" y2="-104" stroke="#ccc" stroke-width="1" stroke-dasharray="2,2"/>
-                
-                <!-- Vectors if provided with proper 3D projection -->
-                ${A ? (() => {
-                  // Inline isometric projection calculation
-                  const cos45 = Math.cos(Math.PI / 4);
-                  const sin45 = Math.sin(Math.PI / 4);
-                  const cos35 = Math.cos(35.26 * Math.PI / 180);
-                  const sin35 = Math.sin(35.26 * Math.PI / 180);
-                  const scale = 25;
-                  
-                  // Project vector A
-                  const x1 = A[0] * cos45 - A[2] * sin45;
-                  const z1 = A[0] * sin45 + A[2] * cos45;
-                  const y2 = A[1] * cos35 - z1 * sin35;
-                  const proj = { x: x1 * scale, y: -y2 * scale };
-                  
-                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#f5576c" stroke-width="3" marker-end="url(#arrowhead-red)"/>
-                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#f5576c" font-weight="bold">A</text>
-                         <defs><marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                         <polygon points="0 0, 10 3.5, 0 7" fill="#f5576c"/></marker></defs>`;
-                })() : ''}
-                
-                ${B ? (() => {
-                  // Inline isometric projection calculation
-                  const cos45 = Math.cos(Math.PI / 4);
-                  const sin45 = Math.sin(Math.PI / 4);
-                  const cos35 = Math.cos(35.26 * Math.PI / 180);
-                  const sin35 = Math.sin(35.26 * Math.PI / 180);
-                  const scale = 25;
-                  
-                  // Project vector B
-                  const x1 = B[0] * cos45 - B[2] * sin45;
-                  const z1 = B[0] * sin45 + B[2] * cos45;
-                  const y2 = B[1] * cos35 - z1 * sin35;
-                  const proj = { x: x1 * scale, y: -y2 * scale };
-                  
-                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#00f2fe" stroke-width="3" marker-end="url(#arrowhead-blue)"/>
-                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#00f2fe" font-weight="bold">B</text>
-                         <defs><marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                         <polygon points="0 0, 10 3.5, 0 7" fill="#00f2fe"/></marker></defs>`;
-                })() : ''}
-                
-                ${C ? (() => {
-                  // Inline isometric projection calculation
-                  const cos45 = Math.cos(Math.PI / 4);
-                  const sin45 = Math.sin(Math.PI / 4);
-                  const cos35 = Math.cos(35.26 * Math.PI / 180);
-                  const sin35 = Math.sin(35.26 * Math.PI / 180);
-                  const scale = 25;
-                  
-                  // Project vector C
-                  const x1 = C[0] * cos45 - C[2] * sin45;
-                  const z1 = C[0] * sin45 + C[2] * cos45;
-                  const y2 = C[1] * cos35 - z1 * sin35;
-                  const proj = { x: x1 * scale, y: -y2 * scale };
-                  
-                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#ff9a56" stroke-width="3" marker-end="url(#arrowhead-orange)"/>
-                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#ff9a56" font-weight="bold">C</text>
-                         <defs><marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                         <polygon points="0 0, 10 3.5, 0 7" fill="#ff9a56"/></marker></defs>`;
-                })() : ''}
-              </svg>
-            </div>
-            <p><strong>3D Right-Handed System:</strong> Proper isometric projection with right-hand rule:</p>
-            <ul style="text-align: left; max-width: 500px; margin: 0 auto;">
-              <li><strong>X-axis:</strong> Points to the right (along x-direction)</li>
-              <li><strong>Y-axis:</strong> Points diagonally up-left (along y-direction)</li>
-              <li><strong>Z-axis:</strong> Points straight up (along z-direction)</li>
-              <li><strong>Right-hand rule:</strong> Point thumb along X, index finger along Y, middle finger points along Z</li>
-              <li><strong>Projection:</strong> Uses mathematical isometric transformation for accurate 3D visualization</li>
-              <li><strong>Origin:</strong> All axes pass through (0,0,0) as shown</li>
-            </ul>
-            <div style="text-align: center; margin-top: 15px;">
-              <small><em>Vectors are projected using proper isometric transformation for accurate 3D representation.</em></small>
-            </div>
-          `
-        });
+      if (!A && !B && !C) {
+        showError('Please enter at least one vector (A, B, or C) to plot');
+        return;
       }
       
+      // Build GeoGebra command with vectors
+      let commands = [];
+      
+      if (A) {
+        if (dim === 2) {
+          commands.push(`Vector((0,0),(${A[0]},${A[1]}))`);
+        } else {
+          commands.push(`Vector((0,0,0),(${A[0]},${A[1]},${A[2]}))`);
+        }
+      }
+      
+      if (B) {
+        if (dim === 2) {
+          commands.push(`Vector((0,0),(${B[0]},${B[1]}))`);
+        } else {
+          commands.push(`Vector((0,0,0),(${B[0]},${B[1]},${B[2]}))`);
+        }
+      }
+      
+      if (C) {
+        if (dim === 2) {
+          commands.push(`Vector((0,0),(${C[0]},${C[1]}))`);
+        } else {
+          commands.push(`Vector((0,0,0),(${C[0]},${C[1]},${C[2]}))`);
+        }
+      }
+      
+      // Create GeoGebra URL
+      const commandString = commands.join('%2C'); // URL encode comma
+      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
+      
+      // Open in new tab
+      window.open(geogebraUrl, '_blank');
+      
+      // Show confirmation to user
+      const steps = [{
+        title: 'External Plotting Service',
+        content: `
+          <div class="alert alert-info">
+            <strong>📊 Opening GeoGebra Graphing Calculator</strong><br><br>
+            Your vectors have been sent to GeoGebra for visualization:<br><br>
+            ${A ? `<strong>Vector A:</strong> ${VectorModule.formatVector(A)}<br>` : ''}
+            ${B ? `<strong>Vector B:</strong> ${VectorModule.formatVector(B)}<br>` : ''}
+            ${C ? `<strong>Vector C:</strong> ${VectorModule.formatVector(C)}<br>` : ''}
+            <br>
+            <em>A new tab should open with your vectors plotted. If the popup is blocked, please allow popups for this site.</em>
+          </div>
+        `
+      }];
+      
       const summary = `
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         ${A ? `<div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>` : ''}
         ${B ? `<div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>` : ''}
         ${C ? `<div class="summary-line"><strong>Vector C:</strong> ${VectorModule.formatVector(C)}</div>` : ''}
-        <div class="summary-result">Interactive coordinate system with proper mathematical projection through origin</div>
+        <div class="summary-result">Vectors plotted in external graphing calculator</div>
       `;
       
-      showResult(title, summary, steps);
+      showResult('Vector Plotting', summary, steps);
     }
     
     const TestRunner = (() => {
