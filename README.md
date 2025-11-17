@@ -16,12 +16,14 @@ python3 -m http.server 8000
 ## ✨ Features
 
 ### Matrix Operations
+
 - **✖️ Matrix Multiplication** - Multiply matrices A × B with step-by-step visualization
 - **📊 Determinant Calculation** - Calculate det(A) using Gaussian elimination
 - **🔄 Matrix Inverse** - Calculate A⁻¹ using Gauss-Jordan elimination with cofactor verification
 - **🧪 Comprehensive Testing** - Built-in test suite for all operations
 
 ### 🆕 Symbolic Algebra Support
+
 - **Variables** - Use x, y, z, etc. in matrix cells
 - **Polynomials** - Enter expressions like `2x^2+3x+1`
 - **Rational Expressions** - Support for `(x+1)/(x-1)` with automatic simplification
@@ -29,6 +31,7 @@ python3 -m http.server 8000
 - **Expression Evaluation** - Substitute variables with numeric values
 
 ### Exact Arithmetic
+
 - **Fraction Class** - No floating-point rounding errors
 - **Smart Pivot Selection** - Integer-first heuristics for numerical stability
 - **Step-by-Step Display** - See all intermediate calculations
@@ -37,15 +40,18 @@ python3 -m http.server 8000
 ## 📖 Usage Examples
 
 ### Example 1: Basic Symbolic Matrix
+
 **Set both matrices to 2×2**
 
 Matrix A:
+
 ```
 1    x
 0    1
 ```
 
 Matrix B:
+
 ```
 1    0
 y    1
@@ -54,15 +60,18 @@ y    1
 Click **✖️ Multiply A × B**
 
 **Result:**
+
 ```
 1+xy    x
 y       1
 ```
 
 ### Example 2: Symbolic Determinant
+
 **Set Matrix A to 2×2**
 
 Matrix A:
+
 ```
 x    1
 1    x
@@ -73,19 +82,23 @@ Click **📊 Det(A)**
 **Result:** `x^2 - 1`
 
 ### Example 3: Mixed Numeric and Symbolic
+
 Matrix A:
+
 ```
 2    x
 0    3
 ```
 
 Matrix B:
+
 ```
 1    0
 5    1
 ```
 
 **Result A × B:**
+
 ```
 2+5x    x
 15      3
@@ -109,19 +122,25 @@ Matrix B:
 ### Core Classes (~1,200 lines)
 
 #### **Monomial** (~150 lines)
+
 Represents single terms like `3x²y` with coefficient and variable powers.
 
 #### **Polynomial** (~200 lines)
+
 Represents sums of monomials with automatic like-term combination.
 
 #### **RationalExpression** (~150 lines)
+
 Represents polynomial quotients with simplification.
 
 #### **SymbolicValue** (~300 lines)
+
 Unified wrapper for Fraction, Polynomial, or RationalExpression with common interface.
 
 ### Parser (~150 lines)
+
 Comprehensive expression parser supporting:
+
 - Variables and numeric literals
 - Operators: `+`, `-`, `*`, `/`, `^`
 - Implied multiplication: `2x`, `xy`
@@ -129,7 +148,9 @@ Comprehensive expression parser supporting:
 - Rational expressions
 
 ### Matrix Operations
+
 All operations (multiply, determinant, inverse) fully support:
+
 - Numeric values (exact Fraction arithmetic)
 - Symbolic values (variables and expressions)
 - Mixed numeric/symbolic matrices
@@ -162,12 +183,14 @@ All tests show ✅ (pass) or ❌ (fail) with detailed results.
 ## 🎯 Use Cases
 
 ### Educational
+
 - Demonstrate matrix operations symbolically
 - Show determinant formulas
 - Visualize matrix transformations
 - Teach linear algebra with parameters
 
 ### Scientific
+
 - Parametric matrix analysis
 - Formula derivation
 - Variable substitution
@@ -176,17 +199,20 @@ All tests show ✅ (pass) or ❌ (fail) with detailed results.
 ## 🔧 Technical Details
 
 ### Technology Stack
+
 - **HTML5** - Structure
 - **CSS3** - Styling with animations
 - **JavaScript ES6** - Classes, arrow functions, modern features
 - **Bootstrap 5 CDN** - Responsive layout (optional)
 
 ### Browser Requirements
+
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - ES6 support required
 - Works offline (except Bootstrap CDN)
 
 ### Performance
+
 - **Polynomial operations**: O(n*m) for n and m terms
 - **Matrix operations**: O(n³) with symbolic overhead
 - **Parsing**: O(n) for input length
@@ -195,17 +221,20 @@ All tests show ✅ (pass) or ❌ (fail) with detailed results.
 ## 📋 Limitations
 
 ### Current Constraints
+
 - Single-letter variables only (a-z, A-Z)
 - Integer exponents only (no x^y)
 - Basic simplification (combines like terms, constant factors)
 - Limited polynomial GCD (constants only)
 
 ### Known Issues
+
 - Large expressions can become complex without full factorization
 - Rational simplification is basic (e.g., (x²-1)/(x-1) doesn't auto-reduce to x+1)
 - Complex symbolic expressions may be verbose
 
 ## 🚀 Future Enhancements
+
 - Multi-character variable names
 - Full polynomial GCD and factorization
 - Symbolic differentiation
@@ -222,6 +251,7 @@ All tests show ✅ (pass) or ❌ (fail) with detailed results.
 ## 🤝 Contributing
 
 This is an educational project. Feel free to:
+
 - Report issues
 - Suggest improvements
 - Fork and enhance
@@ -234,6 +264,7 @@ Open source - use freely for educational and personal projects.
 ## 🎉 Acknowledgments
 
 Built with modern web technologies and a focus on:
+
 - Educational value
 - Mathematical correctness
 - Step-by-step visualization
