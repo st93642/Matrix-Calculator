@@ -384,6 +384,7 @@
       <button class="btn-operation btn-add" onclick="calculate('add')">+ Add/Subtract Vectors</button>
       <button class="btn-operation btn-scalar" onclick="calculate('scalar')">× Scalar Multiply</button>
       <button class="btn-operation btn-distance" onclick="calculate('distance')">📏 Distance P₁P₂</button>
+      <button class="btn-operation btn-test" onclick="runVectorTests()">🧪 Run Tests</button>
     </div>
     
     <!-- Results Section -->
@@ -392,7 +393,14 @@
       <div class="result-summary" id="resultSummary"></div>
       <div class="steps-container" id="stepsContainer"></div>
     </div>
-  </div>
+
+    <!-- Test Results Section -->
+    <div class="test-section" id="testSection">
+      <div class="result-header">Unit Test Results</div>
+      <div id="testSummary"></div>
+      <div id="testResults" style="max-height: 70vh; overflow-y: auto;"></div>
+    </div>
+    </div>
   
   <script>
     const VectorModule = (() => {
@@ -1051,9 +1059,457 @@
       showResult('Point Distance', summary, steps);
     }
     
+    const TestRunner = (() => {
+      const tests = [];
+
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+
+      const assertAlmostEqual = (actual, expected, tolerance = 1e-6, message = '') => {
+        if (Math.abs(actual - expected) > tolerance) {
+          throw new Error(`${message}\nExpected: ${expected}, Got: ${actual}`);
+        }
+      };
+
+      const assertVectorAlmostEqual = (actual, expected, tolerance = 1e-6, message = '') => {
+        if (actual.length !== expected.length) {
+          throw new Error(`${message}\nExpected length ${expected.length}, got ${actual.length}`);
+        }
+        for (let i = 0; i < actual.length; i++) {
+          if (Math.abs(actual[i] - expected[i]) > tolerance) {
+            throw new Error(`${message}\nAt index ${i}: expected ${expected[i]}, got ${actual[i]}`);
+          }
+        }
+      };
+
+      const registerTest = (name, fn) => {
+        tests.push({ name, fn });
+      };
+
+      // Validation Tests
+      registerTest('validateDimension - valid 2D', () => {
+        assert(VectorModule.validateDimension(2) === 2, 'Should return 2 for 2D');
+      });
+
+      registerTest('validateDimension - valid 3D', () => {
+        assert(VectorModule.validateDimension(3) === 3, 'Should return 3 for 3D');
+      });
+
+      registerTest('validateDimension - invalid dimension', () => {
+        try {
+          VectorModule.validateDimension(4);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('must be 2 or 3'), 'Should have validation error');
+        }
+      });
+
+      // Parse Vector Tests
+      registerTest('parseVector - 2D vector string', () => {
+        const result = VectorModule.parseVector('1, 2');
+        assertVectorAlmostEqual(result, [1, 2], 1e-6, '2D parse');
+      });
+
+      registerTest('parseVector - 3D vector string', () => {
+        const result = VectorModule.parseVector('1, 2, 3');
+        assertVectorAlmostEqual(result, [1, 2, 3], 1e-6, '3D parse');
+      });
+
+      registerTest('parseVector - with decimal numbers', () => {
+        const result = VectorModule.parseVector('1.5, 2.5, 3.5');
+        assertVectorAlmostEqual(result, [1.5, 2.5, 3.5], 1e-6, 'Decimal parse');
+      });
+
+      registerTest('parseVector - with negative numbers', () => {
+        const result = VectorModule.parseVector('-1, -2, -3');
+        assertVectorAlmostEqual(result, [-1, -2, -3], 1e-6, 'Negative parse');
+      });
+
+      registerTest('parseVector - 2D auto-extend to 3D', () => {
+        const result = VectorModule.parseVector('1, 2', 3);
+        assertVectorAlmostEqual(result, [1, 2, 0], 1e-6, 'Should extend 2D to 3D with z=0');
+      });
+
+      registerTest('parseVector - dimension mismatch', () => {
+        try {
+          VectorModule.parseVector('1, 2', 3);
+          throw new Error('Should have validated 3D requirement but found 2D');
+        } catch (e) {
+          assert(!e.message.includes('Should have validated'), 'Expected dimension mismatch error');
+        }
+      });
+
+      registerTest('parseVector - invalid number', () => {
+        try {
+          VectorModule.parseVector('1, abc, 3');
+          throw new Error('Should have thrown parsing error');
+        } catch (e) {
+          assert(e.message.includes('Invalid number'), 'Should have parsing error');
+        }
+      });
+
+      registerTest('parseVector - empty string', () => {
+        try {
+          VectorModule.parseVector('');
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('cannot be empty'), 'Should reject empty input');
+        }
+      });
+
+      // Format Vector Tests
+      registerTest('formatVector - integer components', () => {
+        const result = VectorModule.formatVector([1, 2, 3]);
+        assert(result === '(1, 2, 3)', `Should format as (1, 2, 3), got ${result}`);
+      });
+
+      registerTest('formatVector - decimal components', () => {
+        const result = VectorModule.formatVector([1.5, 2.5, 3.5]);
+        assert(result.includes('1.5') && result.includes('2.5') && result.includes('3.5'), 'Should include decimals');
+      });
+
+      registerTest('formatVector - negative components', () => {
+        const result = VectorModule.formatVector([-1, -2, -3]);
+        assert(result === '(-1, -2, -3)', `Should format negatives, got ${result}`);
+      });
+
+      // Zero Vector Tests
+      registerTest('isZeroVector - true for zero vector', () => {
+        assert(VectorModule.isZeroVector([0, 0, 0]), 'Should identify zero vector');
+      });
+
+      registerTest('isZeroVector - false for non-zero', () => {
+        assert(!VectorModule.isZeroVector([1, 0, 0]), 'Should reject non-zero vector');
+      });
+
+      registerTest('isZeroVector - near-zero tolerance', () => {
+        assert(VectorModule.isZeroVector([1e-11, 1e-11, 1e-11]), 'Should accept near-zero');
+      });
+
+      // Vector Addition Tests
+      registerTest('vectorAddition - 2D', () => {
+        const result = VectorModule.vectorAddition([1, 2], [3, 4]);
+        assertVectorAlmostEqual(result, [4, 6], 1e-6, '2D addition');
+      });
+
+      registerTest('vectorAddition - 3D', () => {
+        const result = VectorModule.vectorAddition([1, 2, 3], [4, 5, 6]);
+        assertVectorAlmostEqual(result, [5, 7, 9], 1e-6, '3D addition');
+      });
+
+      registerTest('vectorAddition - with negative', () => {
+        const result = VectorModule.vectorAddition([1, 2], [-1, -2]);
+        assertVectorAlmostEqual(result, [0, 0], 1e-6, 'Addition with negatives');
+      });
+
+      registerTest('vectorAddition - dimension mismatch', () => {
+        try {
+          VectorModule.vectorAddition([1, 2], [1, 2, 3]);
+          throw new Error('Should have thrown dimension error');
+        } catch (e) {
+          assert(e.message.includes('same dimension'), 'Expected dimension error');
+        }
+      });
+
+      // Vector Subtraction Tests
+      registerTest('vectorSubtraction - 2D', () => {
+        const result = VectorModule.vectorSubtraction([3, 4], [1, 2]);
+        assertVectorAlmostEqual(result, [2, 2], 1e-6, '2D subtraction');
+      });
+
+      registerTest('vectorSubtraction - 3D', () => {
+        const result = VectorModule.vectorSubtraction([4, 5, 6], [1, 2, 3]);
+        assertVectorAlmostEqual(result, [3, 3, 3], 1e-6, '3D subtraction');
+      });
+
+      registerTest('vectorSubtraction - dimension mismatch', () => {
+        try {
+          VectorModule.vectorSubtraction([1, 2], [1, 2, 3]);
+          throw new Error('Should have thrown dimension error');
+        } catch (e) {
+          assert(e.message.includes('same dimension'), 'Expected dimension error');
+        }
+      });
+
+      // Scalar Multiplication Tests
+      registerTest('scalarMultiplication - positive scalar', () => {
+        const result = VectorModule.scalarMultiplication([1, 2, 3], 2);
+        assertVectorAlmostEqual(result, [2, 4, 6], 1e-6, 'Positive scalar');
+      });
+
+      registerTest('scalarMultiplication - negative scalar', () => {
+        const result = VectorModule.scalarMultiplication([1, 2, 3], -1);
+        assertVectorAlmostEqual(result, [-1, -2, -3], 1e-6, 'Negative scalar');
+      });
+
+      registerTest('scalarMultiplication - zero scalar', () => {
+        const result = VectorModule.scalarMultiplication([1, 2, 3], 0);
+        assertVectorAlmostEqual(result, [0, 0, 0], 1e-6, 'Zero scalar');
+      });
+
+      registerTest('scalarMultiplication - fractional scalar', () => {
+        const result = VectorModule.scalarMultiplication([2, 4, 6], 0.5);
+        assertVectorAlmostEqual(result, [1, 2, 3], 1e-6, 'Fractional scalar');
+      });
+
+      // Dot Product Tests
+      registerTest('dotProduct - standard case', () => {
+        const result = VectorModule.dotProduct([1, 2, 3], [4, 5, 6]);
+        assertAlmostEqual(result, 32, 1e-6, 'Dot product [1,2,3]·[4,5,6]');
+      });
+
+      registerTest('dotProduct - orthogonal vectors', () => {
+        const result = VectorModule.dotProduct([1, 0, 0], [0, 1, 0]);
+        assertAlmostEqual(result, 0, 1e-6, 'Orthogonal vectors should have dot product 0');
+      });
+
+      registerTest('dotProduct - 2D', () => {
+        const result = VectorModule.dotProduct([1, 2], [3, 4]);
+        assertAlmostEqual(result, 11, 1e-6, '2D dot product');
+      });
+
+      registerTest('dotProduct - dimension mismatch', () => {
+        try {
+          VectorModule.dotProduct([1, 2], [1, 2, 3]);
+          throw new Error('Should have thrown dimension error');
+        } catch (e) {
+          assert(e.message.includes('same dimension'), 'Expected dimension error');
+        }
+      });
+
+      // Cross Product Tests
+      registerTest('crossProduct - standard case', () => {
+        const result = VectorModule.crossProduct([1, 0, 0], [0, 1, 0]);
+        assertVectorAlmostEqual(result, [0, 0, 1], 1e-6, 'i × j = k');
+      });
+
+      registerTest('crossProduct - parallel vectors', () => {
+        const result = VectorModule.crossProduct([1, 2, 3], [2, 4, 6]);
+        assertVectorAlmostEqual(result, [0, 0, 0], 1e-6, 'Parallel vectors cross product is zero');
+      });
+
+      registerTest('crossProduct - non-3D', () => {
+        try {
+          VectorModule.crossProduct([1, 2], [3, 4]);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('3D'), 'Should require 3D vectors');
+        }
+      });
+
+      registerTest('crossProduct - anti-commutative', () => {
+        const forward = VectorModule.crossProduct([1, 2, 3], [4, 5, 6]);
+        const backward = VectorModule.crossProduct([4, 5, 6], [1, 2, 3]);
+        assertVectorAlmostEqual(forward.map(v => -v), backward, 1e-6, 'Cross product should be anti-commutative');
+      });
+
+      // Vector Norm Tests
+      registerTest('vectorNorm - unit vector', () => {
+        const result = VectorModule.vectorNorm([1, 0, 0]);
+        assertAlmostEqual(result, 1, 1e-6, 'Unit vector norm');
+      });
+
+      registerTest('vectorNorm - 3-4-5 triangle', () => {
+        const result = VectorModule.vectorNorm([3, 4, 0]);
+        assertAlmostEqual(result, 5, 1e-6, '3-4-5 triangle norm');
+      });
+
+      registerTest('vectorNorm - 2D vector', () => {
+        const result = VectorModule.vectorNorm([1, 1]);
+        assertAlmostEqual(result, Math.sqrt(2), 1e-6, '2D norm');
+      });
+
+      // Angle Between Tests
+      registerTest('angleBetween - perpendicular vectors', () => {
+        const result = VectorModule.angleBetween([1, 0, 0], [0, 1, 0]);
+        assertAlmostEqual(result.degrees, 90, 1e-4, 'Perpendicular vectors angle');
+      });
+
+      registerTest('angleBetween - same vector', () => {
+        const result = VectorModule.angleBetween([1, 2, 3], [1, 2, 3]);
+        assertAlmostEqual(result.degrees, 0, 1e-4, 'Same vector angle');
+      });
+
+      registerTest('angleBetween - opposite vectors', () => {
+        const result = VectorModule.angleBetween([1, 0, 0], [-1, 0, 0]);
+        assertAlmostEqual(result.degrees, 180, 1e-4, 'Opposite vectors angle');
+      });
+
+      registerTest('angleBetween - zero vector', () => {
+        try {
+          VectorModule.angleBetween([0, 0, 0], [1, 2, 3]);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('zero vector'), 'Should reject zero vectors');
+        }
+      });
+
+      // Orthogonal Projection Tests
+      registerTest('orthogonalProjection - projection onto axis', () => {
+        const result = VectorModule.orthogonalProjection([1, 2], [1, 0]);
+        assertVectorAlmostEqual(result, [1, 0], 1e-6, 'Project onto x-axis');
+      });
+
+      registerTest('orthogonalProjection - projection onto self', () => {
+        const result = VectorModule.orthogonalProjection([1, 2, 3], [1, 2, 3]);
+        assertVectorAlmostEqual(result, [1, 2, 3], 1e-6, 'Projection onto self');
+      });
+
+      registerTest('orthogonalProjection - zero vector target', () => {
+        try {
+          VectorModule.orthogonalProjection([1, 2, 3], [0, 0, 0]);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('zero vector'), 'Should reject zero target');
+        }
+      });
+
+      // Scalar Triple Product Tests
+      registerTest('scalarTripleProduct - standard case', () => {
+        const result = VectorModule.scalarTripleProduct([1, 0, 0], [0, 1, 0], [0, 0, 1]);
+        assertAlmostEqual(result, 1, 1e-6, 'Unit cube volume');
+      });
+
+      registerTest('scalarTripleProduct - coplanar vectors', () => {
+        const result = VectorModule.scalarTripleProduct([1, 0, 0], [0, 1, 0], [1, 1, 0]);
+        assertAlmostEqual(result, 0, 1e-6, 'Coplanar vectors triple product');
+      });
+
+      registerTest('scalarTripleProduct - non-3D', () => {
+        try {
+          VectorModule.scalarTripleProduct([1, 2], [3, 4], [5, 6]);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('3D'), 'Should require 3D vectors');
+        }
+      });
+
+      // Component From Points Tests
+      registerTest('componentFromPoints - 3D', () => {
+        const result = VectorModule.componentFromPoints([1, 2, 3], [4, 5, 6]);
+        assertVectorAlmostEqual(result, [3, 3, 3], 1e-6, 'Vector from P1 to P2');
+      });
+
+      registerTest('componentFromPoints - 2D', () => {
+        const result = VectorModule.componentFromPoints([0, 0], [3, 4]);
+        assertVectorAlmostEqual(result, [3, 4], 1e-6, '2D vector from points');
+      });
+
+      registerTest('componentFromPoints - same point', () => {
+        const result = VectorModule.componentFromPoints([1, 2, 3], [1, 2, 3]);
+        assertVectorAlmostEqual(result, [0, 0, 0], 1e-6, 'Same point gives zero vector');
+      });
+
+      registerTest('componentFromPoints - dimension mismatch', () => {
+        try {
+          VectorModule.componentFromPoints([1, 2], [1, 2, 3]);
+          throw new Error('Should have thrown error');
+        } catch (e) {
+          assert(e.message.includes('same dimension'), 'Expected dimension error');
+        }
+      });
+
+      // Point Distance Tests
+      registerTest('pointDistance - unit distance', () => {
+        const result = VectorModule.pointDistance([0, 0, 0], [1, 0, 0]);
+        assertAlmostEqual(result, 1, 1e-6, 'Unit distance');
+      });
+
+      registerTest('pointDistance - 3-4-5 triangle', () => {
+        const result = VectorModule.pointDistance([0, 0, 0], [3, 4, 0]);
+        assertAlmostEqual(result, 5, 1e-6, '3-4-5 distance');
+      });
+
+      registerTest('pointDistance - 2D', () => {
+        const result = VectorModule.pointDistance([0, 0], [1, 1]);
+        assertAlmostEqual(result, Math.sqrt(2), 1e-6, '2D distance');
+      });
+
+      registerTest('pointDistance - same point', () => {
+        const result = VectorModule.pointDistance([5, 5, 5], [5, 5, 5]);
+        assertAlmostEqual(result, 0, 1e-6, 'Same point distance');
+      });
+
+      const runTests = () => {
+        const results = [];
+        for (const test of tests) {
+          try {
+            test.fn();
+            results.push({ name: test.name, passed: true, error: null });
+          } catch (error) {
+            results.push({ name: test.name, passed: false, error: error.message });
+          }
+        }
+        return results;
+      };
+
+      return { runTests };
+    })();
+
+    function displayTestResults(results) {
+      const testSection = document.getElementById('testSection');
+      const summaryDiv = document.getElementById('testSummary');
+      const resultsDiv = document.getElementById('testResults');
+
+      testSection.classList.add('show');
+      resultsDiv.innerHTML = '';
+
+      const passed = results.filter(r => r.passed).length;
+      const total = results.length;
+      const percentage = Math.round((passed / total) * 100);
+
+      let summaryClass = 'test-summary-fail';
+      let summaryText = `❌ Tests Failed`;
+
+      if (passed === total) {
+        summaryClass = 'test-summary-pass';
+        summaryText = `✅ All Tests Passed`;
+      } else if (passed >= total * 0.9) {
+        summaryClass = 'test-summary-partial';
+        summaryText = `⚠️ Most Tests Passed`;
+      }
+
+      summaryDiv.innerHTML = `
+        <div class="test-summary ${summaryClass}">
+          ${summaryText}: ${passed}/${total} tests passed (${percentage}%)
+        </div>
+      `;
+
+      results.forEach(result => {
+        const resultDiv = document.createElement('div');
+        resultDiv.className = `test-result ${result.passed ? 'test-pass' : 'test-fail'}`;
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'test-name';
+        nameDiv.textContent = (result.passed ? '✅' : '❌') + ' ' + result.name;
+
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'test-status';
+        if (result.error) {
+          statusDiv.innerHTML = `<pre style="margin: 8px 0; font-size: 0.85em;">${result.error}</pre>`;
+        } else {
+          statusDiv.textContent = 'Passed';
+        }
+
+        resultDiv.appendChild(nameDiv);
+        resultDiv.appendChild(statusDiv);
+        resultsDiv.appendChild(resultDiv);
+      });
+    }
+
+    function runVectorTests() {
+      try {
+        const results = TestRunner.runTests();
+        displayTestResults(results);
+      } catch (error) {
+        showError(`Test runner error: ${error.message}`);
+      }
+    }
+
     window.addEventListener('load', () => {
       updatePlaceholders(3);
     });
-  </script>
-</body>
-</html>
+    </script>
+    </body>
+    </html>
