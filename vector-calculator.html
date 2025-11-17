@@ -1,0 +1,1059 @@
+<!-- ********************************************************************** -->
+<!--                                                                        -->
+<!--  vector-calculator.html                            TTTTTTTT SSSSSSS II -->
+<!--                                                       TT    SS      II -->
+<!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
+<!--                                                       TT         SS II -->
+<!--  Created: Jan 2025 st93642                            TT    SSSSSSS II -->
+<!--                                                                        -->
+<!--   Transport and Telecommunication Institute - Riga, Latvia             -->
+<!--                       https://tsi.lv                                   -->
+<!-- ********************************************************************** -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vector Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #764ba2;
+      margin-bottom: 30px;
+      font-size: 0.95em;
+      opacity: 0.8;
+    }
+    
+    .section-header {
+      font-size: 1.3em;
+      color: #764ba2;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 8px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+    
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .vector-input-group {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #e0e0e0;
+      margin-bottom: 15px;
+    }
+    
+    .vector-input-group h4 {
+      color: #667eea;
+      margin-bottom: 12px;
+      font-size: 0.95em;
+    }
+    
+    .vector-inputs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .vector-input-field {
+      flex: 1;
+      min-width: 80px;
+    }
+    
+    .vector-input-field input {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .vector-input-label {
+      font-size: 0.8em;
+      color: #666;
+      text-align: center;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    
+    .error-message {
+      color: #dc3545;
+      font-size: 0.85em;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+    
+    .btn-operation {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 18px;
+      font-size: 0.9em;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+    }
+    
+    .btn-operation:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-dot { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .btn-cross { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .btn-norm { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .btn-angle { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .btn-projection { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    .btn-triple { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+    .btn-component { background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%); }
+    .btn-add { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-scalar { background: linear-gradient(135deg, #f5af19 0%, #f12711 100%); }
+    .btn-distance { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    
+    .result-section {
+      margin-top: 30px;
+      padding: 25px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 5px solid #667eea;
+      display: none;
+    }
+    
+    .result-section.show {
+      display: block;
+    }
+    
+    .result-header {
+      color: #764ba2;
+      margin-bottom: 20px;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+    
+    .result-summary {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .summary-line {
+      margin-bottom: 8px;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+    
+    .summary-line strong {
+      color: #667eea;
+    }
+    
+    .summary-result {
+      font-size: 1.1em;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .steps-container {
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .step {
+      padding: 15px;
+      margin-bottom: 15px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .step-title {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 8px;
+      font-size: 0.95em;
+    }
+    
+    .step-content {
+      color: #555;
+      font-family: 'Courier New', monospace;
+      line-height: 1.6;
+      font-size: 0.9em;
+    }
+    
+    .vector-display {
+      display: inline-block;
+      background: #f0f0f0;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-weight: 600;
+      color: #333;
+      margin: 4px 2px;
+      font-family: 'Courier New', monospace;
+      border: 1px solid #ddd;
+    }
+    
+    .error {
+      padding: 15px;
+      margin-bottom: 15px;
+      background: #f8d7da;
+      border: 2px solid #f5c6cb;
+      border-radius: 8px;
+      color: #721c24;
+      font-weight: 500;
+    }
+    
+    .info-box {
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2196F3;
+      font-size: 0.9em;
+    }
+    
+    .info-box strong {
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📐 Vector Calculator</h1>
+    <p class="subtitle">2D & 3D Vector Operations with Step-by-Step Solutions</p>
+    
+    <div class="info-box">
+      <strong>💡 Input Format:</strong> Enter vectors as comma-separated numbers (e.g., <code>2, 3, 4</code> for 3D or <code>1, 2</code> for 2D). Points use the same format. Negative and decimal values are supported.
+    </div>
+    
+    <!-- Dimension Control -->
+    <div class="section-header">Configuration</div>
+    <div class="controls">
+      <div class="control-group">
+        <label>Vector Dimension:</label>
+        <select id="dimension" onchange="onDimensionChange()">
+          <option value="2">2D (x, y)</option>
+          <option value="3" selected>3D (x, y, z)</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Vector Inputs -->
+    <div class="section-header">Vector Inputs</div>
+    
+    <div class="vector-input-group">
+      <h4>Vectors A, B, C</h4>
+      <div class="vector-inputs">
+        <div class="vector-input-field">
+          <input type="text" id="vecA" placeholder="e.g., 1, 2, 3" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Vector <strong>A</strong></div>
+          <div class="error-message" id="vecA-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="vecB" placeholder="e.g., 4, 5, 6" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Vector <strong>B</strong></div>
+          <div class="error-message" id="vecB-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="vecC" placeholder="e.g., 7, 8, 9" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Vector <strong>C</strong></div>
+          <div class="error-message" id="vecC-error"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="vector-input-group">
+      <h4>Points P₁, P₂</h4>
+      <div class="vector-inputs">
+        <div class="vector-input-field">
+          <input type="text" id="p1" placeholder="e.g., 1, 2, 3" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Point <strong>P₁</strong></div>
+          <div class="error-message" id="p1-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="p2" placeholder="e.g., 4, 5, 6" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Point <strong>P₂</strong></div>
+          <div class="error-message" id="p2-error"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Operation Buttons -->
+    <div class="section-header">Operations</div>
+    <div class="buttons">
+      <button class="btn-operation btn-dot" onclick="calculate('dot')">• Dot Product A·B</button>
+      <button class="btn-operation btn-cross" onclick="calculate('cross')">⨯ Cross Product A×B</button>
+      <button class="btn-operation btn-norm" onclick="calculate('norm')">|| Norm |A|</button>
+      <button class="btn-operation btn-angle" onclick="calculate('angle')">∠ Angle Between</button>
+      <button class="btn-operation btn-projection" onclick="calculate('projection')">→ Projection</button>
+      <button class="btn-operation btn-triple" onclick="calculate('triple')">≋ Scalar Triple A·(B×C)</button>
+      <button class="btn-operation btn-component" onclick="calculate('component')">⃗ Vector from Points</button>
+      <button class="btn-operation btn-add" onclick="calculate('add')">+ Add/Subtract Vectors</button>
+      <button class="btn-operation btn-scalar" onclick="calculate('scalar')">× Scalar Multiply</button>
+      <button class="btn-operation btn-distance" onclick="calculate('distance')">📏 Distance P₁P₂</button>
+    </div>
+    
+    <!-- Results Section -->
+    <div class="result-section" id="resultSection">
+      <div class="result-header">Calculation Results</div>
+      <div class="result-summary" id="resultSummary"></div>
+      <div class="steps-container" id="stepsContainer"></div>
+    </div>
+  </div>
+  
+  <script>
+    const VectorModule = (() => {
+      const validateDimension = (dim) => {
+        if (![2, 3].includes(dim)) throw new Error('Dimension must be 2 or 3');
+        return dim;
+      };
+      
+      const parseVector = (input, requiredDim = null) => {
+        if (!input || typeof input !== 'string') throw new Error('Vector input must be a non-empty string');
+        
+        const trimmed = input.trim();
+        if (!trimmed) throw new Error('Vector input cannot be empty');
+        
+        const parts = trimmed.split(',').map(s => {
+          const num = parseFloat(s.trim());
+          if (isNaN(num)) throw new Error(`Invalid number: ${s.trim()}`);
+          return num;
+        });
+        
+        if (parts.length === 0) throw new Error('Vector must have at least one component');
+        
+        if (parts.length === 2 && requiredDim === 3) {
+          parts.push(0);
+        }
+        
+        if (requiredDim && parts.length !== requiredDim) {
+          throw new Error(`Expected ${requiredDim}D vector, got ${parts.length}D`);
+        }
+        
+        return parts;
+      };
+      
+      const formatVector = (vec) => {
+        return '(' + vec.map(v => {
+          if (Number.isInteger(v)) return v.toString();
+          return v.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+        }).join(', ') + ')';
+      };
+      
+      const isZeroVector = (vec) => {
+        return vec.every(v => Math.abs(v) < 1e-10);
+      };
+      
+      const vectorAddition = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        return a.map((v, i) => v + b[i]);
+      };
+      
+      const vectorSubtraction = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        return a.map((v, i) => v - b[i]);
+      };
+      
+      const scalarMultiplication = (vec, scalar) => {
+        return vec.map(v => v * scalar);
+      };
+      
+      const dotProduct = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension for dot product');
+        let sum = 0;
+        for (let i = 0; i < a.length; i++) {
+          sum += a[i] * b[i];
+        }
+        return sum;
+      };
+      
+      const crossProduct = (a, b) => {
+        if (a.length !== 3 || b.length !== 3) throw new Error('Cross product only works for 3D vectors');
+        return [
+          a[1] * b[2] - a[2] * b[1],
+          a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0]
+        ];
+      };
+      
+      const vectorNorm = (vec) => {
+        const sumSquares = vec.reduce((sum, v) => sum + v * v, 0);
+        return Math.sqrt(sumSquares);
+      };
+      
+      const angleBetween = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        
+        const normA = vectorNorm(a);
+        const normB = vectorNorm(b);
+        
+        if (normA < 1e-10 || normB < 1e-10) throw new Error('Cannot find angle with zero vector');
+        
+        const dot = dotProduct(a, b);
+        const cosTheta = dot / (normA * normB);
+        const clamped = Math.max(-1, Math.min(1, cosTheta));
+        const radians = Math.acos(clamped);
+        const degrees = radians * 180 / Math.PI;
+        
+        return { radians, degrees, cosTheta };
+      };
+      
+      const orthogonalProjection = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        
+        const dotAB = dotProduct(a, b);
+        const dotBB = dotProduct(b, b);
+        
+        if (dotBB < 1e-10) throw new Error('Cannot project onto zero vector');
+        
+        const scalar = dotAB / dotBB;
+        return scalarMultiplication(b, scalar);
+      };
+      
+      const scalarTripleProduct = (a, b, c) => {
+        if (a.length !== 3 || b.length !== 3 || c.length !== 3) {
+          throw new Error('Scalar triple product requires 3D vectors');
+        }
+        const cross = crossProduct(b, c);
+        return dotProduct(a, cross);
+      };
+      
+      const componentFromPoints = (p1, p2) => {
+        if (p1.length !== p2.length) throw new Error('Points must have same dimension');
+        return vectorSubtraction(p2, p1);
+      };
+      
+      const pointDistance = (p1, p2) => {
+        const vec = componentFromPoints(p1, p2);
+        return vectorNorm(vec);
+      };
+      
+      return {
+        validateDimension,
+        parseVector,
+        formatVector,
+        isZeroVector,
+        vectorAddition,
+        vectorSubtraction,
+        scalarMultiplication,
+        dotProduct,
+        crossProduct,
+        vectorNorm,
+        angleBetween,
+        orthogonalProjection,
+        scalarTripleProduct,
+        componentFromPoints,
+        pointDistance
+      };
+    })();
+    
+    let stepDelay = 0;
+    
+    function onDimensionChange() {
+      clearResults();
+      const dim = parseInt(document.getElementById('dimension').value);
+      updatePlaceholders(dim);
+    }
+    
+    function updatePlaceholders(dim) {
+      const placeholders = dim === 2 
+        ? { vec: 'e.g., 1, 2', point: 'e.g., 0, 0' }
+        : { vec: 'e.g., 1, 2, 3', point: 'e.g., 0, 0, 0' };
+      
+      document.getElementById('vecA').placeholder = placeholders.vec;
+      document.getElementById('vecB').placeholder = placeholders.vec;
+      document.getElementById('vecC').placeholder = placeholders.vec;
+      document.getElementById('p1').placeholder = placeholders.point;
+      document.getElementById('p2').placeholder = placeholders.point;
+    }
+    
+    function onInputChange() {
+      validateAllInputs();
+    }
+    
+    function validateAllInputs() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      const fields = ['vecA', 'vecB', 'vecC', 'p1', 'p2'];
+      let allValid = true;
+      
+      fields.forEach(fieldId => {
+        const input = document.getElementById(fieldId).value.trim();
+        const errorDiv = document.getElementById(`${fieldId}-error`);
+        
+        if (input === '') {
+          errorDiv.classList.remove('show');
+          return;
+        }
+        
+        try {
+          VectorModule.parseVector(input, dim);
+          errorDiv.classList.remove('show');
+        } catch (error) {
+          errorDiv.textContent = error.message;
+          errorDiv.classList.add('show');
+          allValid = false;
+        }
+      });
+      
+      return allValid;
+    }
+    
+    function getVectorInput(fieldId) {
+      const input = document.getElementById(fieldId).value.trim();
+      if (!input) return null;
+      const dim = parseInt(document.getElementById('dimension').value);
+      try {
+        return VectorModule.parseVector(input, dim);
+      } catch (error) {
+        throw new Error(`${fieldId.toUpperCase()}: ${error.message}`);
+      }
+    }
+    
+    function clearResults() {
+      document.getElementById('resultSection').classList.remove('show');
+      document.getElementById('resultSummary').innerHTML = '';
+      document.getElementById('stepsContainer').innerHTML = '';
+    }
+    
+    function addStep(title, content) {
+      setTimeout(() => {
+        const container = document.getElementById('stepsContainer');
+        const step = document.createElement('div');
+        step.className = 'step';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'step-title';
+        titleDiv.textContent = title;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'step-content';
+        contentDiv.innerHTML = content;
+        
+        step.appendChild(titleDiv);
+        step.appendChild(contentDiv);
+        container.appendChild(step);
+        
+        setTimeout(() => {
+          step.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 50);
+      }, stepDelay);
+      
+      stepDelay += 300;
+    }
+    
+    function showResult(title, summary, steps) {
+      stepDelay = 0;
+      clearResults();
+      
+      const resultSection = document.getElementById('resultSection');
+      const summaryDiv = document.getElementById('resultSummary');
+      
+      summaryDiv.innerHTML = `<div class="result-header">${title}</div>${summary}`;
+      resultSection.classList.add('show');
+      
+      steps.forEach(step => {
+        addStep(step.title, step.content);
+      });
+    }
+    
+    function showError(message) {
+      clearResults();
+      const resultSection = document.getElementById('resultSection');
+      const summaryDiv = document.getElementById('resultSummary');
+      
+      summaryDiv.innerHTML = `<div class="error">${message}</div>`;
+      resultSection.classList.add('show');
+    }
+    
+    function calculate(operation) {
+      try {
+        validateAllInputs();
+        
+        switch(operation) {
+          case 'dot': calculateDot(); break;
+          case 'cross': calculateCross(); break;
+          case 'norm': calculateNorm(); break;
+          case 'angle': calculateAngle(); break;
+          case 'projection': calculateProjection(); break;
+          case 'triple': calculateTriple(); break;
+          case 'component': calculateComponent(); break;
+          case 'add': calculateAdd(); break;
+          case 'scalar': calculateScalar(); break;
+          case 'distance': calculateDistance(); break;
+        }
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+    
+    function calculateDot() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.dotProduct(A, B);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Dot Product Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  A·B = ${A.map((v, i) => `${v} × ${B[i]}`).join(' + ')}`
+      });
+      
+      steps.push({
+        title: 'Step 2: Calculation',
+        content: `${A.map((v, i) => `${v} × ${B[i]} = ${v * B[i]}`).join('<br>')}
+                  <br><br>Sum: ${A.map((v, i) => v * B[i]).join(' + ')} = <strong>${result}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vectors:</strong> A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Dot Product (A · B)</div>
+        <div class="summary-result">Result: <span class="vector-display">${result}</span></div>
+      `;
+      
+      showResult('Dot Product Result', summary, steps);
+    }
+    
+    function calculateCross() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      if (dim !== 3) throw new Error('Cross product is only defined for 3D vectors');
+      
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.crossProduct(A, B);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Cross Product Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  A × B = (a₂b₃ - a₃b₂, a₃b₁ - a₁b₃, a₁b₂ - a₂b₁)`
+      });
+      
+      steps.push({
+        title: 'Step 2: Component Calculations',
+        content: `i-component: ${A[1]} × ${B[2]} - ${A[2]} × ${B[1]} = ${result[0]}<br>
+                  j-component: ${A[2]} × ${B[0]} - ${A[0]} × ${B[2]} = ${result[1]}<br>
+                  k-component: ${A[0]} × ${B[1]} - ${A[1]} × ${B[0]} = ${result[2]}`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vectors:</strong> A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Cross Product (A × B)</div>
+        <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+      `;
+      
+      showResult('Cross Product Result', summary, steps);
+    }
+    
+    function calculateNorm() {
+      const A = getVectorInput('vecA');
+      if (!A) throw new Error('Please enter vector A');
+      
+      if (VectorModule.isZeroVector(A)) throw new Error('Cannot calculate norm of zero vector');
+      
+      const result = VectorModule.vectorNorm(A);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Norm Formula',
+        content: `For vector A = ${VectorModule.formatVector(A)}<br>
+                  |A| = √(a₁² + a₂²${A.length === 3 ? ' + a₃²' : ''})`
+      });
+      
+      steps.push({
+        title: 'Step 2: Calculation',
+        content: `|A| = √(${A.map(v => `${v}²`).join(' + ')})<br>
+                  = √(${A.map(v => v * v).join(' + ')})<br>
+                  = √${A.reduce((sum, v) => sum + v * v, 0)}<br>
+                  = <strong>${result.toFixed(6)}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vector:</strong> A = ${VectorModule.formatVector(A)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Vector Norm (|A|)</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.toFixed(6)}</span></div>
+      `;
+      
+      showResult('Vector Norm Result', summary, steps);
+    }
+    
+    function calculateAngle() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.angleBetween(A, B);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Angle Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  θ = arccos(A·B / (|A| × |B|))`
+      });
+      
+      const dotAB = VectorModule.dotProduct(A, B);
+      const normA = VectorModule.vectorNorm(A);
+      const normB = VectorModule.vectorNorm(B);
+      
+      steps.push({
+        title: 'Step 2: Calculate Dot Product and Norms',
+        content: `A·B = ${dotAB.toFixed(4)}<br>
+                  |A| = ${normA.toFixed(4)}<br>
+                  |B| = ${normB.toFixed(4)}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Calculate Angle',
+        content: `cos(θ) = ${dotAB.toFixed(4)} / (${normA.toFixed(4)} × ${normB.toFixed(4)}) = ${result.cosTheta.toFixed(4)}<br>
+                  θ = arccos(${result.cosTheta.toFixed(4)})<br>
+                  θ = <strong>${result.radians.toFixed(4)} radians</strong> = <strong>${result.degrees.toFixed(2)}°</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vectors:</strong> A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Angle Between Vectors</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.degrees.toFixed(2)}° (${result.radians.toFixed(4)} rad)</span></div>
+      `;
+      
+      showResult('Angle Between Vectors', summary, steps);
+    }
+    
+    function calculateProjection() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.orthogonalProjection(A, B);
+      
+      const dotAB = VectorModule.dotProduct(A, B);
+      const dotBB = VectorModule.dotProduct(B, B);
+      const scalar = dotAB / dotBB;
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Projection Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  proj_B(A) = (A·B / B·B) × B`
+      });
+      
+      steps.push({
+        title: 'Step 2: Calculate Dot Products',
+        content: `A·B = ${dotAB.toFixed(4)}<br>
+                  B·B = ${dotBB.toFixed(4)}<br>
+                  Scalar: ${dotAB.toFixed(4)} / ${dotBB.toFixed(4)} = ${scalar.toFixed(4)}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Scalar Multiplication',
+        content: `proj_B(A) = ${scalar.toFixed(4)} × ${VectorModule.formatVector(B)}<br>
+                  = ${VectorModule.formatVector(result)}`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>
+        <div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Projection of A onto B</div>
+        <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+      `;
+      
+      showResult('Orthogonal Projection', summary, steps);
+    }
+    
+    function calculateTriple() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      if (dim !== 3) throw new Error('Scalar triple product is only defined for 3D vectors');
+      
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      const C = getVectorInput('vecC');
+      
+      if (!A || !B || !C) throw new Error('Please enter vectors A, B, and C');
+      
+      const cross = VectorModule.crossProduct(B, C);
+      const result = VectorModule.dotProduct(A, cross);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Scalar Triple Product Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}, C = ${VectorModule.formatVector(C)}<br>
+                  A·(B×C) = First calculate B×C, then dot with A`
+      });
+      
+      steps.push({
+        title: 'Step 2: Calculate Cross Product B×C',
+        content: `B×C = (${B[1]}×${C[2]} - ${B[2]}×${C[1]}, ${B[2]}×${C[0]} - ${B[0]}×${C[2]}, ${B[0]}×${C[1]} - ${B[1]}×${C[0]})<br>
+                  = ${VectorModule.formatVector(cross)}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Dot Product A·(B×C)',
+        content: `${A.map((v, i) => `${v} × ${cross[i]}`).join(' + ')}<br>
+                  = ${A.map((v, i) => v * cross[i]).join(' + ')}<br>
+                  = <strong>${result.toFixed(4)}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vectors:</strong> A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}, C = ${VectorModule.formatVector(C)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Scalar Triple Product (A·(B×C))</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.toFixed(4)}</span></div>
+      `;
+      
+      showResult('Scalar Triple Product', summary, steps);
+    }
+    
+    function calculateComponent() {
+      const P1 = getVectorInput('p1');
+      const P2 = getVectorInput('p2');
+      
+      if (!P1 || !P2) throw new Error('Please enter points P₁ and P₂');
+      
+      const result = VectorModule.componentFromPoints(P1, P2);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Vector from Points',
+        content: `For points P₁ = ${VectorModule.formatVector(P1)} and P₂ = ${VectorModule.formatVector(P2)}<br>
+                  Vector = P₂ - P₁`
+      });
+      
+      steps.push({
+        title: 'Step 2: Subtraction',
+        content: `${P2.map((v, i) => `${v} - ${P1[i]}`).join('<br>')}<br>
+                  = ${result.map(v => v).join(', ')}`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}</div>
+        <div class="summary-line"><strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Vector from P₁ to P₂</div>
+        <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+      `;
+      
+      showResult('Vector from Points', summary, steps);
+    }
+    
+    function calculateAdd() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const resultAdd = VectorModule.vectorAddition(A, B);
+      const resultSub = VectorModule.vectorSubtraction(A, B);
+      
+      const stepsAdd = [];
+      stepsAdd.push({
+        title: 'Step 1: Vector Addition',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  A + B = (${A.map((v, i) => `${v} + ${B[i]}`).join(', ')})`
+      });
+      
+      stepsAdd.push({
+        title: 'Step 2: Result',
+        content: `A + B = ${VectorModule.formatVector(resultAdd)}`
+      });
+      
+      stepsAdd.push({
+        title: 'Step 3: Vector Subtraction',
+        content: `A - B = (${A.map((v, i) => `${v} - ${B[i]}`).join(', ')})<br>
+                  = ${VectorModule.formatVector(resultSub)}`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vectors:</strong> A = ${VectorModule.formatVector(A)}, B = ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Addition:</strong> A + B = <span class="vector-display">${VectorModule.formatVector(resultAdd)}</span></div>
+        <div class="summary-line"><strong>Subtraction:</strong> A - B = <span class="vector-display">${VectorModule.formatVector(resultSub)}</span></div>
+      `;
+      
+      showResult('Vector Addition & Subtraction', summary, stepsAdd);
+    }
+    
+    function calculateScalar() {
+      const A = getVectorInput('vecA');
+      if (!A) throw new Error('Please enter vector A');
+      
+      const scalarInput = document.getElementById('vecB').value.trim();
+      if (!scalarInput) throw new Error('Please enter a scalar value in vector B field');
+      
+      let scalar;
+      try {
+        scalar = parseFloat(scalarInput);
+        if (isNaN(scalar)) throw new Error('Invalid scalar value');
+      } catch (error) {
+        throw new Error('Please enter a single number for scalar multiplication');
+      }
+      
+      const result = VectorModule.scalarMultiplication(A, scalar);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Scalar Multiplication',
+        content: `For vector A = ${VectorModule.formatVector(A)} and scalar k = ${scalar}<br>
+                  k × A = ${scalar} × ${VectorModule.formatVector(A)}`
+      });
+      
+      steps.push({
+        title: 'Step 2: Multiply Each Component',
+        content: `${A.map(v => `${scalar} × ${v} = ${scalar * v}`).join('<br>')}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Result',
+        content: `${scalar} × A = ${VectorModule.formatVector(result)}`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vector:</strong> A = ${VectorModule.formatVector(A)}</div>
+        <div class="summary-line"><strong>Scalar:</strong> k = ${scalar}</div>
+        <div class="summary-line"><strong>Operation:</strong> Scalar Multiplication</div>
+        <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+      `;
+      
+      showResult('Scalar Multiplication', summary, steps);
+    }
+    
+    function calculateDistance() {
+      const P1 = getVectorInput('p1');
+      const P2 = getVectorInput('p2');
+      
+      if (!P1 || !P2) throw new Error('Please enter points P₁ and P₂');
+      
+      const result = VectorModule.pointDistance(P1, P2);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Distance Formula',
+        content: `For points P₁ = ${VectorModule.formatVector(P1)} and P₂ = ${VectorModule.formatVector(P2)}<br>
+                  Distance = √((p₂ₓ - p₁ₓ)² + (p₂ᵧ - p₁ᵧ)²${P1.length === 3 ? ' + (p₂ᵤ - p₁ᵤ)²' : ''})`
+      });
+      
+      const vec = VectorModule.vectorSubtraction(P2, P1);
+      steps.push({
+        title: 'Step 2: Calculate Differences',
+        content: `${P2.map((v, i) => `${v} - ${P1[i]} = ${v - P1[i]}`).join('<br>')}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Square and Sum',
+        content: `√(${vec.map(v => `${v}²`).join(' + ')})<br>
+                  = √(${vec.map(v => v * v).join(' + ')})<br>
+                  = √${vec.reduce((sum, v) => sum + v * v, 0)}<br>
+                  = <strong>${result.toFixed(6)}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}</div>
+        <div class="summary-line"><strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Distance Between Points</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.toFixed(6)}</span></div>
+      `;
+      
+      showResult('Point Distance', summary, steps);
+    }
+    
+    window.addEventListener('load', () => {
+      updatePlaceholders(3);
+    });
+  </script>
+</body>
+</html>
