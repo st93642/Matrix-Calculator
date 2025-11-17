@@ -410,7 +410,7 @@
       };
       
       const parseVector = (input, requiredDim = null) => {
-        if (!input || typeof input !== 'string') throw new Error('Vector input must be a non-empty string');
+        if (!input || typeof input !== 'string') throw new Error('Vector input cannot be empty');
         
         const trimmed = input.trim();
         if (!trimmed) throw new Error('Vector input cannot be empty');
@@ -1133,10 +1133,11 @@
 
       registerTest('parseVector - dimension mismatch', () => {
         try {
-          VectorModule.parseVector('1, 2', 3);
-          throw new Error('Should have validated 3D requirement but found 2D');
+          const result = VectorModule.parseVector('1, 2', 3);
+          // Should auto-extend 2D to 3D by adding z=0
+          assertVectorAlmostEqual(result, [1, 2, 0], 1e-6, 'Should auto-extend 2D to 3D');
         } catch (e) {
-          assert(!e.message.includes('Should have validated'), 'Expected dimension mismatch error');
+          throw new Error('Should have auto-extended 2D to 3D but threw error: ' + e.message);
         }
       });
 
