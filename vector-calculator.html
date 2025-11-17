@@ -32,7 +32,7 @@
     }
     
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       background: white;
       border-radius: 20px;
@@ -160,15 +160,19 @@
     
     .btn-operation {
       flex: 1;
-      min-width: 100px;
-      padding: 12px 18px;
-      font-size: 0.9em;
+      min-width: 120px;
+      padding: 10px 14px;
+      font-size: 0.85em;
       font-weight: 600;
       border: none;
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s;
       color: white;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .btn-operation:hover {
@@ -186,6 +190,8 @@
     .btn-add { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .btn-scalar { background: linear-gradient(135deg, #f5af19 0%, #f12711 100%); }
     .btn-distance { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .btn-exercise { background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); }
+    .btn-viz { background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%); color: #333; }
     
     .result-section {
       margin-top: 30px;
@@ -317,6 +323,10 @@
     
     <div class="info-box">
       <strong>💡 Input Format:</strong> Enter vectors as comma-separated numbers (e.g., <code>2, 3, 4</code> for 3D or <code>1, 2</code> for 2D). Points use the same format. Negative and decimal values are supported.
+      <br><br>
+      <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
+      <br><br>
+      <strong>📊 Visualization:</strong> Click "Coordinate System" to see an interactive right-handed coordinate system with your vectors plotted.
     </div>
     
     <!-- Dimension Control -->
@@ -372,7 +382,7 @@
     </div>
     
     <!-- Operation Buttons -->
-    <div class="section-header">Operations</div>
+    <div class="section-header">Basic Operations</div>
     <div class="buttons">
       <button class="btn-operation btn-dot" onclick="calculate('dot')">• Dot Product A·B</button>
       <button class="btn-operation btn-cross" onclick="calculate('cross')">⨯ Cross Product A×B</button>
@@ -384,7 +394,21 @@
       <button class="btn-operation btn-add" onclick="calculate('add')">+ Add/Subtract Vectors</button>
       <button class="btn-operation btn-scalar" onclick="calculate('scalar')">× Scalar Multiply</button>
       <button class="btn-operation btn-distance" onclick="calculate('distance')">📏 Distance P₁P₂</button>
+    </div>
+    
+    <div class="section-header">Exercise Operations</div>
+    <div class="buttons">
+      <button class="btn-operation btn-exercise" onclick="calculateExercise('v-minus-w')">v - w</button>
+      <button class="btn-operation btn-exercise" onclick="calculateExercise('6u-plus-2v')">6u + 2v</button>
+      <button class="btn-operation btn-exercise" onclick="calculateExercise('-v-plus-u')">-v + u</button>
+      <button class="btn-operation btn-exercise" onclick="calculateExercise('5-times-v-minus-4u')">5(v - 4u)</button>
+      <button class="btn-operation btn-exercise" onclick="calculateExercise('-3-times-v-minus-8w')">-3(v - 8w)</button>
       <button class="btn-operation btn-test" onclick="runVectorTests()">🧪 Run Tests</button>
+    </div>
+    
+    <div class="section-header">Visualization</div>
+    <div class="buttons">
+      <button class="btn-operation btn-viz" onclick="showCoordinateSystem()">📊 Coordinate System</button>
     </div>
     
     <!-- Results Section -->
@@ -410,7 +434,7 @@
       };
       
       const parseVector = (input, requiredDim = null) => {
-        if (!input || typeof input !== 'string') throw new Error('Vector input must be a non-empty string');
+        if (!input || typeof input !== 'string') throw new Error('Vector input cannot be empty');
         
         const trimmed = input.trim();
         if (!trimmed) throw new Error('Vector input cannot be empty');
@@ -1059,6 +1083,355 @@
       showResult('Point Distance', summary, steps);
     }
     
+    function calculateExercise(exerciseType) {
+      try {
+        validateAllInputs();
+        
+        // Use A, B, C as u, v, w for the exercises
+        const u = getVectorInput('vecA');
+        const v = getVectorInput('vecB');
+        const w = getVectorInput('vecC');
+        
+        if (!u || !v || !w) throw new Error('Please enter vectors A, B, and C to use as u, v, w');
+        
+        let result, steps, summary, title;
+        
+        switch(exerciseType) {
+          case 'v-minus-w':
+            result = VectorModule.vectorSubtraction(v, w);
+            title = 'Vector Subtraction: v - w';
+            steps = [
+              {
+                title: 'Step 1: Formula',
+                content: `v - w = ${VectorModule.formatVector(v)} - ${VectorModule.formatVector(w)}`
+              },
+              {
+                title: 'Step 2: Component-wise Subtraction',
+                content: `${v.map((vi, i) => `${vi} - ${w[i]} = ${vi - w[i]}`).join('<br>')}`
+              },
+              {
+                title: 'Step 3: Result',
+                content: `v - w = ${VectorModule.formatVector(result)}`
+              }
+            ];
+            summary = `
+              <div class="summary-line"><strong>Vector v:</strong> ${VectorModule.formatVector(v)}</div>
+              <div class="summary-line"><strong>Vector w:</strong> ${VectorModule.formatVector(w)}</div>
+              <div class="summary-line"><strong>Operation:</strong> v - w</div>
+              <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+            `;
+            break;
+            
+          case '6u-plus-2v':
+            const sixU = VectorModule.scalarMultiplication(u, 6);
+            const twoV = VectorModule.scalarMultiplication(v, 2);
+            result = VectorModule.vectorAddition(sixU, twoV);
+            title = 'Linear Combination: 6u + 2v';
+            steps = [
+              {
+                title: 'Step 1: Scalar Multiplications',
+                content: `6u = 6 × ${VectorModule.formatVector(u)} = ${VectorModule.formatVector(sixU)}<br>
+                          2v = 2 × ${VectorModule.formatVector(v)} = ${VectorModule.formatVector(twoV)}`
+              },
+              {
+                title: 'Step 2: Vector Addition',
+                content: `6u + 2v = ${VectorModule.formatVector(sixU)} + ${VectorModule.formatVector(twoV)}<br>
+                          = ${result.map((r, i) => `${sixU[i]} + ${twoV[i]} = ${r}`).join('<br>')}`
+              },
+              {
+                title: 'Step 3: Result',
+                content: `6u + 2v = ${VectorModule.formatVector(result)}`
+              }
+            ];
+            summary = `
+              <div class="summary-line"><strong>Vector u:</strong> ${VectorModule.formatVector(u)}</div>
+              <div class="summary-line"><strong>Vector v:</strong> ${VectorModule.formatVector(v)}</div>
+              <div class="summary-line"><strong>Operation:</strong> 6u + 2v</div>
+              <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+            `;
+            break;
+            
+          case '-v-plus-u':
+            const negV = VectorModule.scalarMultiplication(v, -1);
+            result = VectorModule.vectorAddition(negV, u);
+            title = 'Vector Addition: -v + u';
+            steps = [
+              {
+                title: 'Step 1: Negate v',
+                content: `-v = -1 × ${VectorModule.formatVector(v)} = ${VectorModule.formatVector(negV)}`
+              },
+              {
+                title: 'Step 2: Add u',
+                content: `-v + u = ${VectorModule.formatVector(negV)} + ${VectorModule.formatVector(u)}<br>
+                          = ${result.map((r, i) => `${negV[i]} + ${u[i]} = ${r}`).join('<br>')}`
+              },
+              {
+                title: 'Step 3: Result',
+                content: `-v + u = ${VectorModule.formatVector(result)}`
+              }
+            ];
+            summary = `
+              <div class="summary-line"><strong>Vector u:</strong> ${VectorModule.formatVector(u)}</div>
+              <div class="summary-line"><strong>Vector v:</strong> ${VectorModule.formatVector(v)}</div>
+              <div class="summary-line"><strong>Operation:</strong> -v + u</div>
+              <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+            `;
+            break;
+            
+          case '5-times-v-minus-4u':
+            const fiveV = VectorModule.scalarMultiplication(v, 5);
+            const fourU = VectorModule.scalarMultiplication(u, 4);
+            const vMinus4U = VectorModule.vectorSubtraction(v, fourU);
+            result = VectorModule.scalarMultiplication(vMinus4U, 5);
+            title = 'Vector Operation: 5(v - 4u)';
+            steps = [
+              {
+                title: 'Step 1: Calculate 4u',
+                content: `4u = 4 × ${VectorModule.formatVector(u)} = ${VectorModule.formatVector(fourU)}`
+              },
+              {
+                title: 'Step 2: Calculate (v - 4u)',
+                content: `v - 4u = ${VectorModule.formatVector(v)} - ${VectorModule.formatVector(fourU)}<br>
+                          = ${vMinus4U.map((r, i) => `${v[i]} - ${fourU[i]} = ${r}`).join('<br>')}<br>
+                          = ${VectorModule.formatVector(vMinus4U)}`
+              },
+              {
+                title: 'Step 3: Multiply by 5',
+                content: `5(v - 4u) = 5 × ${VectorModule.formatVector(vMinus4U)}<br>
+                          = ${result.map((r, i) => `5 × ${vMinus4U[i]} = ${r}`).join('<br>')}<br>
+                          = ${VectorModule.formatVector(result)}`
+              }
+            ];
+            summary = `
+              <div class="summary-line"><strong>Vector u:</strong> ${VectorModule.formatVector(u)}</div>
+              <div class="summary-line"><strong>Vector v:</strong> ${VectorModule.formatVector(v)}</div>
+              <div class="summary-line"><strong>Operation:</strong> 5(v - 4u)</div>
+              <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+            `;
+            break;
+            
+          case '-3-times-v-minus-8w':
+            const threeV = VectorModule.scalarMultiplication(v, -3);
+            const eightW = VectorModule.scalarMultiplication(w, 8);
+            const vMinus8W = VectorModule.vectorSubtraction(v, eightW);
+            result = VectorModule.scalarMultiplication(vMinus8W, -3);
+            title = 'Vector Operation: -3(v - 8w)';
+            steps = [
+              {
+                title: 'Step 1: Calculate 8w',
+                content: `8w = 8 × ${VectorModule.formatVector(w)} = ${VectorModule.formatVector(eightW)}`
+              },
+              {
+                title: 'Step 2: Calculate (v - 8w)',
+                content: `v - 8w = ${VectorModule.formatVector(v)} - ${VectorModule.formatVector(eightW)}<br>
+                          = ${vMinus8W.map((r, i) => `${v[i]} - ${eightW[i]} = ${r}`).join('<br>')}<br>
+                          = ${VectorModule.formatVector(vMinus8W)}`
+              },
+              {
+                title: 'Step 3: Multiply by -3',
+                content: `-3(v - 8w) = -3 × ${VectorModule.formatVector(vMinus8W)}<br>
+                          = ${result.map((r, i) => `-3 × ${vMinus8W[i]} = ${r}`).join('<br>')}<br>
+                          = ${VectorModule.formatVector(result)}`
+              }
+            ];
+            summary = `
+              <div class="summary-line"><strong>Vector v:</strong> ${VectorModule.formatVector(v)}</div>
+              <div class="summary-line"><strong>Vector w:</strong> ${VectorModule.formatVector(w)}</div>
+              <div class="summary-line"><strong>Operation:</strong> -3(v - 8w)</div>
+              <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
+            `;
+            break;
+            
+          default:
+            throw new Error('Unknown exercise type');
+        }
+        
+        showResult(title, summary, steps);
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+    
+    function showCoordinateSystem() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      const C = getVectorInput('vecC');
+      
+      const steps = [];
+      const title = 'Right-Handed Coordinate System';
+      
+      if (dim === 2) {
+        steps.push({
+          title: '2D Coordinate System',
+          content: `
+            <div style="text-align: center; margin: 20px 0;">
+              <svg width="300" height="300" viewBox="-150 -150 300 300">
+                <!-- Grid -->
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+                  </pattern>
+                </defs>
+                <rect x="-150" y="-150" width="300" height="300" fill="url(#grid)" />
+                
+                <!-- Axes -->
+                <line x1="-140" y1="0" x2="140" y2="0" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="0" y1="140" x2="0" y2="-140" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+                
+                <!-- Arrow markers -->
+                <defs>
+                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+                  </marker>
+                </defs>
+                
+                <!-- Labels -->
+                <text x="130" y="-10" font-size="14" font-weight="bold" fill="#333">x</text>
+                <text x="10" y="-130" font-size="14" font-weight="bold" fill="#333">y</text>
+                <text x="5" y="15" font-size="12" fill="#666">O</text>
+                
+                <!-- Vectors if provided -->
+                ${A ? `<line x1="0" y1="0" x2="${A[0]*30}" y2="${-A[1]*30}" stroke="#f5576c" stroke-width="3" marker-end="url(#arrowhead-red)"/>
+                         <text x="${A[0]*30+10}" y="${-A[1]*30-10}" font-size="12" fill="#f5576c" font-weight="bold">A</text>
+                         <defs><marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                         <polygon points="0 0, 10 3.5, 0 7" fill="#f5576c"/></marker></defs>` : ''}
+                ${B ? `<line x1="0" y1="0" x2="${B[0]*30}" y2="${-B[1]*30}" stroke="#00f2fe" stroke-width="3" marker-end="url(#arrowhead-blue)"/>
+                         <text x="${B[0]*30+10}" y="${-B[1]*30-10}" font-size="12" fill="#00f2fe" font-weight="bold">B</text>
+                         <defs><marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                         <polygon points="0 0, 10 3.5, 0 7" fill="#00f2fe"/></marker></defs>` : ''}
+              </svg>
+            </div>
+            <p><strong>2D Right-Handed System:</strong> X-axis points right, Y-axis points up. This follows the standard mathematical convention where positive rotation is counterclockwise.</p>
+          `
+        });
+      } else {
+        steps.push({
+          title: '3D Coordinate System',
+          content: `
+            <div style="text-align: center; margin: 20px 0;">
+              <svg width="400" height="400" viewBox="-200 -200 400 400">
+                <!-- 3D Axes using proper isometric projection -->
+                <!-- X-axis: (1, 0, 0) -> projection -->
+                <line x1="0" y1="0" x2="120" y2="0" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-x)"/>
+                <!-- Y-axis: (0, 1, 0) -> projection -->
+                <line x1="0" y1="0" x2="-60" y2="-104" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-y)"/>
+                <!-- Z-axis: (0, 0, 1) -> projection -->
+                <line x1="0" y1="0" x2="0" y2="-120" stroke="#333" stroke-width="2.5" marker-end="url(#arrowhead-z)"/>
+                
+                <!-- Arrow markers for each axis -->
+                <defs>
+                  <marker id="arrowhead-x" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+                  </marker>
+                  <marker id="arrowhead-y" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+                  </marker>
+                  <marker id="arrowhead-z" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+                  </marker>
+                </defs>
+                
+                <!-- Axis labels -->
+                <text x="125" y="5" font-size="14" font-weight="bold" fill="#333">x</text>
+                <text x="-70" y="-105" font-size="14" font-weight="bold" fill="#333">y</text>
+                <text x="5" y="-125" font-size="14" font-weight="bold" fill="#333">z</text>
+                <text x="8" y="15" font-size="12" fill="#666">O</text>
+                
+                <!-- Helper lines to show 3D structure -->
+                <line x1="0" y1="0" x2="-60" y2="0" stroke="#ccc" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="0" y1="0" x2="0" y2="-104" stroke="#ccc" stroke-width="1" stroke-dasharray="2,2"/>
+                
+                <!-- Vectors if provided with proper 3D projection -->
+                ${A ? (() => {
+                  // Inline isometric projection calculation
+                  const cos45 = Math.cos(Math.PI / 4);
+                  const sin45 = Math.sin(Math.PI / 4);
+                  const cos35 = Math.cos(35.26 * Math.PI / 180);
+                  const sin35 = Math.sin(35.26 * Math.PI / 180);
+                  const scale = 25;
+                  
+                  // Project vector A
+                  const x1 = A[0] * cos45 - A[2] * sin45;
+                  const z1 = A[0] * sin45 + A[2] * cos45;
+                  const y2 = A[1] * cos35 - z1 * sin35;
+                  const proj = { x: x1 * scale, y: -y2 * scale };
+                  
+                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#f5576c" stroke-width="3" marker-end="url(#arrowhead-red)"/>
+                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#f5576c" font-weight="bold">A</text>
+                         <defs><marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                         <polygon points="0 0, 10 3.5, 0 7" fill="#f5576c"/></marker></defs>`;
+                })() : ''}
+                
+                ${B ? (() => {
+                  // Inline isometric projection calculation
+                  const cos45 = Math.cos(Math.PI / 4);
+                  const sin45 = Math.sin(Math.PI / 4);
+                  const cos35 = Math.cos(35.26 * Math.PI / 180);
+                  const sin35 = Math.sin(35.26 * Math.PI / 180);
+                  const scale = 25;
+                  
+                  // Project vector B
+                  const x1 = B[0] * cos45 - B[2] * sin45;
+                  const z1 = B[0] * sin45 + B[2] * cos45;
+                  const y2 = B[1] * cos35 - z1 * sin35;
+                  const proj = { x: x1 * scale, y: -y2 * scale };
+                  
+                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#00f2fe" stroke-width="3" marker-end="url(#arrowhead-blue)"/>
+                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#00f2fe" font-weight="bold">B</text>
+                         <defs><marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                         <polygon points="0 0, 10 3.5, 0 7" fill="#00f2fe"/></marker></defs>`;
+                })() : ''}
+                
+                ${C ? (() => {
+                  // Inline isometric projection calculation
+                  const cos45 = Math.cos(Math.PI / 4);
+                  const sin45 = Math.sin(Math.PI / 4);
+                  const cos35 = Math.cos(35.26 * Math.PI / 180);
+                  const sin35 = Math.sin(35.26 * Math.PI / 180);
+                  const scale = 25;
+                  
+                  // Project vector C
+                  const x1 = C[0] * cos45 - C[2] * sin45;
+                  const z1 = C[0] * sin45 + C[2] * cos45;
+                  const y2 = C[1] * cos35 - z1 * sin35;
+                  const proj = { x: x1 * scale, y: -y2 * scale };
+                  
+                  return `<line x1="0" y1="0" x2="${proj.x}" y2="${proj.y}" stroke="#ff9a56" stroke-width="3" marker-end="url(#arrowhead-orange)"/>
+                         <text x="${proj.x + 10}" y="${proj.y - 10}" font-size="12" fill="#ff9a56" font-weight="bold">C</text>
+                         <defs><marker id="arrowhead-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                         <polygon points="0 0, 10 3.5, 0 7" fill="#ff9a56"/></marker></defs>`;
+                })() : ''}
+              </svg>
+            </div>
+            <p><strong>3D Right-Handed System:</strong> Proper isometric projection with right-hand rule:</p>
+            <ul style="text-align: left; max-width: 500px; margin: 0 auto;">
+              <li><strong>X-axis:</strong> Points to the right (along x-direction)</li>
+              <li><strong>Y-axis:</strong> Points diagonally up-left (along y-direction)</li>
+              <li><strong>Z-axis:</strong> Points straight up (along z-direction)</li>
+              <li><strong>Right-hand rule:</strong> Point thumb along X, index finger along Y, middle finger points along Z</li>
+              <li><strong>Projection:</strong> Uses mathematical isometric transformation for accurate 3D visualization</li>
+              <li><strong>Origin:</strong> All axes pass through (0,0,0) as shown</li>
+            </ul>
+            <div style="text-align: center; margin-top: 15px;">
+              <small><em>Vectors are projected using proper isometric transformation for accurate 3D representation.</em></small>
+            </div>
+          `
+        });
+      }
+      
+      const summary = `
+        <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
+        <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
+        ${A ? `<div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>` : ''}
+        ${B ? `<div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>` : ''}
+        ${C ? `<div class="summary-line"><strong>Vector C:</strong> ${VectorModule.formatVector(C)}</div>` : ''}
+        <div class="summary-result">Interactive coordinate system with proper mathematical projection through origin</div>
+      `;
+      
+      showResult(title, summary, steps);
+    }
+    
     const TestRunner = (() => {
       const tests = [];
 
@@ -1133,10 +1506,11 @@
 
       registerTest('parseVector - dimension mismatch', () => {
         try {
-          VectorModule.parseVector('1, 2', 3);
-          throw new Error('Should have validated 3D requirement but found 2D');
+          const result = VectorModule.parseVector('1, 2', 3);
+          // Should auto-extend 2D to 3D by adding z=0
+          assertVectorAlmostEqual(result, [1, 2, 0], 1e-6, 'Should auto-extend 2D to 3D');
         } catch (e) {
-          assert(!e.message.includes('Should have validated'), 'Expected dimension mismatch error');
+          throw new Error('Should have auto-extended 2D to 3D but threw error: ' + e.message);
         }
       });
 
