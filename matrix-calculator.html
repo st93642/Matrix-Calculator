@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Nov 17 2025 11:03 st93642                                    -->
+<!--  Updated: Nov 17 2025 15:51 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -2378,15 +2378,26 @@
         }
         
         // Special case: numerator is a constant fraction and denominator is a single variable term
-        // e.g., (31/9) / (P) should display as 31/9P
+        // e.g., (31/9) / (P) should display as 31/9P, but (1) / (P) should display as 1/P
         if (this.numerator.isConstant() && this.denominator.terms.length === 1) {
           const numCoeff = this.numerator.terms[0].coefficient;
           const denTerm = this.denominator.terms[0];
           
           // Check if denominator has only variables (coefficient is 1)
           if (denTerm.coefficient.isOne() && Object.keys(denTerm.powers).length > 0) {
-            // Display as fraction with variables: e.g., "31/9P" or "5/2xy"
             const varPart = denTerm.toString().replace(/^1\s*/, ''); // Remove leading "1 " if present
+            
+            // If numerator is 1 (not a fraction), display as 1/P not 1P
+            if (numCoeff.num === 1 && numCoeff.den === 1) {
+              return `1/${varPart}`;
+            }
+            
+            // If numerator has denominator=1, display as e.g., "5P" not "5/1P"
+            if (numCoeff.den === 1) {
+              return numCoeff.num + varPart;
+            }
+            
+            // Otherwise display as fraction with variables: e.g., "31/9P"
             return numCoeff.toString() + varPart;
           }
           
