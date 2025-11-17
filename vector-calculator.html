@@ -1381,11 +1381,11 @@
           <div class="alert alert-info">
             <strong>📊 Opening GeoGebra Graphing Calculator</strong><br><br>
             Your vectors and points have been sent to GeoGebra for visualization:<br><br>
-            ${A ? `<strong>Vector A:</strong> ${VectorModule.formatVector(A)}<br>` : ''}
-            ${B ? `<strong>Vector B:</strong> ${VectorModule.formatVector(B)}<br>` : ''}
-            ${C ? `<strong>Vector C:</strong> ${VectorModule.formatVector(C)}<br>` : ''}
-            ${P1 ? `<strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}<br>` : ''}
-            ${P2 ? `<strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}<br>` : ''}
+            ${A ? '<strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '<br>' : ''}
+            ${B ? '<strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '<br>' : ''}
+            ${C ? '<strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '<br>' : ''}
+            ${P1 ? '<strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '<br>' : ''}
+            ${P2 ? '<strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '<br>' : ''}
             <br>
             <em>A new tab should open with coordinate system, vectors, and points plotted. If the popup is blocked, please allow popups for this site.</em>
           </div>
@@ -1396,11 +1396,11 @@
         <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
         <div class="summary-line"><strong>Elements:</strong> Coordinate System + Vectors + Points</div>
-        ${A ? `<div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>` : ''}
-        ${B ? `<div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>` : ''}
-        ${C ? `<div class="summary-line"><strong>Vector C:</strong> ${VectorModule.formatVector(C)}</div>` : ''}
-        ${P1 ? `<div class="summary-line"><strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}</div>` : ''}
-        ${P2 ? `<div class="summary-line"><strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}</div>` : ''}
+        ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
+        ${B ? '<div class="summary-line"><strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '</div>' : ''}
+        ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
+        ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
+        ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
         <div class="summary-result">Coordinate system with vectors and points plotted in external graphing calculator</div>
       `;
       
