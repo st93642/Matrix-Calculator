@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Nov 17 2025 00:44 st93642                                    -->
+<!--  Updated: Nov 17 2025 09:35 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -46,36 +46,6 @@
       color: #667eea;
       margin-bottom: 30px;
       font-size: 2.5em;
-    }
-    
-    .tabs {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #e0e0e0;
-    }
-    
-    .tab-button {
-      padding: 15px 30px;
-      background: #333333;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      color: #cccccc;
-      transition: all 0.3s;
-    }
-    
-    .tab-button.active {
-      background: white;
-      color: #667eea;
-      border-bottom-color: #667eea;
-    }
-    
-    .tab-button:hover {
-      background: #444444;
-      color: #ffffff;
     }
     
     .tab-content {
@@ -179,11 +149,7 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
     
-    .btn-add { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .btn-multiply { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .btn-transpose { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .btn-subtract { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
-    .btn-scalar { background: linear-gradient(135deg, #ffd93d 0%, #ffb142 100%); }
     .btn-determinant { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
     .btn-inverse { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
     
@@ -384,119 +350,7 @@
       line-height: 1.6;
     }
     
-    /* Vector-specific styles */
-    .vector-inputs {
-      display: flex;
-      gap: 30px;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-    }
-    
-    .vector-section {
-      flex: 1;
-      min-width: 200px;
-    }
-    
-    .vector-group {
-      background: #f8f9fa;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    
-    .vector-group h4 {
-      color: #764ba2;
-      margin-bottom: 15px;
-      font-size: 1.2em;
-    }
-    
-    .vector-input {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    
-    .vector-input label {
-      min-width: 60px;
-      font-weight: 600;
-      color: #555;
-    }
-    
-    .vector-input input {
-      flex: 1;
-      padding: 8px 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 6px;
-      font-size: 16px;
-      text-align: center;
-    }
-    
-    .vector-input input:focus {
-      border-color: #667eea;
-      outline: none;
-    }
-    
-    .vector-buttons {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 30px;
-    }
-    
-    .vector-btn {
-      flex: 1;
-      min-width: 150px;
-      padding: 15px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-      color: white;
-    }
-    
-    .btn-vector-add { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .btn-vector-add-w { background: linear-gradient(135deg, #4a5fc1 0%, #5a3d91 100%); }
-    .btn-vector-subtract { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
-    .btn-vector-subtract-w { background: linear-gradient(135deg, #d43d3d 0%, #c9302c 100%); }
-    .btn-vector-scalar { background: linear-gradient(135deg, #ffd93d 0%, #ffb142 100%); }
-    .btn-vector-scalar-w { background: linear-gradient(135deg, #e6b800 0%, #d39e00 100%); }
-    .btn-vector-norm { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .btn-vector-norm-w { background: linear-gradient(135deg, #c06bd6 0%, #d6336c 100%); }
-    .btn-vector-distance { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .btn-vector-components { background: linear-gradient(135deg, #a8e6cf 0%, #52c234 100%); }
-    
-    .vector-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-    
     .test-section {
-      margin-top: 20px;
-      text-align: center;
-    }
-    
-    .test-btn {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-    }
-    
-    .test-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
-    }
-    
-    .test-results {
       margin-top: 20px;
       padding: 20px;
       background: #f8f9fa;
@@ -546,14 +400,9 @@
 </head>
 <body>
   <div class="container">
-    <h1>🧮 Matrix & Vector Calculator</h1>
+    <h1>🧮 Matrix Calculator</h1>
     
-    <div class="tabs">
-      <button class="tab-button active" onclick="switchTab('matrix')">Matrices</button>
-      <button class="tab-button" onclick="switchTab('vector')">Vectors</button>
-    </div>
-    
-    <!-- Matrix Tab Content -->
+    <!-- Matrix Operations -->
     <div id="matrix-tab" class="tab-content active">
       <div class="controls">
         <div class="control-group">
@@ -616,10 +465,6 @@
             <option value="5x5">5×5</option>
           </select>
         </div>
-        <div class="control-group">
-          <label>Scalar:</label>
-          <input type="number" id="scalarValue" value="2" step="any" style="width: 80px;">
-        </div>
       </div>
       
       <div class="matrices-container">
@@ -634,85 +479,9 @@
       </div>
       
       <div class="buttons">
-        <button class="btn-add" onclick="calculate('add')">➕ Add A + B</button>
-        <button class="btn-subtract" onclick="calculate('subtract')">➖ Subtract A - B</button>
         <button class="btn-multiply" onclick="calculate('multiply')">✖️ Multiply A × B</button>
-        <button class="btn-scalar" onclick="calculate('scalar')">🔢 Scalar kA</button>
-        <button class="btn-transpose" onclick="calculate('transpose')">🔄 Transpose A</button>
         <button class="btn-determinant" onclick="calculate('determinant')">📊 Det(A)</button>
         <button class="btn-inverse" onclick="calculate('inverse')">🔄⁻¹ Inverse A⁻¹</button>
-      </div>
-      
-      <div class="test-section">
-        <button class="test-btn" onclick="runMatrixTests()">🧮 Run Matrix Tests</button>
-      </div>
-    </div>
-    
-    <!-- Vector Tab Content -->
-    <div id="vector-tab" class="tab-content">
-      <div class="vector-inputs">
-        <div class="vector-section">
-          <div class="vector-group">
-            <h4>Vector Operations</h4>
-            <div class="vector-input">
-              <label>Vector U:</label>
-              <input type="number" id="u1" placeholder="x" step="any">
-              <input type="number" id="u2" placeholder="y" step="any">
-              <input type="number" id="u3" placeholder="z" step="any">
-            </div>
-            <div class="vector-input">
-              <label>Vector V:</label>
-              <input type="number" id="v1" placeholder="x" step="any">
-              <input type="number" id="v2" placeholder="y" step="any">
-              <input type="number" id="v3" placeholder="z" step="any">
-            </div>
-            <div class="vector-input">
-              <label>Vector W:</label>
-              <input type="number" id="w1" placeholder="x" step="any">
-              <input type="number" id="w2" placeholder="y" step="any">
-              <input type="number" id="w3" placeholder="z" step="any">
-            </div>
-            <div class="vector-input">
-              <label>Scalar k:</label>
-              <input type="number" id="vectorScalar" value="2" step="any" style="max-width: 80px;">
-            </div>
-          </div>
-        </div>
-        
-        <div class="vector-section">
-          <div class="vector-group">
-            <h4>Point-to-Point Operations</h4>
-            <div class="vector-input">
-              <label>Point P1:</label>
-              <input type="number" id="p1x" placeholder="x" step="any">
-              <input type="number" id="p1y" placeholder="y" step="any">
-              <input type="number" id="p1z" placeholder="z" step="any">
-            </div>
-            <div class="vector-input">
-              <label>Point P2:</label>
-              <input type="number" id="p2x" placeholder="x" step="any">
-              <input type="number" id="p2y" placeholder="y" step="any">
-              <input type="number" id="p2z" placeholder="z" step="any">
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="vector-buttons">
-        <button class="vector-btn btn-vector-add" onclick="calculateVector('add')">➕ U + V</button>
-        <button class="vector-btn btn-vector-add-w" onclick="calculateVector('addW')">➕ U + W</button>
-        <button class="vector-btn btn-vector-subtract" onclick="calculateVector('subtract')">➖ U - V</button>
-        <button class="vector-btn btn-vector-subtract-w" onclick="calculateVector('subtractW')">➖ U - W</button>
-        <button class="vector-btn btn-vector-scalar" onclick="calculateVector('scalar')">🔢 kU</button>
-        <button class="vector-btn btn-vector-scalar-w" onclick="calculateVector('scalarW')">🔢 kW</button>
-        <button class="vector-btn btn-vector-norm" onclick="calculateVector('norm')">📏 ||U||</button>
-        <button class="vector-btn btn-vector-norm-w" onclick="calculateVector('normW')">📏 ||W||</button>
-        <button class="vector-btn btn-vector-distance" onclick="calculateVector('distance')">📍 Distance P1-P2</button>
-        <button class="vector-btn btn-vector-components" onclick="calculateVector('components')">→ Vector P1→P2</button>
-      </div>
-      
-      <div class="test-section">
-        <button class="test-btn" onclick="runVectorTests()">🧪 Run Vector Tests</button>
       </div>
     </div>
     
@@ -728,344 +497,7 @@
   
   <script>
     let stepDelay = 0;
-    
-    function switchTab(tabName) {
-      // Hide all tabs
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      
-      // Show selected tab
-      document.getElementById(tabName + '-tab').classList.add('active');
-      event.target.classList.add('active');
-      
-      // Hide results when switching tabs
-      document.getElementById('result').style.display = 'none';
-    }
-    
-    // Vector Functions
-    function getVector(idPrefix) {
-      return [
-        parseFloat(document.getElementById(idPrefix + '1').value) || 0,
-        parseFloat(document.getElementById(idPrefix + '2').value) || 0,
-        parseFloat(document.getElementById(idPrefix + '3').value) || 0
-      ];
-    }
-    
-    function getPoint(idPrefix) {
-      return [
-        parseFloat(document.getElementById(idPrefix + 'x').value) || 0,
-        parseFloat(document.getElementById(idPrefix + 'y').value) || 0,
-        parseFloat(document.getElementById(idPrefix + 'z').value) || 0
-      ];
-    }
-    
-    function displayVector(vector, label = '') {
-      const div = document.createElement('div');
-      div.className = 'vector-display';
-      
-      if (label) {
-        const labelSpan = document.createElement('span');
-        labelSpan.textContent = label + ' ';
-        div.appendChild(labelSpan);
-      }
-      
-      div.innerHTML += `<span class="vector-arrow">→</span> (${vector[0]}, ${vector[1]}, ${vector[2]})`;
-      return div;
-    }
-    
-    function calculateVector(operation) {
-      stepDelay = 0;
-      const resultDiv = document.getElementById('result');
-      const container = document.getElementById('processContainer');
-      
-      resultDiv.style.display = 'block';
-      container.innerHTML = '';
-      
-      try {
-        switch(operation) {
-          case 'add':
-            vectorAdd();
-            break;
-          case 'addW':
-            vectorAddW();
-            break;
-          case 'subtract':
-            vectorSubtract();
-            break;
-          case 'subtractW':
-            vectorSubtractW();
-            break;
-          case 'scalar':
-            vectorScalarMultiply();
-            break;
-          case 'scalarW':
-            vectorScalarMultiplyW();
-            break;
-          case 'norm':
-            vectorNorm();
-            break;
-          case 'normW':
-            vectorNormW();
-            break;
-          case 'distance':
-            vectorDistance();
-            break;
-          case 'components':
-            vectorComponents();
-            break;
-        }
-      } catch (error) {
-        resultContent.innerHTML = `<div class="error">${error.message}</div>`;
-      }
-    }
-    
-    function vectorAdd() {
-      const u = getVector('u');
-      const v = getVector('v');
-      
-      addStep('Vector Addition Setup', 'Adding vectors U and V component-wise');
-      
-      const result = [u[0] + v[0], u[1] + v[1], u[2] + v[2]];
-      
-      addStep('Component Addition', 
-        `U = (${u[0]}, ${u[1]}, ${u[2]})<br>V = (${v[0]}, ${v[1]}, ${v[2]})<br><br>` +
-        `U + V = (${u[0]} + ${v[0]}, ${u[1]} + ${v[1]}, ${u[2]} + ${v[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, 'U + V'));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Addition Theory', 
-            'Vector addition is performed component-wise: (u₁ + v₁, u₂ + v₂, u₃ + v₃). This operation follows the parallelogram law - the sum of two vectors is the diagonal of the parallelogram formed by the vectors. Vector addition is commutative (U + V = V + U) and associative ((U + V) + W = U + (V + W)).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorSubtract() {
-      const u = getVector('u');
-      const v = getVector('v');
-      
-      addStep('Vector Subtraction Setup', 'Subtracting vector V from vector U component-wise');
-      
-      const result = [u[0] - v[0], u[1] - v[1], u[2] - v[2]];
-      
-      addStep('Component Subtraction', 
-        `U = (${u[0]}, ${u[1]}, ${u[2]})<br>V = (${v[0]}, ${v[1]}, ${v[2]})<br><br>` +
-        `U - V = (${u[0]} - ${v[0]}, ${u[1]} - ${v[1]}, ${u[2]} - ${v[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, 'U - V'));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Subtraction Theory', 
-            'Vector subtraction is performed component-wise: (u₁ - v₁, u₂ - v₂, u₃ - v₃). Geometrically, U - V gives the vector from the tip of V to the tip of U. Vector subtraction is not commutative (U - V ≠ V - U).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorScalarMultiply() {
-      const u = getVector('u');
-      const k = parseFloat(document.getElementById('vectorScalar').value) || 0;
-      
-      addStep('Scalar Multiplication Setup', `Multiplying vector U by scalar ${k}`);
-      
-      const result = [k * u[0], k * u[1], k * u[2]];
-      
-      addStep('Component Multiplication', 
-        `k = ${k}<br>U = (${u[0]}, ${u[1]}, ${u[2]})<br><br>` +
-        `kU = (${k} × ${u[0]}, ${k} × ${u[1]}, ${k} × ${u[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, `${k}U`));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Scalar Multiplication Theory', 
-            'Scalar multiplication multiplies each component by the scalar: (k × u₁, k × u₂, k × u₃). If k > 1, the vector is stretched; if 0 < k < 1, it\'s compressed; if k < 0, the direction is reversed. Properties include: k(U + V) = kU + kV, (k + m)U = kU + mU, and (km)U = k(mU).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorNorm() {
-      const u = getVector('u');
-      
-      addStep('Vector Norm (Magnitude) Setup', 'Calculating the Euclidean norm of vector U');
-      
-      const norm = Math.sqrt(u[0]*u[0] + u[1]*u[1] + u[2]*u[2]);
-      
-      addStep('Norm Calculation', 
-        `U = (${u[0]}, ${u[1]}, ${u[2]})<br><br>` +
-        `||U|| = √(${u[0]}² + ${u[1]}² + ${u[2]}²) = √(${u[0]*u[0]} + ${u[1]*u[1]} + ${u[2]*u[2]}) = √(${u[0]*u[0] + u[1]*u[1] + u[2]*u[2]}) = ${norm.toFixed(3)}`,
-        1500
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').innerHTML = 
-          `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||U|| = ${norm.toFixed(3)}</div>`;
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Norm Theory', 
-            'The Euclidean norm (magnitude) measures the length of a vector: ||U|| = √(u₁² + u₂² + u₃²). A unit vector has norm 1. The norm satisfies the triangle inequality: ||U + V|| ≤ ||U|| + ||V||. Zero vector has norm 0. The norm is always non-negative.');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorDistance() {
-      const p1 = getPoint('p1');
-      const p2 = getPoint('p2');
-      
-      addStep('Distance Between Points Setup', 'Calculating Euclidean distance between points P1 and P2');
-      
-      const diff = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
-      const distance = Math.sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
-      
-      addStep('Distance Calculation', 
-        `P1 = (${p1[0]}, ${p1[1]}, ${p1[2]})<br>P2 = (${p2[0]}, ${p2[1]}, ${p2[2]})<br><br>` +
-        `Vector P1→P2 = (${diff[0]}, ${diff[1]}, ${diff[2]})<br>` +
-        `Distance = ||P2 - P1|| = √((${diff[0]})² + (${diff[1]})² + (${diff[2]})²) = √(${diff[0]*diff[0]} + ${diff[1]*diff[1]} + ${diff[2]*diff[2]}) = √(${diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]}) = ${distance.toFixed(3)}`,
-        1500
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').innerHTML = 
-          `<div style="font-size: 24px; font-weight: 600; color: #667eea;">Distance = ${distance.toFixed(3)}</div>`;
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Distance Between Points Theory', 
-            'The Euclidean distance between points P1 and P2 is ||P2 - P1|| = √((x₂-x₁)² + (y₂-y₁)² + (z₂-z₁)²). This is the straight-line distance in 3D space. Distance is always non-negative and symmetric (distance P1→P2 = distance P2→P1).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorComponents() {
-      const p1 = getPoint('p1');
-      const p2 = getPoint('p2');
-      
-      addStep('Vector Components Setup', 'Finding the vector from point P1 to point P2');
-      
-      const components = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
-      
-      addStep('Component Calculation', 
-        `P1 = (${p1[0]}, ${p1[1]}, ${p1[2]})<br>P2 = (${p2[0]}, ${p2[1]}, ${p2[2]})<br><br>` +
-        `Vector P1→P2 = P2 - P1 = (${p2[0]} - ${p1[0]}, ${p2[1]} - ${p1[1]}, ${p2[2]} - ${p1[2]}) = (${components[0]}, ${components[1]}, ${components[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(components, 'P1→P2'));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Components Theory', 
-            'The vector from point P1 to P2 has components (x₂-x₁, y₂-y₁, z₂-z₁). This represents the displacement vector. The initial point P1 is the "tail" and terminal point P2 is the "head" of the vector. Vector components determine both magnitude and direction in 3D space.');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorAddW() {
-      const u = getVector('u');
-      const w = getVector('w');
-      
-      addStep('Vector Addition Setup', 'Adding vectors U and W component-wise');
-      
-      const result = [u[0] + w[0], u[1] + w[1], u[2] + w[2]];
-      
-      addStep('Component Addition', 
-        `U = (${u[0]}, ${u[1]}, ${u[2]})<br>W = (${w[0]}, ${w[1]}, ${w[2]})<br><br>` +
-        `U + W = (${u[0]} + ${w[0]}, ${u[1]} + ${w[1]}, ${u[2]} + ${w[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, 'U + W'));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Addition Theory', 
-            'Vector addition is performed component-wise: (u₁ + w₁, u₂ + w₂, u₃ + w₃). This operation follows the parallelogram law - the sum of two vectors is the diagonal of the parallelogram formed by the vectors. Vector addition is commutative (U + W = W + U) and associative ((U + W) + V = U + (W + V)).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorSubtractW() {
-      const u = getVector('u');
-      const w = getVector('w');
-      
-      addStep('Vector Subtraction Setup', 'Subtracting vector W from vector U component-wise');
-      
-      const result = [u[0] - w[0], u[1] - w[1], u[2] - w[2]];
-      
-      addStep('Component Subtraction', 
-        `U = (${u[0]}, ${u[1]}, ${u[2]})<br>W = (${w[0]}, ${w[1]}, ${w[2]})<br><br>` +
-        `U - W = (${u[0]} - ${w[0]}, ${u[1]} - ${w[1]}, ${u[2]} - ${w[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, 'U - W'));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Subtraction Theory', 
-            'Vector subtraction is performed component-wise: (u₁ - w₁, u₂ - w₂, u₃ - w₃). Geometrically, U - W gives the vector from the tip of W to the tip of U. Vector subtraction is not commutative (U - W ≠ W - U).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorScalarMultiplyW() {
-      const w = getVector('w');
-      const k = parseFloat(document.getElementById('vectorScalar').value) || 0;
-      
-      addStep('Scalar Multiplication Setup', `Multiplying vector W by scalar ${k}`);
-      
-      const result = [k * w[0], k * w[1], k * w[2]];
-      
-      addStep('Component Multiplication', 
-        `k = ${k}<br>W = (${w[0]}, ${w[1]}, ${w[2]})<br><br>` +
-        `kW = (${k} × ${w[0]}, ${k} × ${w[1]}, ${k} × ${w[2]}) = (${result[0]}, ${result[1]}, ${result[2]})`,
-        1000
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').appendChild(displayVector(result, `${k}W`));
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Scalar Multiplication Theory', 
-            'Scalar multiplication multiplies each component by the scalar: (k × w₁, k × w₂, k × w₃). If k > 1, the vector is stretched; if 0 < k < 1, it\'s compressed; if k < 0, the direction is reversed. Properties include: k(W + U) = kW + kU, (k + m)W = kW + mW, and (km)W = k(mW).');
-        }, 500);
-      }, stepDelay);
-    }
-    
-    function vectorNormW() {
-      const w = getVector('w');
-      
-      addStep('Vector Norm (Magnitude) Setup', 'Calculating the Euclidean norm of vector W');
-      
-      const norm = Math.sqrt(w[0]*w[0] + w[1]*w[1] + w[2]*w[2]);
-      
-      addStep('Norm Calculation', 
-        `W = (${w[0]}, ${w[1]}, ${w[2]})<br><br>` +
-        `||W|| = √(${w[0]}² + ${w[1]}² + ${w[2]}²) = √(${w[0]*w[0]} + ${w[1]*w[1]} + ${w[2]*w[2]}) = √(${w[0]*w[0] + w[1]*w[1] + w[2]*w[2]}) = ${norm.toFixed(3)}`,
-        1500
-      );
-      
-      setTimeout(() => {
-        document.getElementById('processContainer').innerHTML = 
-          `<div style="font-size: 24px; font-weight: 600; color: #667eea;">||W|| = ${norm.toFixed(3)}</div>`;
-        
-        setTimeout(() => {
-          addTheoreticalExplanation('Vector Norm Theory', 
-            'The Euclidean norm (magnitude) measures the length of a vector: ||W|| = √(w₁² + w₂² + w₃²). A unit vector has norm 1. The norm satisfies the triangle inequality: ||W + U|| ≤ ||W|| + ||U||. Zero vector has norm 0. The norm is always non-negative.');
-        }, 500);
-      }, stepDelay);
-    }
-    
+
     function updateMatrices() {
       const sizeA = document.getElementById('sizeA').value.split('x');
       const sizeB = document.getElementById('sizeB').value.split('x');
@@ -1279,20 +711,8 @@
       
       try {
         switch(operation) {
-          case 'add':
-            addMatrices(matrixA, matrixB);
-            break;
-          case 'subtract':
-            subtractMatrices(matrixA, matrixB);
-            break;
           case 'multiply':
             multiplyMatrices(matrixA, matrixB);
-            break;
-          case 'scalar':
-            scalarMultiply(matrixA);
-            break;
-          case 'transpose':
-            transposeMatrix(matrixA);
             break;
           case 'determinant':
             calculateDeterminant(matrixA);
@@ -1302,93 +722,8 @@
             break;
         }
       } catch (error) {
-        resultContent.innerHTML = `<div class="error">${error.message}</div>`;
+        container.innerHTML = `<div class="error">${error.message}</div>`;
       }
-    }
-    
-    function addMatrices(A, B) {
-      const result = addMatricesCalc(A, B);
-      
-      addStep('Step 1: Matrix Addition', 'Adding corresponding elements from Matrix A and Matrix B', 750);
-      
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < A[0].length; j++) {
-          addStep(
-            `Element [${i+1},${j+1}]`,
-            `A[${i+1},${j+1}] + B[${i+1},${j+1}] = ${A[i][j]} + ${B[i][j]} = ${result[i][j]}`,
-            450
-          );
-        }
-      }
-      
-      setTimeout(() => {
-        addVisualElement(displayMatrix(result, 'Result: A + B'));
-        
-        // Add theoretical explanation
-        setTimeout(() => {
-          addTheoreticalExplanation('Matrix Addition Theory', 
-            'Matrix addition is performed element-wise, where each element of the result matrix C is the sum of the corresponding elements from matrices A and B: Cᵢⱼ = Aᵢⱼ + Bᵢⱼ. This operation requires both matrices to have identical dimensions (same number of rows and columns). Matrix addition is commutative (A + B = B + A) and associative ((A + B) + C = A + (B + C)).');
-        }, 750);
-      }, stepDelay);
-      
-      return result;
-    }
-    
-    function subtractMatrices(A, B) {
-      const result = subtractMatricesCalc(A, B);
-      
-      addStep('Step 1: Matrix Subtraction', 'Subtracting corresponding elements from Matrix B from Matrix A', 750);
-      
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < A[0].length; j++) {
-          addStep(
-            `Element [${i+1},${j+1}]`,
-            `A[${i+1},${j+1}] - B[${i+1},${j+1}] = ${A[i][j]} - ${B[i][j]} = ${result[i][j]}`,
-            450
-          );
-        }
-      }
-      
-      setTimeout(() => {
-        addVisualElement(displayMatrix(result, 'Result: A - B'));
-        
-        // Add theoretical explanation
-        setTimeout(() => {
-          addTheoreticalExplanation('Matrix Subtraction Theory', 
-            'Matrix subtraction is performed element-wise, where each element of the result matrix C is the difference of the corresponding elements from matrices A and B: Cᵢⱼ = Aᵢⱼ - Bᵢⱼ. This operation requires both matrices to have identical dimensions (same number of rows and columns). Matrix subtraction is not commutative (A - B ≠ B - A).');
-        }, 750);
-      }, stepDelay);
-      
-      return result;
-    }
-    
-    function scalarMultiply(A) {
-      const scalar = parseFloat(document.getElementById('scalarValue').value) || 0;
-      const result = scalarMultiplyCalc(A, scalar);
-      
-      addStep('Step 1: Scalar Multiplication', `Multiplying matrix A by scalar ${scalar}`, 750);
-      
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < A[0].length; j++) {
-          addStep(
-            `Element [${i+1},${j+1}]`,
-            `${scalar} × A[${i+1},${j+1}] = ${scalar} × ${A[i][j]} = ${result[i][j]}`,
-            450
-          );
-        }
-      }
-      
-      setTimeout(() => {
-        addVisualElement(displayMatrix(result, `Result: ${scalar}A`));
-        
-        // Add theoretical explanation
-        setTimeout(() => {
-          addTheoreticalExplanation('Scalar Multiplication Theory', 
-            'Scalar multiplication multiplies each element of the matrix by a scalar value k: (kA)ᵢⱼ = k × Aᵢⱼ. This operation changes the scale of the matrix while preserving its structure. Properties include: k(A + B) = kA + kB, (k + m)A = kA + mA, and (km)A = k(mA). Scalar multiplication is used in transformations, scaling, and solving linear equations.');
-        }, 750);
-      }, stepDelay);
-      
-      return result;
     }
     
     function multiplyMatrices(A, B) {
@@ -1461,57 +796,6 @@
         setTimeout(() => {
           addTheoreticalExplanation('Matrix Multiplication Theory', 
             'Matrix multiplication combines rows from the first matrix with columns from the second matrix using dot products. For element Cᵢⱼ, take row i from matrix A and column j from matrix B, multiply corresponding elements, and sum the results. The inner dimensions must match (columns of A = rows of B). Result dimensions are (rows of A) × (columns of B). Matrix multiplication is not commutative (A × B ≠ B × A in general).');
-        }, 750);
-      }, stepDelay + 1500);
-      
-      return result;
-    }
-    
-    function transposeMatrix(A) {
-      const result = transposeMatrixCalc(A);
-      
-      addStep('Step 1: Matrix Transpose Setup', `Transposing ${A.length}×${A[0].length} matrix to ${A[0].length}×${A.length} matrix`, 750);
-      
-      // Create visual transpose display - synchronized with first step
-      setTimeout(() => {
-        const visualDiv = document.createElement('div');
-        visualDiv.className = 'visual-calculation';
-        visualDiv.innerHTML = `
-          <div id="original-matrix">${displayMatrix(A, 'Original A').outerHTML}</div>
-          <div class="calc-arrow">→</div>
-          <div id="transpose-result">${displayMatrix(result, 'Transposed Aᵀ').outerHTML}</div>
-        `;
-        addVisualElement(visualDiv);
-      }, stepDelay);
-      
-      for (let i = 0; i < A.length; i++) {
-        for (let j = 0; j < A[0].length; j++) {
-          // Animate the element movement
-          setTimeout(() => {
-            highlightCell('original-matrix', i, j);
-            highlightCell('transpose-result', j, i);
-          }, stepDelay);
-          
-          addStep(
-            `Element Movement`,
-            `A[${i+1},${j+1}] = ${A[i][j]} → Aᵀ[${j+1},${i+1}] = ${A[i][j]}`,
-            900
-          );
-          
-          // Update the result matrix
-          setTimeout(() => {
-            updateResultCell('transpose-result', j, i, A[i][j]);
-          }, stepDelay + 450);
-        }
-      }
-      
-      setTimeout(() => {
-        addVisualElement(displayMatrix(result, 'Final Result: Aᵀ'));
-        
-        // Add theoretical explanation
-        setTimeout(() => {
-          addTheoreticalExplanation('Matrix Transpose Theory', 
-            'Matrix transpose swaps rows with columns: element Aᵢⱼ becomes Aᵀⱼᵢ. A matrix of size m×n becomes n×m. Transpose has several important properties: (Aᵀ)ᵀ = A, (A + B)ᵀ = Aᵀ + Bᵀ, and (A × B)ᵀ = Bᵀ × Aᵀ. Transpose is used in solving linear systems, finding orthogonal matrices, and many other applications in linear algebra.');
         }, 750);
       }, stepDelay + 1500);
       
@@ -2261,35 +1545,7 @@
     }
     
     // Pure calculation functions (no UI)
-    function addMatricesCalc(A, B) {
-      if (A.length !== B.length || A[0].length !== B[0].length) {
-        throw new Error('Matrices must have the same dimensions for addition');
-      }
-      
-      const result = [];
-      for (let i = 0; i < A.length; i++) {
-        result[i] = [];
-        for (let j = 0; j < A[0].length; j++) {
-          result[i][j] = A[i][j] + B[i][j];
-        }
-      }
-      return result;
-    }
-    
-    function subtractMatricesCalc(A, B) {
-      if (A.length !== B.length || A[0].length !== B[0].length) {
-        throw new Error('Matrices must have the same dimensions for subtraction');
-      }
-      
-      const result = [];
-      for (let i = 0; i < A.length; i++) {
-        result[i] = [];
-        for (let j = 0; j < A[0].length; j++) {
-          result[i][j] = A[i][j] - B[i][j];
-        }
-      }
-      return result;
-    }
+
     
     function multiplyMatricesCalc(A, B) {
       const rowsA = A.length;
@@ -2311,28 +1567,8 @@
       }
       return result;
     }
-    
-    function scalarMultiplyCalc(A, scalar) {
-      const result = [];
-      for (let i = 0; i < A.length; i++) {
-        result[i] = [];
-        for (let j = 0; j < A[0].length; j++) {
-          result[i][j] = scalar * A[i][j];
-        }
-      }
-      return result;
-    }
-    
-    function transposeMatrixCalc(A) {
-      const result = [];
-      for (let i = 0; i < A[0].length; i++) {
-        result[i] = [];
-        for (let j = 0; j < A.length; j++) {
-          result[i][j] = A[j][i];
-        }
-      }
-      return result;
-    }
+
+
     
     // Fraction class for exact arithmetic
     class Fraction {
@@ -2557,329 +1793,7 @@
       return inverse;
     }
     
-    function runVectorTests() {
-      const resultDiv = document.getElementById('result');
-      const container = document.getElementById('processContainer');
-      
-      resultDiv.style.display = 'block';
-      container.innerHTML = '';
-      
-      const testResults = [];
-      
-      // Test Vector Addition
-      testResults.push(testVectorAddition());
-      
-      // Test Vector Addition with W
-      testResults.push(testVectorAdditionW());
-      
-      // Test Vector Subtraction
-      testResults.push(testVectorSubtraction());
-      
-      // Test Vector Subtraction with W
-      testResults.push(testVectorSubtractionW());
-      
-      // Test Scalar Multiplication
-      testResults.push(testScalarMultiplication());
-      
-      // Test Scalar Multiplication with W
-      testResults.push(testScalarMultiplicationW());
-      
-      // Test Vector Norm
-      testResults.push(testVectorNorm());
-      
-      // Test Vector Norm with W
-      testResults.push(testVectorNormW());
-      
-      // Test Distance Calculation
-      testResults.push(testDistanceCalculation());
-      
-      // Test Vector Components
-      testResults.push(testVectorComponents());
-      
-      // Display results
-      displayTestResults(testResults);
-    }
-    
-    function testVectorAddition() {
-      // Set test inputs
-      document.getElementById('u1').value = '3';
-      document.getElementById('u2').value = '4';
-      document.getElementById('u3').value = '5';
-      document.getElementById('v1').value = '1';
-      document.getElementById('v2').value = '2';
-      document.getElementById('v3').value = '3';
-      
-      const u = getVector('u');
-      const v = getVector('v');
-      const expected = [4, 6, 8]; // 3+1, 4+2, 5+3
-      const result = [u[0] + v[0], u[1] + v[1], u[2] + v[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Vector Addition (3,4,5) + (1,2,3)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorSubtraction() {
-      // Set test inputs
-      document.getElementById('u1').value = '5';
-      document.getElementById('u2').value = '7';
-      document.getElementById('u3').value = '9';
-      document.getElementById('v1').value = '2';
-      document.getElementById('v2').value = '3';
-      document.getElementById('v3').value = '4';
-      
-      const u = getVector('u');
-      const v = getVector('v');
-      const expected = [3, 4, 5]; // 5-2, 7-3, 9-4
-      const result = [u[0] - v[0], u[1] - v[1], u[2] - v[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Vector Subtraction (5,7,9) - (2,3,4)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testScalarMultiplication() {
-      // Set test inputs
-      document.getElementById('u1').value = '2';
-      document.getElementById('u2').value = '3';
-      document.getElementById('u3').value = '4';
-      document.getElementById('vectorScalar').value = '3';
-      
-      const u = getVector('u');
-      const k = parseFloat(document.getElementById('vectorScalar').value);
-      const expected = [6, 9, 12]; // 2*3, 3*3, 4*3
-      const result = [k * u[0], k * u[1], k * u[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Scalar Multiplication 3 × (2,3,4)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorNorm() {
-      // Set test inputs
-      document.getElementById('u1').value = '3';
-      document.getElementById('u2').value = '4';
-      document.getElementById('u3').value = '0';
-      
-      const u = getVector('u');
-      const expected = 5; // √(3² + 4² + 0²) = √(9 + 16) = √25 = 5
-      const result = Math.sqrt(u[0]*u[0] + u[1]*u[1] + u[2]*u[2]);
-      
-      const passed = Math.abs(result - expected) < 0.001;
-      return {
-        name: 'Vector Norm ||(3,4,0)||',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testDistanceCalculation() {
-      // Set test inputs
-      document.getElementById('p1x').value = '0';
-      document.getElementById('p1y').value = '0';
-      document.getElementById('p1z').value = '0';
-      document.getElementById('p2x').value = '3';
-      document.getElementById('p2y').value = '4';
-      document.getElementById('p2z').value = '0';
-      
-      const p1 = getPoint('p1');
-      const p2 = getPoint('p2');
-      const diff = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
-      const expected = 5; // √((3-0)² + (4-0)² + (0-0)²) = √(9 + 16) = √25 = 5
-      const result = Math.sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
-      
-      const passed = Math.abs(result - expected) < 0.001;
-      return {
-        name: 'Distance between (0,0,0) and (3,4,0)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorComponents() {
-      // Set test inputs
-      document.getElementById('p1x').value = '1';
-      document.getElementById('p1y').value = '2';
-      document.getElementById('p1z').value = '3';
-      document.getElementById('p2x').value = '4';
-      document.getElementById('p2y').value = '6';
-      document.getElementById('p2z').value = '8';
-      
-      const p1 = getPoint('p1');
-      const p2 = getPoint('p2');
-      const expected = [3, 4, 5]; // 4-1, 6-2, 8-3
-      const result = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Vector Components (1,2,3) → (4,6,8)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorAdditionW() {
-      // Set test inputs
-      document.getElementById('u1').value = '1';
-      document.getElementById('u2').value = '2';
-      document.getElementById('u3').value = '3';
-      document.getElementById('w1').value = '4';
-      document.getElementById('w2').value = '5';
-      document.getElementById('w3').value = '6';
-      
-      const u = getVector('u');
-      const w = getVector('w');
-      const expected = [5, 7, 9]; // 1+4, 2+5, 3+6
-      const result = [u[0] + w[0], u[1] + w[1], u[2] + w[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Vector Addition W (1,2,3) + (4,5,6)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorSubtractionW() {
-      // Set test inputs
-      document.getElementById('u1').value = '7';
-      document.getElementById('u2').value = '8';
-      document.getElementById('u3').value = '9';
-      document.getElementById('w1').value = '2';
-      document.getElementById('w2').value = '3';
-      document.getElementById('w3').value = '4';
-      
-      const u = getVector('u');
-      const w = getVector('w');
-      const expected = [5, 5, 5]; // 7-2, 8-3, 9-4
-      const result = [u[0] - w[0], u[1] - w[1], u[2] - w[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Vector Subtraction W (7,8,9) - (2,3,4)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testScalarMultiplicationW() {
-      // Set test inputs
-      document.getElementById('w1').value = '2';
-      document.getElementById('w2').value = '4';
-      document.getElementById('w3').value = '6';
-      document.getElementById('vectorScalar').value = '2';
-      
-      const w = getVector('w');
-      const k = parseFloat(document.getElementById('vectorScalar').value);
-      const expected = [4, 8, 12]; // 2*2, 4*2, 6*2
-      const result = [k * w[0], k * w[1], k * w[2]];
-      
-      const passed = arraysEqual(result, expected);
-      return {
-        name: 'Scalar Multiplication W 2 × (2,4,6)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testVectorNormW() {
-      // Set test inputs
-      document.getElementById('w1').value = '6';
-      document.getElementById('w2').value = '8';
-      document.getElementById('w3').value = '0';
-      
-      const w = getVector('w');
-      const expected = 10; // √(6² + 8² + 0²) = √(36 + 64) = √100 = 10
-      const result = Math.sqrt(w[0]*w[0] + w[1]*w[1] + w[2]*w[2]);
-      
-      const passed = Math.abs(result - expected) < 0.001;
-      return {
-        name: 'Vector Norm W ||(6,8,0)||',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function arraysEqual(a, b) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (Math.abs(a[i] - b[i]) > 0.001) return false;
-      }
-      return true;
-    }
-    
-    function displayTestResults(results) {
-      const container = document.getElementById('processContainer');
-      
-      const resultsDiv = document.createElement('div');
-      resultsDiv.className = 'test-results';
-      
-      const header = document.createElement('h3');
-      header.textContent = 'Vector Operation Tests';
-      header.style.color = '#28a745';
-      header.style.marginBottom = '20px';
-      resultsDiv.appendChild(header);
-      
-      let passedCount = 0;
-      results.forEach(result => {
-        if (result.passed) passedCount++;
-        
-        const testDiv = document.createElement('div');
-        testDiv.className = `test-result ${result.passed ? 'test-pass' : 'test-fail'}`;
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'test-name';
-        nameSpan.textContent = result.name;
-        
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'test-status';
-        statusSpan.textContent = result.passed ? 'PASS' : 'FAIL';
-        
-        testDiv.appendChild(nameSpan);
-        testDiv.appendChild(statusSpan);
-        
-        if (!result.passed) {
-          const detailsDiv = document.createElement('div');
-          detailsDiv.style.marginTop = '8px';
-          detailsDiv.style.fontSize = '14px';
-          detailsDiv.innerHTML = `Expected: [${result.expected.join(', ')}]<br>Actual: [${Array.isArray(result.actual) ? result.actual.map(x => typeof x === 'number' ? x.toFixed(3) : x).join(', ') : result.actual.toFixed(3)}]`;
-          testDiv.appendChild(detailsDiv);
-        }
-        
-        resultsDiv.appendChild(testDiv);
-      });
-      
-      const summaryDiv = document.createElement('div');
-      summaryDiv.style.marginTop = '20px';
-      summaryDiv.style.padding = '15px';
-      summaryDiv.style.background = passedCount === results.length ? '#d4edda' : '#f8d7da';
-      summaryDiv.style.borderRadius = '8px';
-      summaryDiv.style.textAlign = 'center';
-      summaryDiv.style.fontWeight = '600';
-      summaryDiv.innerHTML = `Tests Passed: ${passedCount}/${results.length}`;
-      resultsDiv.appendChild(summaryDiv);
-      
-      container.appendChild(resultsDiv);
-    }
+
     
     // Matrix Test Functions
     function runMatrixTests() {
@@ -2891,29 +1805,10 @@
       
       const testResults = [];
       
-      // Matrix Addition Tests
-      testResults.push(testMatrixAddition2x2());
-      testResults.push(testMatrixAddition3x3());
-      testResults.push(testMatrixAdditionCommutativity());
-      
-      // Matrix Subtraction Tests
-      testResults.push(testMatrixSubtraction2x2());
-      testResults.push(testMatrixSubtraction3x3());
-      
-      // Scalar Multiplication Tests
-      testResults.push(testScalarMultiplication2x2());
-      testResults.push(testScalarMultiplication3x3());
-      testResults.push(testScalarDistributivity());
-      
       // Matrix Multiplication Tests
       testResults.push(testMatrixMultiplication2x2());
       testResults.push(testMatrixMultiplication2x3_3x2());
       testResults.push(testMatrixMultiplicationIdentity());
-      
-      // Matrix Transpose Tests
-      testResults.push(testMatrixTranspose2x3());
-      testResults.push(testMatrixTransposeDouble());
-      testResults.push(testMatrixTransposeSum());
       
       // Determinant Tests
       testResults.push(testDeterminant2x2());
@@ -2928,117 +1823,14 @@
       // Display results
       displayMatrixTestResults(testResults);
     }
-    
-    function testMatrixAddition2x2() {
-      const A = [[1, 2], [3, 4]];
-      const B = [[5, 6], [7, 8]];
-      const result = addMatricesCalc(A, B);
-      const expected = [[6, 8], [10, 12]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Matrix Addition 2x2 + 2x2',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testMatrixAddition3x3() {
-      const A = [[1, 0, 2], [3, 2, 1], [4, 0, 3]];
-      const B = [[1, 1, 3], [4, 2, 1], [3, 2, 0]];
-      const result = addMatricesCalc(A, B);
-      const expected = [[2, 1, 5], [7, 4, 2], [7, 2, 3]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Matrix Addition 3x3 + 3x3',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testMatrixAdditionCommutativity() {
-      const A = [[1, 2], [3, 4]];
-      const B = [[5, 6], [7, 8]];
-      const AB = addMatricesCalc(A, B);
-      const BA = addMatricesCalc(B, A);
-      const passed = matricesEqual(AB, BA);
-      return {
-        name: 'Matrix Addition Commutativity: A + B = B + A',
-        passed: passed,
-        expected: 'Equal matrices',
-        actual: passed ? 'Equal' : 'Not equal'
-      };
-    }
-    
-    function testMatrixSubtraction2x2() {
-      const A = [[5, 6], [7, 8]];
-      const B = [[1, 2], [3, 4]];
-      const result = subtractMatricesCalc(A, B);
-      const expected = [[4, 4], [4, 4]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Matrix Subtraction 2x2 - 2x2',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testMatrixSubtraction3x3() {
-      const A = [[1, 0, 2], [3, 2, 1], [4, 0, 3]];
-      const B = [[1, 1, 3], [4, 2, 1], [3, 2, 0]];
-      const result = subtractMatricesCalc(A, B);
-      const expected = [[0, -1, -1], [-1, 0, 0], [1, -2, 3]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Matrix Subtraction 3x3 - 3x3',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testScalarMultiplication2x2() {
-      const A = [[1, 2], [3, 4]];
-      const result = scalarMultiplyCalc(A, 3);
-      const expected = [[3, 6], [9, 12]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Scalar Multiplication 2x2 × 3',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testScalarMultiplication3x3() {
-      const A = [[1, 0, 2], [3, 2, 1], [4, 0, 3]];
-      const result = scalarMultiplyCalc(A, -2);
-      const expected = [[-2, 0, -4], [-6, -4, -2], [-8, 0, -6]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Scalar Multiplication 3x3 × (-2)',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testScalarDistributivity() {
-      const A = [[1, 2], [3, 4]];
-      const B = [[5, 6], [7, 8]];
-      const k = 3;
-      const left = scalarMultiplyCalc(addMatricesCalc(A, B), k);
-      const right = addMatricesCalc(scalarMultiplyCalc(A, k), scalarMultiplyCalc(B, k));
-      const passed = matricesEqual(left, right);
-      return {
-        name: 'Scalar Distributivity: k(A + B) = kA + kB',
-        passed: passed,
-        expected: 'Equal matrices',
-        actual: passed ? 'Equal' : 'Not equal'
-      };
-    }
+
+
+
+
+
+
+
+
     
     function testMatrixMultiplication2x2() {
       const A = [[1, 2], [3, 4]];
@@ -3080,45 +1872,9 @@
         actual: passed ? 'Equal' : 'Not equal'
       };
     }
-    
-    function testMatrixTranspose2x3() {
-      const A = [[1, 2, 3], [4, 5, 6]];
-      const result = transposeMatrixCalc(A);
-      const expected = [[1, 4], [2, 5], [3, 6]];
-      const passed = matricesEqual(result, expected);
-      return {
-        name: 'Matrix Transpose 2x3 to 3x2',
-        passed: passed,
-        expected: expected,
-        actual: result
-      };
-    }
-    
-    function testMatrixTransposeDouble() {
-      const A = [[1, 2, 3], [4, 5, 6]];
-      const result = transposeMatrixCalc(transposeMatrixCalc(A));
-      const passed = matricesEqual(result, A);
-      return {
-        name: 'Matrix Transpose Double: (A^T)^T = A',
-        passed: passed,
-        expected: 'Equal to original matrix',
-        actual: passed ? 'Equal' : 'Not equal'
-      };
-    }
-    
-    function testMatrixTransposeSum() {
-      const A = [[1, 2], [3, 4]];
-      const B = [[5, 6], [7, 8]];
-      const left = transposeMatrixCalc(addMatricesCalc(A, B));
-      const right = addMatricesCalc(transposeMatrixCalc(A), transposeMatrixCalc(B));
-      const passed = matricesEqual(left, right);
-      return {
-        name: 'Matrix Transpose of Sum: (A + B)^T = A^T + B^T',
-        passed: passed,
-        expected: 'Equal matrices',
-        actual: passed ? 'Equal' : 'Not equal'
-      };
-    }
+
+
+
     
     function testDeterminant2x2() {
       const A = [[1, 2], [3, 4]];

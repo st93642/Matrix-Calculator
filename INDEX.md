@@ -1,28 +1,31 @@
-# Matrix Calculator - Improved Gauss-Jordan Inverse
+# Matrix Calculator - Core Operations
 
 **For Using the Calculator:**
 
 - Open: `matrix-calculator.html` in your browser
-- All features accessible through the UI
+- Three core matrix operations available through the UI
 
-## Key Functions (Line Numbers)
+## Supported Operations
 
-### New Components
+### Matrix Operations
 
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| Fraction Class | 1992-2063 | Exact rational arithmetic |
-| calculateInverseCofactor() | 1984-2123 | Alternative inverse method |
-| calculateInverseCalc() | 2125-2212 | Rewritten core algorithm |
-| calculateInverse() | 1612-1744 | Enhanced visualization |
-| displayAugmentedFractions() | 1747-1807 | Display helper |
+✅ **Matrix Multiplication** - Multiply matrices A × B with step-by-step visualization
+✅ **Determinant Calculation** - Calculate det(A) using Gaussian elimination with integer-first arithmetic
+✅ **Matrix Inverse** - Calculate A⁻¹ using Gauss-Jordan elimination with Fraction class for exact arithmetic
 
-#### Existing (Unchanged)
+## Key Components
 
-- Matrix operations (add, subtract, multiply, scalar, transpose, determinant)
-- Vector operations (add, subtract, scalar, norm, distance, components)
-- Test infrastructure
-- UI framework
+| Component | Purpose |
+|-----------|---------|
+| Fraction Class | Exact rational arithmetic for inverse calculations |
+| calculateInverseCofactor() | Alternative inverse method for cross-verification |
+| calculateInverseCalc() | Core inverse algorithm using Fractions |
+| calculateInverse() | Enhanced inverse visualization with integer-first heuristics |
+| calculateDeterminant() | Gaussian elimination determinant with optional Fractions |
+| multiplyMatrices() | Matrix multiplication with visual step-by-step display |
+| displayAugmented() | Display helper for augmented matrices |
+| Test infrastructure | Automated tests for all three operations |
+| UI framework | Clean, responsive interface |
 
 ---
 
@@ -69,28 +72,25 @@
 
 1. **Open in Browser**
 
-   ```
+   ```bash
    Open matrix-calculator.html in any modern browser
    ```
 
-2. **Navigate to Matrix Tab**
-   - Click "Matrices" tab (should be active)
-
-3. **Set Matrix Size**
-   - Change "Matrix A Size" dropdown to desired size (1×1 to 5×5)
+2. **Set Matrix Sizes**
+   - Change "Matrix A Size" and "Matrix B Size" dropdowns to desired sizes (1×1 to 5×5)
    - Matrix values auto-generate randomly
 
-4. **Calculate Inverse**
-   - Click the "🔄⁻¹ Inverse A⁻¹" button
-   - Watch step-by-step process
-   - See fractions displayed (e.g., "3/2")
-   - Observe row swaps (if applicable)
-   - Verify with cofactor method
-
-5. **View Results**
-   - **Left panel**: Shows visual matrix transformations
-   - **Right panel**: Shows step-by-step calculation
-   - Includes theoretical explanation
+3. **Choose an Operation**
+   - **✖️ Multiply A × B** - Matrix multiplication with visual step-by-step process
+   - **📊 Det(A)** - Calculate determinant using Gaussian elimination
+   - **🔄⁻¹ Inverse A⁻¹** - Calculate inverse with Gauss-Jordan elimination
+   
+4. **View Step-by-Step Results**
+   - Watch animations and intermediate steps
+   - See fractions displayed for inverse (e.g., "3/2")
+   - Observe row swaps and pivot selection
+   - Cross-verification with cofactor method (for inverse)
+   - Read theoretical explanations
 
 ---
 
@@ -117,31 +117,23 @@
 
 ---
 
-### Code Integration
-
-- All changes isolated to specific functions
-- No impact on other operations
-- Backward compatible
-
----
-
 ## Performance Characteristics
 
 ### Strengths
 
-✅ Exact arithmetic (no rounding errors)
-✅ Educational value (fractions visible)
-✅ Numerically stable
-✅ Clear visualization
-✅ Comprehensive verification
+✅ Exact arithmetic (no rounding errors with Fraction class)
+✅ Educational value (step-by-step visualization)
+✅ Integer-first pivot selection for numerical stability
+✅ Clear visualization with animations
+✅ Cross-verification (cofactor method for inverse)
 
-### Improvements
+### Features
 
-- Gauss-Jordan enhancement with integer arithmetic
-- Fraction class implementation
-- Cross-verification with cofactor method
-- Enhanced step-by-step visualization
-- Comprehensive documentation
+- **Gauss-Jordan elimination**: Integer-first heuristics for inverse calculation
+- **Fraction class**: Exact rational arithmetic when needed
+- **Gaussian elimination**: Efficient determinant calculation
+- **Matrix multiplication**: Visual step-by-step process
+- **Comprehensive testing**: Built-in test infrastructure
 
 ---
 
@@ -149,10 +141,7 @@
 
 📂 **Main Application**: `matrix-calculator.html`
 
-📖 **Documentations**:
+📖 **Documentation**:
 
 - Overview: `INDEX.md` (you are here)
-- Summary: `IMPLEMENTATION_SUMMARY.md`
-- Codebase: `CODEBASE_ANALYSIS.md`
-- Algorithm: `GAUSS_JORDAN_IMPROVEMENTS.md`
-- Developer: `IMPLEMENTATION_GUIDE.md`
+- Developer Guide: `.github/copilot-instructions.md`
