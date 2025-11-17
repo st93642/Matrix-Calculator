@@ -326,7 +326,7 @@
       <br><br>
       <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
       <br><br>
-      <strong>📊 Visualization:</strong> Click "Plot Vectors" to see your vectors plotted in an external graphing calculator (GeoGebra). Opens in new tab.
+      <strong>📊 Visualization:</strong> Click "Plot Vectors" to see coordinate system with vectors and points plotted in GeoGebra. Individual operation results also have "Plot" buttons for targeted visualization. Opens in new tab.
     </div>
     
     <!-- Dimension Control -->
@@ -408,7 +408,8 @@
     
     <div class="section-header">Visualization</div>
     <div class="buttons">
-      <button class="btn-operation btn-viz" onclick="plotVectors()">📊 Plot Vectors</button>
+      <button class="btn-operation btn-viz" onclick="plotCoordinateSystem()">📐 Coordinate System</button>
+      <button class="btn-operation btn-viz" onclick="plotVectors()">📊 Plot Vectors & Points</button>
     </div>
     
     <!-- Results Section -->
@@ -666,14 +667,18 @@
       stepDelay += 300;
     }
     
-    function showResult(title, summary, steps) {
+    function showResult(title, summary, steps, plotButton = null) {
       stepDelay = 0;
       clearResults();
       
       const resultSection = document.getElementById('resultSection');
       const summaryDiv = document.getElementById('resultSummary');
       
-      summaryDiv.innerHTML = `<div class="result-header">${title}</div>${summary}`;
+      let summaryHtml = `<div class="result-header">${title}</div>${summary}`;
+      if (plotButton) {
+        summaryHtml += `<div style="margin-top: 15px; text-align: center;">${plotButton}</div>`;
+      }
+      summaryDiv.innerHTML = summaryHtml;
       resultSection.classList.add('show');
       
       steps.forEach(step => {
@@ -772,7 +777,13 @@
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
       
-      showResult('Cross Product Result', summary, steps);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Cross Product', [${result.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A × B</button>
+        </div>
+      `;
+      
+      showResult('Cross Product Result', summary, steps, plotButton);
     }
     
     function calculateNorm() {
@@ -888,7 +899,13 @@
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
       
-      showResult('Orthogonal Projection', summary, steps);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Orthogonal Projection', [${result.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot proj_B(A)</button>
+        </div>
+      `;
+      
+      showResult('Orthogonal Projection', summary, steps, plotButton);
     }
     
     function calculateTriple() {
@@ -961,7 +978,13 @@
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
       
-      showResult('Vector from Points', summary, steps);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector from Points', [${result.join(',')}], {P1: [${P1.join(',')}], P2: [${P2.join(',')]}]})" style="margin: 5px;">📊 Plot Vector P₁P₂</button>
+        </div>
+      `;
+      
+      showResult('Vector from Points', summary, steps, plotButton);
     }
     
     function calculateAdd() {
@@ -997,7 +1020,14 @@
         <div class="summary-line"><strong>Subtraction:</strong> A - B = <span class="vector-display">${VectorModule.formatVector(resultSub)}</span></div>
       `;
       
-      showResult('Vector Addition & Subtraction', summary, stepsAdd);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Addition', [${resultAdd.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A + B</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Subtraction', [${resultSub.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A - B</button>
+        </div>
+      `;
+      
+      showResult('Vector Addition & Subtraction', summary, stepsAdd, plotButton);
     }
     
     function calculateScalar() {
@@ -1041,7 +1071,13 @@
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
       
-      showResult('Scalar Multiplication', summary, steps);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Scalar Multiplication', [${result.join(',')}], {A: [${A.join(',')}]})" style="margin: 5px;">📊 Plot k×A</button>
+        </div>
+      `;
+      
+      showResult('Scalar Multiplication', summary, steps, plotButton);
     }
     
     function calculateDistance() {
@@ -1080,7 +1116,13 @@
         <div class="summary-result">Result: <span class="vector-display">${result.toFixed(6)}</span></div>
       `;
       
-      showResult('Point Distance', summary, steps);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Point Distance', null, {P1: [${P1.join(',')}], P2: [${P2.join(',')]}]})" style="margin: 5px;">📊 Plot Points</button>
+        </div>
+      `;
+      
+      showResult('Point Distance', summary, steps, plotButton);
     }
     
     function calculateExercise(exerciseType) {
@@ -1246,7 +1288,14 @@
             throw new Error('Unknown exercise type');
         }
         
-        showResult(title, summary, steps);
+        // Add plot buttons for exercises
+      const plotButton = `
+        <div class="plot-buttons">
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('${title}', [${result.join(',')}], {u: [${u.join(',')}], v: [${v.join(',')}], w: [${w.join(',')]}]})" style="margin: 5px;">📊 Plot Result</button>
+        </div>
+      `;
+      
+      showResult(title, summary, steps, plotButton);
       } catch (error) {
         showError(error.message);
       }
@@ -1257,36 +1306,63 @@
       const A = getVectorInput('vecA');
       const B = getVectorInput('vecB');
       const C = getVectorInput('vecC');
+      const P1 = getVectorInput('p1');
+      const P2 = getVectorInput('p2');
       
-      if (!A && !B && !C) {
-        showError('Please enter at least one vector (A, B, or C) to plot');
+      if (!A && !B && !C && !P1 && !P2) {
+        showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
         return;
       }
       
-      // Build GeoGebra command with vectors
+      // Build GeoGebra commands with coordinate system and elements
       let commands = [];
       
+      // Add coordinate axes
+      if (dim === 2) {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis');
+      } else {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
+      }
+      
+      // Add points
+      if (P1) {
+        if (dim === 2) {
+          commands.push(`P1 = (${P1[0]}, ${P1[1]})`);
+        } else {
+          commands.push(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
+        }
+      }
+      
+      if (P2) {
+        if (dim === 2) {
+          commands.push(`P2 = (${P2[0]}, ${P2[1]})`);
+        } else {
+          commands.push(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
+        }
+      }
+      
+      // Add vectors from origin
       if (A) {
         if (dim === 2) {
-          commands.push(`Vector((0,0),(${A[0]},${A[1]}))`);
+          commands.push(`VectorA = Vector((0,0),(${A[0]},${A[1]}))`);
         } else {
-          commands.push(`Vector((0,0,0),(${A[0]},${A[1]},${A[2]}))`);
+          commands.push(`VectorA = Vector((0,0,0),(${A[0]},${A[1]},${A[2]}))`);
         }
       }
       
       if (B) {
         if (dim === 2) {
-          commands.push(`Vector((0,0),(${B[0]},${B[1]}))`);
+          commands.push(`VectorB = Vector((0,0),(${B[0]},${B[1]}))`);
         } else {
-          commands.push(`Vector((0,0,0),(${B[0]},${B[1]},${B[2]}))`);
+          commands.push(`VectorB = Vector((0,0,0),(${B[0]},${B[1]},${B[2]}))`);
         }
       }
       
       if (C) {
         if (dim === 2) {
-          commands.push(`Vector((0,0),(${C[0]},${C[1]}))`);
+          commands.push(`VectorC = Vector((0,0),(${C[0]},${C[1]}))`);
         } else {
-          commands.push(`Vector((0,0,0),(${C[0]},${C[1]},${C[2]}))`);
+          commands.push(`VectorC = Vector((0,0,0),(${C[0]},${C[1]},${C[2]}))`);
         }
       }
       
@@ -1303,12 +1379,14 @@
         content: `
           <div class="alert alert-info">
             <strong>📊 Opening GeoGebra Graphing Calculator</strong><br><br>
-            Your vectors have been sent to GeoGebra for visualization:<br><br>
+            Your vectors and points have been sent to GeoGebra for visualization:<br><br>
             ${A ? `<strong>Vector A:</strong> ${VectorModule.formatVector(A)}<br>` : ''}
             ${B ? `<strong>Vector B:</strong> ${VectorModule.formatVector(B)}<br>` : ''}
             ${C ? `<strong>Vector C:</strong> ${VectorModule.formatVector(C)}<br>` : ''}
+            ${P1 ? `<strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}<br>` : ''}
+            ${P2 ? `<strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}<br>` : ''}
             <br>
-            <em>A new tab should open with your vectors plotted. If the popup is blocked, please allow popups for this site.</em>
+            <em>A new tab should open with coordinate system, vectors, and points plotted. If the popup is blocked, please allow popups for this site.</em>
           </div>
         `
       }];
@@ -1316,13 +1394,163 @@
       const summary = `
         <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
+        <div class="summary-line"><strong>Elements:</strong> Coordinate System + Vectors + Points</div>
         ${A ? `<div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>` : ''}
         ${B ? `<div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>` : ''}
         ${C ? `<div class="summary-line"><strong>Vector C:</strong> ${VectorModule.formatVector(C)}</div>` : ''}
-        <div class="summary-result">Vectors plotted in external graphing calculator</div>
+        ${P1 ? `<div class="summary-line"><strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}</div>` : ''}
+        ${P2 ? `<div class="summary-line"><strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}</div>` : ''}
+        <div class="summary-result">Coordinate system with vectors and points plotted in external graphing calculator</div>
       `;
       
-      showResult('Vector Plotting', summary, steps);
+      showResult('Coordinate System & Elements Plotting', summary, steps);
+    }
+    
+    function plotCoordinateSystem() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      
+      // Build GeoGebra commands with just coordinate system
+      let commands = [];
+      
+      // Add coordinate axes
+      if (dim === 2) {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'Origin = (0,0)');
+      } else {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis', 'Origin = (0,0,0)');
+      }
+      
+      // Create GeoGebra URL
+      const commandString = commands.join('%2C');
+      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
+      
+      // Open in new tab
+      window.open(geogebraUrl, '_blank');
+      
+      // Show confirmation
+      const steps = [{
+        title: 'Right-Handed Coordinate System',
+        content: `
+          <div class="alert alert-info">
+            <strong>📐 Opening GeoGebra Graphing Calculator</strong><br><br>
+            A ${dim}D right-handed coordinate system has been opened for visualization.<br><br>
+            ${dim === 2 ? 
+              '<strong>2D System:</strong> X-axis points right, Y-axis points up. This follows standard mathematical convention where positive rotation is counterclockwise.' :
+              '<strong>3D System:</strong> Following the right-hand rule - when you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
+            }
+            <br><br>
+            <em>A new tab should open with the coordinate system. If the popup is blocked, please allow popups for this site.</em>
+          </div>
+        `
+      }];
+      
+      const summary = `
+        <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
+        <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-result">Coordinate system opened in external graphing calculator</div>
+      `;
+      
+      showResult('Coordinate System', summary, steps);
+    }
+    
+    function plotOperationResult(operationName, result, inputs = {}) {
+      const dim = parseInt(document.getElementById('dimension').value);
+      
+      // Build GeoGebra commands with coordinate system and operation result
+      let commands = [];
+      
+      // Add coordinate axes
+      if (dim === 2) {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis');
+      } else {
+        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
+      }
+      
+      // Add input vectors/points
+      if (inputs.A) {
+        if (dim === 2) {
+          commands.push(`VectorA = Vector((0,0),(${inputs.A[0]},${inputs.A[1]}))`);
+        } else {
+          commands.push(`VectorA = Vector((0,0,0),(${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
+        }
+      }
+      
+      if (inputs.B) {
+        if (dim === 2) {
+          commands.push(`VectorB = Vector((0,0),(${inputs.B[0]},${inputs.B[1]}))`);
+        } else {
+          commands.push(`VectorB = Vector((0,0,0),(${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
+        }
+      }
+      
+      if (inputs.C) {
+        if (dim === 2) {
+          commands.push(`VectorC = Vector((0,0),(${inputs.C[0]},${inputs.C[1]}))`);
+        } else {
+          commands.push(`VectorC = Vector((0,0,0),(${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
+        }
+      }
+      
+      if (inputs.P1) {
+        if (dim === 2) {
+          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
+        } else {
+          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
+        }
+      }
+      
+      if (inputs.P2) {
+        if (dim === 2) {
+          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
+        } else {
+          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
+        }
+      }
+      
+      // Add result based on operation type
+      if (Array.isArray(result)) {
+        // Vector result
+        if (dim === 2) {
+          commands.push(`Result = Vector((0,0),(${result[0]},${result[1]}))`);
+        } else {
+          commands.push(`Result = Vector((0,0,0),(${result[0]},${result[1]},${result[2]}))`);
+        }
+      } else if (typeof result === 'object' && result.vec) {
+        // Vector component result
+        if (dim === 2) {
+          commands.push(`Result = Vector((0,0),(${result.vec[0]},${result.vec[1]}))`);
+        } else {
+          commands.push(`Result = Vector((0,0,0),(${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+        }
+      }
+      
+      // Create GeoGebra URL
+      const commandString = commands.join('%2C');
+      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
+      
+      // Open in new tab
+      window.open(geogebraUrl, '_blank');
+      
+      // Show confirmation
+      const steps = [{
+        title: 'Operation Result Visualization',
+        content: `
+          <div class="alert alert-info">
+            <strong>📊 Plotting ${operationName} Result</strong><br><br>
+            The operation result has been sent to GeoGebra for visualization along with the input elements.<br><br>
+            <em>A new tab should open with the coordinate system and operation visualization. If the popup is blocked, please allow popups for this site.</em>
+          </div>
+        `
+      }];
+      
+      const summary = `
+        <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
+        <div class="summary-result">Operation result plotted with inputs in external graphing calculator</div>
+      `;
+      
+      showResult(`${operationName} Visualization`, summary, steps);
     }
     
     const TestRunner = (() => {
