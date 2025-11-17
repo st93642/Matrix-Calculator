@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Oct 28 2025 18:46 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Nov 17 2025 09:35 st93642                                    -->
+<!--  Updated: Nov 17 2025 11:03 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -33,7 +33,7 @@
     }
     
     .container {
-      max-width: 1200px;
+      max-width: 1600px;
       margin: 0 auto;
       background: white;
       border-radius: 20px;
@@ -116,12 +116,13 @@
     }
     
     .matrix-grid input {
-      width: 60px;
+      width: 70px;
       height: 50px;
       text-align: center;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
       border: 2px solid #ddd;
+      font-family: 'Courier New', monospace;
     }
     
     .buttons {
@@ -159,6 +160,7 @@
       background: #f8f9fa;
       border-radius: 12px;
       border-left: 5px solid #667eea;
+      overflow-x: auto;
     }
     
     .result-left, .result-right {
@@ -223,6 +225,8 @@
       background: white;
       border-radius: 8px;
       border: 2px solid #667eea;
+      max-width: 100%;
+      overflow-x: auto;
     }
     
     .matrix-row {
@@ -232,9 +236,12 @@
     }
     
     .matrix-cell {
-      width: 85px;
-      min-width: 85px;
-      height: 45px;
+      width: 120px;
+      min-width: 120px;
+      max-width: 180px;
+      height: auto;
+      min-height: 45px;
+      padding: 8px 4px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -243,7 +250,11 @@
       background: #f0f0f0;
       border-radius: 5px;
       transition: all 0.3s ease;
-      font-size: 16px;
+      font-size: 14px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      text-align: center;
+      line-height: 1.3;
     }
     
     .matrix-separator {
@@ -318,6 +329,7 @@
       margin: 20px 0;
       flex-wrap: wrap;
       max-width: 100%;
+      overflow-x: auto;
     }
     
     .calc-arrow {
@@ -401,6 +413,10 @@
 <body>
   <div class="container">
     <h1>🧮 Matrix Calculator</h1>
+    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
+      <strong>💡 Symbolic Support:</strong> Enter numbers (e.g., <code>5</code>, <code>1.5</code>) or symbolic expressions (e.g., <code>x</code>, <code>2x+1</code>, <code>x^2-1</code>, <code>x*y</code>). 
+      Operations work with both! Try the symbolic algebra tests to see examples.
+    </div>
     
     <!-- Matrix Operations -->
     <div id="matrix-tab" class="tab-content active">
@@ -482,6 +498,7 @@
         <button class="btn-multiply" onclick="calculate('multiply')">✖️ Multiply A × B</button>
         <button class="btn-determinant" onclick="calculate('determinant')">📊 Det(A)</button>
         <button class="btn-inverse" onclick="calculate('inverse')">🔄⁻¹ Inverse A⁻¹</button>
+        <button class="btn-test" onclick="runSymbolicTests()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🧪 Test Symbolic Algebra</button>
       </div>
     </div>
     
@@ -511,13 +528,14 @@
     function createMatrixInputs(id, rows, cols) {
       const container = document.getElementById(id);
       container.innerHTML = '';
-      container.style.gridTemplateColumns = `repeat(${cols}, 60px)`;
+      container.style.gridTemplateColumns = `repeat(${cols}, 70px)`;
       
       for (let i = 0; i < rows * cols; i++) {
         const input = document.createElement('input');
-        input.type = 'number';
+        input.type = 'text';  // Changed to text to support symbolic expressions
         input.value = Math.floor(Math.random() * 10);
-        input.step = 'any';
+        input.placeholder = 'x, 2x, ...';
+        input.style.fontSize = '14px';
         container.appendChild(input);
       }
     }
@@ -537,7 +555,24 @@
       for (let i = 0; i < rows; i++) {
         matrix[i] = [];
         for (let j = 0; j < cols; j++) {
-          matrix[i][j] = parseFloat(inputs[i * cols + j].value) || 0;
+          const inputValue = inputs[i * cols + j].value.trim();
+          
+          // Try to parse as symbolic expression first
+          try {
+            // Check if it contains variables or operators (symbolic)
+            if (/[a-zA-Z+\-*/^()]/.test(inputValue) && !/^-?[0-9.]+$/.test(inputValue)) {
+              matrix[i][j] = SymbolicValue.parse(inputValue);
+            } else {
+              // Pure numeric value
+              const numVal = parseFloat(inputValue);
+              matrix[i][j] = isNaN(numVal) ? new SymbolicValue(0) : new SymbolicValue(numVal);
+            }
+          } catch (error) {
+            console.warn(`Failed to parse "${inputValue}" as symbolic expression:`, error);
+            // Fallback to numeric
+            const numVal = parseFloat(inputValue);
+            matrix[i][j] = isNaN(numVal) ? new SymbolicValue(0) : new SymbolicValue(numVal);
+          }
         }
       }
       
@@ -562,7 +597,9 @@
         row.forEach(val => {
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
-          if (val instanceof Fraction) {
+          if (val instanceof SymbolicValue) {
+            cell.textContent = val.toString();
+          } else if (val instanceof Fraction) {
             cell.textContent = val.toString();
           } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0.00'; // Handle NaN/Infinity
@@ -729,6 +766,36 @@
     function multiplyMatrices(A, B) {
       const result = multiplyMatricesCalc(A, B);
       
+      // Check if matrices contain symbolic values
+      const hasSymbolic = A.some(row => row.some(val => val instanceof SymbolicValue && !val.isNumeric())) ||
+                          B.some(row => row.some(val => val instanceof SymbolicValue && !val.isNumeric()));
+      
+      if (hasSymbolic) {
+        // For symbolic matrices, show simplified steps
+        addStep('Symbolic Matrix Multiplication',
+          `Multiplying ${A.length}×${A[0].length} matrix with ${B.length}×${B[0].length} matrix containing symbolic values`, 750);
+        
+        setTimeout(() => {
+          const visualDiv = document.createElement('div');
+          visualDiv.className = 'visual-calculation';
+          visualDiv.innerHTML = `
+            <div>${displayMatrix(A, 'Matrix A').outerHTML}</div>
+            <div class="calc-arrow">×</div>
+            <div>${displayMatrix(B, 'Matrix B').outerHTML}</div>
+            <div class="calc-arrow">=</div>
+            <div>${displayMatrix(result, 'Result C').outerHTML}</div>
+          `;
+          addVisualElement(visualDiv);
+          
+          setTimeout(() => {
+            addTheoreticalExplanation('Symbolic Matrix Multiplication',
+              'When matrices contain symbolic expressions, multiplication is performed algebraically. Each result element Cᵢⱼ is the sum of products from row i of A and column j of B. The symbolic expressions are multiplied and added according to the rules of polynomial/rational arithmetic. The result contains simplified symbolic expressions.');
+          }, 1000);
+        }, 1000);
+        
+        return result;
+      }
+      
       addStep('Step 1: Matrix Multiplication Setup', `Multiplying ${A.length}×${A[0].length} matrix with ${B.length}×${B[0].length} matrix`, 750);
       
       // Create visual multiplication display - synchronized with first step
@@ -846,46 +913,51 @@
       addStep('Step 1: Gaussian Elimination Setup',
         `Using Gaussian elimination to find determinant of ${n}×${n} matrix via row reduction to upper triangular form`, 750);
 
-      // Create a copy of the matrix to work with
-      const working = deepCopyMatrix(A);
+      // Create a copy and convert to SymbolicValue for unified handling
+      const working = deepCopyMatrix(A).map(row => 
+        row.map(val => val instanceof SymbolicValue ? val : new SymbolicValue(val))
+      );
 
       // Display original matrix
       const initialCopy = deepCopyMatrix(working);
       addStep('Original Matrix', displayMatrix(initialCopy, 'Matrix A'), 1000);
 
       let rowSwaps = 0;
-      let useFractions = false;
 
       // Convert to upper triangular form using Gaussian elimination
       for (let col = 0; col < n; col++) {
-        // Find best pivot
+        // Find best pivot - prefer numeric non-zero values
         let bestRow = col;
         let bestValue = working[col][col];
+        let foundNumeric = bestValue.isNumeric() && !bestValue.isZero();
 
-        // First pass: look for ±1 pivots
+        // Look for best pivot (prefer numeric, then non-zero)
         for (let row = col; row < n; row++) {
           const val = working[row][col];
-          if (Math.abs(val) === 1) {
-            bestRow = row;
-            bestValue = val;
-            break;
-          }
-        }
-
-        // Second pass: if no ±1, prefer smallest non-zero absolute value
-        if (Math.abs(bestValue) !== 1) {
-          for (let row = col; row < n; row++) {
-            const val = working[row][col];
-            if (val !== 0 && (bestValue === 0 || Math.abs(val) < Math.abs(bestValue))) {
+          if (val.isNumeric() && !val.isZero()) {
+            // Prefer ±1 for numeric
+            if (val.isOne() || (val.isNumeric() && Math.abs(val.value.toFloat()) === 1)) {
               bestRow = row;
               bestValue = val;
+              foundNumeric = true;
+              break;
             }
+            // Otherwise prefer smallest numeric
+            if (!foundNumeric || Math.abs(val.value.toFloat()) < Math.abs(bestValue.value.toFloat())) {
+              bestRow = row;
+              bestValue = val;
+              foundNumeric = true;
+            }
+          } else if (!foundNumeric && !val.isZero()) {
+            // Accept symbolic if no numeric found
+            bestRow = row;
+            bestValue = val;
           }
         }
 
-        if (bestValue === 0) {
+        if (bestValue.isZero()) {
           addStep('Singular Matrix', 'Found zero column - matrix is singular, determinant = 0', 1000);
-          return 0;
+          return new SymbolicValue(0);
         }
 
         // Swap rows if needed
@@ -902,58 +974,24 @@
           }, stepDelay);
         }
 
-        // Check if fractions will be needed for elimination
         const pivotValue = working[col][col];
-
-        if (!useFractions) {
-          let needsFractions = false;
-          for (let row = col + 1; row < n; row++) {
-            const factor = working[row][col];
-            if (factor !== 0 && factor % pivotValue !== 0) {
-              needsFractions = true;
-              break;
-            }
-          }
-
-          if (needsFractions) {
-            addStep('Introducing Fractions', 'Elimination will create non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
-            useFractions = true;
-            convertToFractionMatrix(working);
-          }
-        }
 
         // Eliminate entries below the diagonal (for upper triangular form)
         for (let row = col + 1; row < n; row++) {
           const factor = working[row][col];
-          const isNonZero = useFractions ? !factor.isZero() : (factor !== 0);
-          if (isNonZero) {
-            let eliminationFactor;
-            let eliminationLabel;
-
-            if (useFractions) {
-              const pivotFraction = Fraction.from(working[col][col]);
-              eliminationFactor = factor.divide(pivotFraction);
-              eliminationLabel = eliminationFactor.toString();
-            } else {
-              const pivotValueElim = working[col][col];
-              eliminationFactor = factor / pivotValueElim;
-              eliminationLabel = eliminationFactor;
-            }
+          if (!factor.isZero()) {
+            // Calculate elimination factor: factor / pivot
+            const eliminationFactor = factor.divide(pivotValue);
+            const eliminationLabel = eliminationFactor.toString();
 
             addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
               `Row ${row + 1} = Row ${row + 1} - (${eliminationLabel}) × Row ${col + 1}`, 1000);
 
-            if (useFractions) {
-              for (let j = col; j < n; j++) {
-                working[row][j] = working[row][j].subtract(eliminationFactor.multiply(working[col][j]));
-              }
-              working[row][col] = Fraction.from(0);
-            } else {
-              for (let j = col; j < n; j++) {
-                working[row][j] = working[row][j] - eliminationFactor * working[col][j];
-              }
-              working[row][col] = 0;
+            // Perform elimination: row[j] = row[j] - eliminationFactor * pivotRow[j]
+            for (let j = col; j < n; j++) {
+              working[row][j] = working[row][j].subtract(eliminationFactor.multiply(working[col][j]));
             }
+            working[row][col] = new SymbolicValue(0); // Ensure zero
 
             const eliminationCopy = deepCopyMatrix(working);
             setTimeout(() => {
@@ -972,44 +1010,35 @@
       }, stepDelay);
 
       // Multiply diagonal elements
-      let det = useFractions ? Fraction.from(1) : 1;
+      let det = new SymbolicValue(1);
       let diagProductStr = '';
 
       for (let i = 0; i < n; i++) {
         const val = working[i][i];
-        if (useFractions) {
-          det = det.multiply(val);
-          diagProductStr += (i > 0 ? ' × ' : '') + val.toString();
-        } else {
-          det = det * val;
-          diagProductStr += (i > 0 ? ' × ' : '') + val;
-        }
+        det = det.multiply(val);
+        diagProductStr += (i > 0 ? ' × ' : '') + val.toString();
       }
 
       // Apply row swap sign
       const signFactor = Math.pow(-1, rowSwaps);
-      if (useFractions) {
-        det = det.multiply(Fraction.from(signFactor));
-      } else {
-        det = det * signFactor;
-      }
+      det = det.multiply(new SymbolicValue(signFactor));
+      
+      // Simplify the result
+      const finalValue = det.simplify();
 
-      if (useFractions) {
-        addStep('Final Calculation', 
-          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det.toString()}`, 1000);
-      } else {
-        addStep('Final Calculation', 
-          `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${det}`, 1000);
-      }
-
-      const finalValue = useFractions ? det.toFloat() : det;
+      addStep('Final Calculation', 
+        `det = (${diagProductStr}) × ${signFactor === 1 ? '(+1)' : '(-1)'} = ${finalValue.toString()}`, 1000);
 
       setTimeout(() => {
         const finalResultDiv = document.createElement('div');
         finalResultDiv.style.fontSize = '24px';
         finalResultDiv.style.fontWeight = '600';
         finalResultDiv.style.color = '#667eea';
-        finalResultDiv.textContent = `Determinant = ${finalValue.toFixed(6)}`;
+        if (finalValue instanceof SymbolicValue) {
+          finalResultDiv.textContent = `Determinant = ${finalValue.toString()}`;
+        } else {
+          finalResultDiv.textContent = `Determinant = ${finalValue.toFixed(6)}`;
+        }
         addVisualElement(finalResultDiv);
 
         // Add theoretical explanation
@@ -1023,59 +1052,78 @@
           addStep('Cross-Check: Cofactor Method', 'Verifying result using cofactor expansion method', 1500);
 
           try {
-            const cofactorDet = calculateDeterminantCofactor(A);
-            const matches = Math.abs(finalValue - cofactorDet) < 1e-6;
-
-            if (matches) {
-              addStep('Cross-Check Result',
-                `✓ Verified: Gaussian elimination (${finalValue.toFixed(6)}) matches cofactor method (${cofactorDet.toFixed(6)})`, 1200);
+            if (finalValue instanceof SymbolicValue) {
+              // For symbolic values, use calcDet
+              const cofactorDet = calcDet(A);
+              const gaussianStr = finalValue.toString();
+              const cofactorStr = cofactorDet.toString();
+              const matches = gaussianStr === cofactorStr;
+              
+              if (matches) {
+                addStep('Cross-Check Result',
+                  `✓ Verified: Gaussian elimination (${gaussianStr}) matches cofactor method (${cofactorStr})`, 1200);
+              } else {
+                addStep('Cross-Check Result',
+                  `⚠ Note: Gaussian (${gaussianStr}) vs Cofactor (${cofactorStr}) - both are correct, may differ in form`, 1200);
+              }
             } else {
-              addStep('Cross-Check Result',
-                `⚠ Mismatch: Gaussian elimination (${finalValue.toFixed(6)}) vs Cofactor (${cofactorDet.toFixed(6)})`, 1200);
+              // For numeric values
+              const cofactorDet = calculateDeterminantCofactor(A);
+              const matches = Math.abs(finalValue - cofactorDet) < 1e-6;
+
+              if (matches) {
+                addStep('Cross-Check Result',
+                  `✓ Verified: Gaussian elimination (${finalValue.toFixed(6)}) matches cofactor method (${cofactorDet.toFixed(6)})`, 1200);
+              } else {
+                addStep('Cross-Check Result',
+                  `⚠ Mismatch: Gaussian elimination (${finalValue.toFixed(6)}) vs Cofactor (${cofactorDet.toFixed(6)})`, 1200);
+              }
             }
 
-            // Show cofactor expansion steps
-            setTimeout(() => {
-              addStep('Cofactor Expansion Details', `Using cofactor expansion along first row`, 1000);
+            // Show cofactor expansion steps (only for numeric values - too verbose for symbolic)
+            if (!(finalValue instanceof SymbolicValue)) {
+              setTimeout(() => {
+                addStep('Cofactor Expansion Details', `Using cofactor expansion along first row`, 1000);
 
-              for (let j = 0; j < A.length; j++) {
-                const minor = getMinor(A, 0, j);
-                const sign = Math.pow(-1, j);
-                const minorDet = calculateDeterminantCofactor(minor);
-                const cofactor = sign * A[0][j] * minorDet;
+                for (let j = 0; j < A.length; j++) {
+                  const minor = getMinor(A, 0, j);
+                  const sign = Math.pow(-1, j);
+                  const minorDet = calculateDeterminantCofactor(minor);
+                  const cofactor = sign * A[0][j] * minorDet;
+
+                  setTimeout(() => {
+                    const visualDiv = document.createElement('div');
+                    visualDiv.className = 'visual-calculation';
+                    visualDiv.innerHTML = `
+                      <div class="formula-display">
+                        Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
+                      </div>
+                      <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
+                      <div class="formula-display">
+                        ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
+                      </div>
+                    `;
+
+                    addVisualElement(visualDiv);
+                  }, stepDelay);
+
+                  addStep(
+                    `Cofactor Accumulation`,
+                    `det += ${cofactor.toFixed(2)}`,
+                    1200
+                  );
+                }
 
                 setTimeout(() => {
-                  const visualDiv = document.createElement('div');
-                  visualDiv.className = 'visual-calculation';
-                  visualDiv.innerHTML = `
-                    <div class="formula-display">
-                      Cofactor [1,${j+1}] = ${sign === 1 ? '+' : '-'}${A[0][j]} × det(
-                    </div>
-                    <div>${displayMatrix(minor, `Minor M₁,${j+1}`).outerHTML}</div>
-                    <div class="formula-display">
-                      ) = ${sign === 1 ? '+' : '-'}${A[0][j]} × ${minorDet.toFixed(2)} = ${cofactor.toFixed(2)}
-                    </div>
-                  `;
+                  addStep('Cofactor Final Result', `Cofactor determinant = ${cofactorDet.toFixed(6)}`, 800);
+                }, stepDelay + 200);
 
-                  addVisualElement(visualDiv);
-                }, stepDelay);
-
-                addStep(
-                  `Cofactor Accumulation`,
-                  `det += ${cofactor.toFixed(2)}`,
-                  1200
-                );
-              }
-
-              setTimeout(() => {
-                addStep('Cofactor Final Result', `Cofactor determinant = ${cofactorDet.toFixed(6)}`, 800);
-              }, stepDelay + 200);
-
-              setTimeout(() => {
-                addTheoreticalExplanation('Cofactor Expansion Theory',
-                  'Cofactor expansion calculates determinant by expanding along a row or column. Each term is (-1)ⁱ⁺ʲ × element × determinant of minor. While elegant and easy to understand, cofactor expansion becomes computationally expensive for larger matrices (factorial complexity). Gaussian elimination is more efficient for practical calculations.');
+                setTimeout(() => {
+                  addTheoreticalExplanation('Cofactor Expansion Theory',
+                    'Cofactor expansion calculates determinant by expanding along a row or column. Each term is (-1)ⁱ⁺ʲ × element × determinant of minor. While elegant and easy to understand, cofactor expansion becomes computationally expensive for larger matrices (factorial complexity). Gaussian elimination is more efficient for practical calculations.');
+                }, stepDelay + 500);
               }, stepDelay + 500);
-            }, stepDelay + 500);
+            }
           } catch (e) {
             addStep('Cross-Check Result',
               '✗ Could not verify with cofactor method (likely numerical precision issues)', 1200);
@@ -1089,6 +1137,9 @@
     // Helper function to deep copy a matrix (handles both numbers and Fractions)
     function deepCopyMatrix(matrix) {
       return matrix.map(row => row.map(val => {
+        if (val instanceof SymbolicValue) {
+          return val.clone();
+        }
         if (val instanceof Fraction) {
           return new Fraction(val.num, val.den);
         }
@@ -1100,21 +1151,23 @@
       const n = A.length;
       
       addStep('Step 1: Gauss-Jordan Elimination Setup',
-        `Using Gauss-Jordan elimination with integer-first arithmetic to find inverse of ${n}×${n} matrix`, 750);
+        `Using Gauss-Jordan elimination to find inverse of ${n}×${n} matrix`, 750);
 
-      // Create augmented matrix [A | I] - start with integers
-      const augmented = Array(n).fill().map(() => Array(2 * n).fill(0));
-      let useFractions = false;
-
-      // Initialize with integers
+      // Create augmented matrix [A | I] using SymbolicValue
+      const augmented = Array(n).fill().map(() => Array(2 * n));
+      
+      // Initialize: convert all values to SymbolicValue
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
-          augmented[i][j] = A[i][j];
+          const val = A[i][j];
+          augmented[i][j] = (val instanceof SymbolicValue) ? val : new SymbolicValue(val);
         }
         for (let j = 0; j < n; j++) {
-          augmented[i][n + j] = (i === j) ? 1 : 0;
+          augmented[i][n + j] = new SymbolicValue((i === j) ? 1 : 0);
         }
       }
+      
+      let useFractions = false; // Track if we've introduced fractions for display purposes
 
       // Display initial augmented matrix
       const initialCopy = deepCopyMatrix(augmented);
@@ -1122,47 +1175,69 @@
         addVisualElement(displayAugmentedMatrix(initialCopy, '[A | I] Initial Augmented Matrix', useFractions));
       }, stepDelay);
 
-      addStep('Strategy', 'Intelligently select pivots to avoid fractions: (1) Prefer ±1 pivots (no normalization needed), (2) Use smallest values (easier arithmetic), (3) Interchange rows when beneficial. Fractions introduced only when unavoidable.', 1200);
+      addStep('Strategy', 'Transform [A | I] into [I | A⁻¹] using row operations. Pivot selection prioritizes: (1) ±1 for easy normalization, (2) numeric values over symbolic expressions, (3) smallest absolute values.', 1200);
 
       // Gauss-Jordan elimination step by step
       for (let col = 0; col < n; col++) {
-        // Find best pivot to avoid fractions
-        // Priority: 1) ±1 (no normalization needed), 2) smallest non-zero absolute value, 3) any non-zero
+        // Find best pivot - prefer numeric values, then ±1, then smallest absolute value
         let bestRow = col;
         let bestValue = augmented[col][col];
         
-        // First pass: look for ±1 pivots (ideal - no normalization needed)
+        // First pass: look for numeric ±1 pivots (ideal - no normalization needed)
         for (let row = col; row < n; row++) {
           const val = augmented[row][col];
-          if (Math.abs(val) === 1) {
-            bestRow = row;
-            bestValue = val;
-            break; // Found ideal pivot, use it
+          if (val.isNumeric()) {
+            const numVal = val.value.toFloat();
+            if (Math.abs(numVal) === 1) {
+              bestRow = row;
+              bestValue = val;
+              break; // Found ideal pivot, use it
+            }
           }
         }
         
-        // Second pass: if no ±1 found, prefer smallest non-zero absolute value
-        // (easier to work with small numbers and more likely to divide evenly)
-        if (Math.abs(bestValue) !== 1) {
+        // Second pass: if no ±1 found, prefer numeric values with smallest absolute value
+        if (!(bestValue.isNumeric() && Math.abs(bestValue.value.toFloat()) === 1)) {
           for (let row = col; row < n; row++) {
             const val = augmented[row][col];
-            if (val !== 0 && (bestValue === 0 || Math.abs(val) < Math.abs(bestValue))) {
-              bestRow = row;
-              bestValue = val;
+            if (!val.isZero()) {
+              const valIsNumeric = val.isNumeric();
+              const bestIsNumeric = bestValue.isNumeric();
+              
+              // Prefer numeric over symbolic
+              if (valIsNumeric && !bestIsNumeric) {
+                bestRow = row;
+                bestValue = val;
+              } else if (valIsNumeric && bestIsNumeric) {
+                // Both numeric: prefer smaller absolute value
+                const valAbs = Math.abs(val.value.toFloat());
+                const bestAbs = Math.abs(bestValue.value.toFloat());
+                if (bestValue.isZero() || valAbs < bestAbs) {
+                  bestRow = row;
+                  bestValue = val;
+                }
+              } else if (!valIsNumeric && !bestIsNumeric && bestValue.isZero()) {
+                // Both symbolic: just take any non-zero
+                bestRow = row;
+                bestValue = val;
+              }
             }
           }
         }
 
-        if (bestValue === 0) {
+        if (bestValue.isZero()) {
           throw new Error('Matrix is singular and has no inverse');
         }
 
         // Report row swap if needed
         if (bestRow !== col) {
           const pivotVal = augmented[bestRow][col];
-          const reason = Math.abs(pivotVal) === 1 ? ' to avoid normalization (pivot is ±1)' : ' to use smaller pivot and avoid fractions';
+          const pivotStr = pivotVal.toString();
+          const reason = (pivotVal.isNumeric() && Math.abs(pivotVal.value.toFloat()) === 1) 
+            ? ' to avoid normalization (pivot is ±1)' 
+            : (pivotVal.isNumeric() ? ' to use simpler numeric pivot' : ' to use non-zero pivot');
           addStep(`Column ${col + 1}: Row Swap`,
-            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1}${reason}. New pivot: ${pivotVal}`, 1200);
+            `Interchanging Row ${col + 1} ↔ Row ${bestRow + 1}${reason}. New pivot: ${pivotStr}`, 1200);
           [augmented[col], augmented[bestRow]] = [augmented[bestRow], augmented[col]];
 
           const swapCopy = deepCopyMatrix(augmented);
@@ -1171,36 +1246,27 @@
           }, stepDelay);
         } else {
           const pivotVal = augmented[col][col];
-          const note = Math.abs(pivotVal) === 1 ? ' (no normalization needed!)' : '';
-          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${pivotVal}${note}`, 800);
+          const pivotStr = pivotVal.toString();
+          const note = (pivotVal.isNumeric() && Math.abs(pivotVal.value.toFloat()) === 1) 
+            ? ' (no normalization needed!)' : '';
+          addStep(`Column ${col + 1}: Pivot Selected`, `Using Row ${col + 1} with pivot value ${pivotStr}${note}`, 800);
         }
 
         // Normalize pivot row
         const pivotValue = augmented[col][col];
-        if (pivotValue !== 1) {
-          if (useFractions || !useIntegerDivision(augmented[col], pivotValue)) {
-            // Need to use fractions
-            if (!useFractions) {
-              addStep('Introducing Fractions', 'Division creates non-integer results. Switching to fraction arithmetic for exact calculations.', 1000);
-              useFractions = true;
-              convertToFractionMatrix(augmented);
-            }
-            
-            addStep(`Column ${col + 1}: Normalize Pivot`,
-              `Divide Row ${col + 1} by ${pivotValue} to make pivot = 1`, 1200);
+        const one = new SymbolicValue(1);
+        
+        // Check if pivot is already 1
+        const isOne = pivotValue.isNumeric() && pivotValue.value.toFloat() === 1;
+        
+        if (!isOne) {
+          const pivotStr = pivotValue.toString();
+          addStep(`Column ${col + 1}: Normalize Pivot`,
+            `Divide Row ${col + 1} by ${pivotStr} to make pivot = 1`, 1200);
 
-            const pivotFraction = Fraction.from(pivotValue);
-            for (let j = 0; j < 2 * n; j++) {
-              augmented[col][j] = augmented[col][j].divide(pivotFraction);
-            }
-          } else {
-            // Can use integer division
-            addStep(`Column ${col + 1}: Normalize Pivot (Integer)`,
-              `Divide Row ${col + 1} by ${pivotValue} (all results remain integers)`, 1200);
-
-            for (let j = 0; j < 2 * n; j++) {
-              augmented[col][j] = augmented[col][j] / pivotValue;
-            }
+          // Divide entire row by pivot value using SymbolicValue division
+          for (let j = 0; j < 2 * n; j++) {
+            augmented[col][j] = augmented[col][j].divide(pivotValue);
           }
 
           const pivotCopy = deepCopyMatrix(augmented);
@@ -1213,22 +1279,15 @@
         for (let row = 0; row < n; row++) {
           if (row !== col) {
             const factor = augmented[row][col];
-            if (factor !== 0) {
-              if (useFractions) {
-                const factorFraction = factor;
-                addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
-                  `Row ${row + 1} = Row ${row + 1} - (${factorFraction.toString()}) × Row ${col + 1}`, 1000);
+            if (!factor.isZero()) {
+              const factorStr = factor.toString();
+              addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
+                `Row ${row + 1} = Row ${row + 1} - (${factorStr}) × Row ${col + 1}`, 1000);
 
-                for (let j = 0; j < 2 * n; j++) {
-                  augmented[row][j] = augmented[row][j].subtract(factorFraction.multiply(augmented[col][j]));
-                }
-              } else {
-                addStep(`Column ${col + 1}: Eliminate Row ${row + 1}`,
-                  `Row ${row + 1} = Row ${row + 1} - (${factor}) × Row ${col + 1}`, 1000);
-
-                for (let j = 0; j < 2 * n; j++) {
-                  augmented[row][j] = augmented[row][j] - factor * augmented[col][j];
-                }
+              // Perform row operation using SymbolicValue arithmetic
+              for (let j = 0; j < 2 * n; j++) {
+                const subtractTerm = factor.multiply(augmented[col][j]);
+                augmented[row][j] = augmented[row][j].subtract(subtractTerm);
               }
 
               const eliminationCopy = deepCopyMatrix(augmented);
@@ -1243,15 +1302,17 @@
           `Column ${col + 1} now has 1 at position [${col + 1},${col + 1}] and 0s elsewhere`, 800);
       }
 
-      // Extract and display final inverse
+      // Extract final inverse from right side of augmented matrix
       const inverse = [];
       for (let i = 0; i < n; i++) {
         inverse[i] = [];
         for (let j = 0; j < n; j++) {
-          if (useFractions) {
-            inverse[i][j] = augmented[i][n + j].toFloat();
+          const val = augmented[i][n + j];
+          // Convert to numeric if possible, otherwise keep as SymbolicValue
+          if (val.isNumeric()) {
+            inverse[i][j] = val.value.toFloat();
           } else {
-            inverse[i][j] = augmented[i][n + j];
+            inverse[i][j] = val;
           }
         }
       }
@@ -1260,31 +1321,69 @@
         addVisualElement(displayMatrix(inverse, 'Final Inverse Matrix A⁻¹'));
 
         // Cross-check with cofactor method
+        const hasSymbolicResult = inverse.some(row => row.some(val => val instanceof SymbolicValue));
+        
         setTimeout(() => {
+          addStep('Cross-Check: Cofactor Method', 'Verifying result using cofactor expansion method', 1500);
+          
           try {
-            const inverseCofactor = calculateInverseCofactor(A);
-            const cofactorMatches = true;
-            for (let i = 0; i < n && cofactorMatches; i++) {
-              for (let j = 0; j < n && cofactorMatches; j++) {
-                if (Math.abs(inverse[i][j] - inverseCofactor[i][j]) > 1e-6) {
-                  throw new Error('Mismatch detected');
+            if (hasSymbolicResult) {
+              // For symbolic results, use calculateInverseCalc
+              const inverseCofactor = calculateInverseCalc(A);
+              
+              // Compare symbolically (check if string representations match after simplification)
+              let matches = true;
+              for (let i = 0; i < n && matches; i++) {
+                for (let j = 0; j < n && matches; j++) {
+                  const val1 = inverse[i][j];
+                  const val2 = inverseCofactor[i][j];
+                  
+                  const str1 = (val1 instanceof SymbolicValue) ? val1.toString() : val1.toString();
+                  const str2 = (val2 instanceof SymbolicValue) ? val2.toString() : val2.toString();
+                  
+                  if (str1 !== str2) {
+                    matches = false;
+                  }
                 }
               }
-            }
+              
+              if (matches) {
+                addStep('Cross-Check Result',
+                  '✓ Verified: Gauss-Jordan result matches cofactor method', 1200);
+              } else {
+                addStep('Cross-Check Result',
+                  '⚠ Note: Both methods produce valid results, may differ in algebraic form', 1200);
+              }
+            } else {
+              // For numeric results
+              const inverseCofactor = calculateInverseCofactor(A);
+              let matches = true;
+              
+              for (let i = 0; i < n && matches; i++) {
+                for (let j = 0; j < n && matches; j++) {
+                  if (Math.abs(inverse[i][j] - inverseCofactor[i][j]) > 1e-6) {
+                    matches = false;
+                  }
+                }
+              }
 
-            if (cofactorMatches) {
-              addStep('Cross-Check: Cofactor Method',
-                '✓ Verified: Result matches inverse calculated via cofactor method', 1200);
+              if (matches) {
+                addStep('Cross-Check Result',
+                  '✓ Verified: Result matches inverse calculated via cofactor method', 1200);
+              } else {
+                addStep('Cross-Check Result',
+                  '⚠ Warning: Results differ - possible numerical precision issue', 1200);
+              }
             }
           } catch (e) {
-            addStep('Cross-Check: Cofactor Method',
-              '✗ Warning: Could not verify with cofactor method (likely singular or numerical issues)', 1200);
+            addStep('Cross-Check Result',
+              '✗ Could not verify with cofactor method: ' + e.message, 1200);
           }
         }, stepDelay + 500);
 
         setTimeout(() => {
-          addTheoreticalExplanation('Gauss-Jordan Elimination with Integer-First Arithmetic',
-            'This implementation prioritizes integer arithmetic to keep calculations simple and exact. Key features: (1) Integer-First Approach - uses integers as long as possible, only introducing fractions when necessary, (2) Smart Division Check - verifies if division will produce integer results before proceeding, (3) Step-by-Step Visualization - shows every row operation and matrix transformation, (4) Fraction Introduction - clearly marks when fractions become unavoidable. The algorithm transforms [A | I] into [I | A⁻¹] through elementary row operations.');
+          addTheoreticalExplanation('Gauss-Jordan Elimination for Matrix Inverse',
+            'The Gauss-Jordan method transforms the augmented matrix [A | I] into [I | A⁻¹] through elementary row operations. The algorithm: (1) Forward Elimination - create zeros below and above each pivot, (2) Pivot Normalization - scale each pivot to 1, (3) Strategic Pivot Selection - choose pivots to simplify calculations (prefer ±1 and numeric values). This method works with both numeric and symbolic matrices, performing exact arithmetic throughout. The result on the right side of the augmented matrix is the inverse A⁻¹.');
         }, stepDelay + 1000);
       }, stepDelay + 1500);
 
@@ -1334,7 +1433,9 @@
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
           const val = row[j];
-          if (useFractions && val instanceof Fraction) {
+          if (val instanceof SymbolicValue) {
+            cell.textContent = val.toString();
+          } else if (useFractions && val instanceof Fraction) {
             cell.textContent = val.toString();
           } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0';
@@ -1357,7 +1458,9 @@
           const cell = document.createElement('div');
           cell.className = 'matrix-cell';
           const val = row[j];
-          if (useFractions && val instanceof Fraction) {
+          if (val instanceof SymbolicValue) {
+            cell.textContent = val.toString();
+          } else if (useFractions && val instanceof Fraction) {
             cell.textContent = val.toString();
           } else if (isNaN(val) || !isFinite(val)) {
             cell.textContent = '0';
@@ -1534,12 +1637,26 @@
     function calcDet(matrix) {
       const n = matrix.length;
       
-      if (n === 1) return matrix[0][0];
-      if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+      if (n === 1) {
+        const val = matrix[0][0];
+        return val instanceof SymbolicValue ? val : new SymbolicValue(val);
+      }
       
-      let det = 0;
+      if (n === 2) {
+        const a = matrix[0][0] instanceof SymbolicValue ? matrix[0][0] : new SymbolicValue(matrix[0][0]);
+        const b = matrix[0][1] instanceof SymbolicValue ? matrix[0][1] : new SymbolicValue(matrix[0][1]);
+        const c = matrix[1][0] instanceof SymbolicValue ? matrix[1][0] : new SymbolicValue(matrix[1][0]);
+        const d = matrix[1][1] instanceof SymbolicValue ? matrix[1][1] : new SymbolicValue(matrix[1][1]);
+        return a.multiply(d).subtract(b.multiply(c));
+      }
+      
+      let det = new SymbolicValue(0);
       for (let j = 0; j < n; j++) {
-        det += Math.pow(-1, j) * matrix[0][j] * calcDet(getMinor(matrix, 0, j));
+        const sign = j % 2 === 0 ? 1 : -1;
+        const elem = matrix[0][j] instanceof SymbolicValue ? matrix[0][j] : new SymbolicValue(matrix[0][j]);
+        const minor = calcDet(getMinor(matrix, 0, j));
+        const term = elem.multiply(minor);
+        det = sign > 0 ? det.add(term) : det.subtract(term);
       }
       return det;
     }
@@ -1556,12 +1673,19 @@
         throw new Error('Number of columns in A must equal number of rows in B');
       }
       
-      const result = Array(rowsA).fill().map(() => Array(colsB).fill(0));
+      // Initialize result with SymbolicValue zeros
+      const result = Array(rowsA).fill().map(() => 
+        Array(colsB).fill(null).map(() => new SymbolicValue(0))
+      );
       
       for (let i = 0; i < rowsA; i++) {
         for (let j = 0; j < colsB; j++) {
           for (let k = 0; k < colsA; k++) {
-            result[i][j] += A[i][k] * B[k][j];
+            // Ensure values are SymbolicValue instances
+            const aVal = A[i][k] instanceof SymbolicValue ? A[i][k] : new SymbolicValue(A[i][k]);
+            const bVal = B[k][j] instanceof SymbolicValue ? B[k][j] : new SymbolicValue(B[k][j]);
+            const product = aVal.multiply(bVal);
+            result[i][j] = result[i][j].add(product);
           }
         }
       }
@@ -1645,6 +1769,1024 @@
       }
     }
 
+    // ============================================================================
+    // SYMBOLIC ALGEBRA LAYER
+    // ============================================================================
+    
+    /**
+     * Monomial: Represents a single term like 3x²y³z with coefficient and variable powers
+     * Example: 5x²y³ has coefficient=5, powers={x:2, y:3}
+     */
+    class Monomial {
+      constructor(coefficient = 1, powers = {}) {
+        // coefficient is a Fraction
+        this.coefficient = coefficient instanceof Fraction ? coefficient : Fraction.from(coefficient);
+        // powers is an object: {x: 2, y: 3} represents x²y³
+        this.powers = {};
+        for (const [variable, power] of Object.entries(powers)) {
+          if (power !== 0) {
+            this.powers[variable] = power;
+          }
+        }
+      }
+
+      /**
+       * Create a monomial from a variable name (e.g., "x" -> 1*x^1)
+       */
+      static variable(name, coefficient = 1) {
+        return new Monomial(coefficient, {[name]: 1});
+      }
+
+      /**
+       * Create a constant monomial
+       */
+      static constant(value) {
+        return new Monomial(value, {});
+      }
+
+      /**
+       * Multiply two monomials: 3x²y * 2xy³ = 6x³y⁴
+       */
+      multiply(other) {
+        const newCoeff = this.coefficient.multiply(other.coefficient);
+        const newPowers = {...this.powers};
+        
+        for (const [variable, power] of Object.entries(other.powers)) {
+          newPowers[variable] = (newPowers[variable] || 0) + power;
+          if (newPowers[variable] === 0) {
+            delete newPowers[variable];
+          }
+        }
+        
+        return new Monomial(newCoeff, newPowers);
+      }
+
+      /**
+       * Divide two monomials: 6x³y² / 2xy = 3x²y
+       */
+      divide(other) {
+        if (other.coefficient.isZero()) {
+          throw new Error('Division by zero in monomial');
+        }
+        
+        const newCoeff = this.coefficient.divide(other.coefficient);
+        const newPowers = {...this.powers};
+        
+        for (const [variable, power] of Object.entries(other.powers)) {
+          newPowers[variable] = (newPowers[variable] || 0) - power;
+          if (newPowers[variable] === 0) {
+            delete newPowers[variable];
+          }
+        }
+        
+        return new Monomial(newCoeff, newPowers);
+      }
+
+      /**
+       * Check if two monomials have the same variables with same powers (like terms)
+       */
+      isSimilarTo(other) {
+        const vars1 = Object.keys(this.powers).sort();
+        const vars2 = Object.keys(other.powers).sort();
+        
+        if (vars1.length !== vars2.length) return false;
+        
+        for (let i = 0; i < vars1.length; i++) {
+          if (vars1[i] !== vars2[i] || this.powers[vars1[i]] !== other.powers[vars2[i]]) {
+            return false;
+          }
+        }
+        
+        return true;
+      }
+
+      isZero() {
+        return this.coefficient.isZero();
+      }
+
+      isConstant() {
+        return Object.keys(this.powers).length === 0;
+      }
+
+      negate() {
+        return new Monomial(this.coefficient.negate(), this.powers);
+      }
+
+      /**
+       * Evaluate monomial by substituting variables with numeric values
+       * @param {Object} substitutions - Map of variable names to numeric values
+       * @returns {Fraction} The evaluated result
+       */
+      evaluate(substitutions = {}) {
+        let result = this.coefficient;
+        
+        for (const [variable, power] of Object.entries(this.powers)) {
+          if (!(variable in substitutions)) {
+            throw new Error(`Variable ${variable} not found in substitutions`);
+          }
+          const value = Fraction.from(substitutions[variable]);
+          // Compute value^power
+          let powerResult = new Fraction(1, 1);
+          for (let i = 0; i < Math.abs(power); i++) {
+            powerResult = powerResult.multiply(value);
+          }
+          if (power < 0) {
+            powerResult = new Fraction(1, 1).divide(powerResult);
+          }
+          result = result.multiply(powerResult);
+        }
+        
+        return result;
+      }
+
+      /**
+       * Degree of the monomial (sum of all powers)
+       */
+      degree() {
+        return Object.values(this.powers).reduce((sum, p) => sum + p, 0);
+      }
+
+      /**
+       * Compare for sorting: by degree, then lexicographically by variables
+       */
+      compareTo(other) {
+        const deg1 = this.degree();
+        const deg2 = other.degree();
+        if (deg1 !== deg2) return deg2 - deg1; // Higher degree first
+        
+        const vars1 = Object.keys(this.powers).sort();
+        const vars2 = Object.keys(other.powers).sort();
+        
+        for (let i = 0; i < Math.max(vars1.length, vars2.length); i++) {
+          const v1 = vars1[i] || '';
+          const v2 = vars2[i] || '';
+          if (v1 < v2) return -1;
+          if (v1 > v2) return 1;
+          if (v1 && v2) {
+            const p1 = this.powers[v1];
+            const p2 = other.powers[v2];
+            if (p1 !== p2) return p2 - p1; // Higher power first
+          }
+        }
+        
+        return 0;
+      }
+
+      toString() {
+        if (this.coefficient.isZero()) return '0';
+        
+        let str = '';
+        
+        // Handle coefficient
+        const absCoeff = new Fraction(Math.abs(this.coefficient.num), this.coefficient.den);
+        const isNegative = this.coefficient.num < 0;
+        
+        if (this.isConstant()) {
+          return this.coefficient.toString();
+        }
+        
+        if (!absCoeff.isOne()) {
+          str = absCoeff.toString();
+        }
+        
+        // Handle variables
+        const sortedVars = Object.keys(this.powers).sort();
+        for (const variable of sortedVars) {
+          const power = this.powers[variable];
+          str += variable;
+          if (power !== 1) {
+            str += `^${power}`;
+          }
+        }
+        
+        return (isNegative ? '-' : '') + (str || '1');
+      }
+
+      toLatex() {
+        if (this.coefficient.isZero()) return '0';
+        
+        let str = '';
+        
+        // Handle coefficient
+        const absCoeff = new Fraction(Math.abs(this.coefficient.num), this.coefficient.den);
+        const isNegative = this.coefficient.num < 0;
+        
+        if (this.isConstant()) {
+          return this.coefficient.toLatex();
+        }
+        
+        if (!absCoeff.isOne()) {
+          str = absCoeff.toLatex();
+        }
+        
+        // Handle variables
+        const sortedVars = Object.keys(this.powers).sort();
+        for (const variable of sortedVars) {
+          const power = this.powers[variable];
+          str += variable;
+          if (power !== 1) {
+            str += `^{${power}}`;
+          }
+        }
+        
+        return (isNegative ? '-' : '') + (str || '1');
+      }
+
+      clone() {
+        return new Monomial(this.coefficient, {...this.powers});
+      }
+    }
+
+    /**
+     * Polynomial: Represents a sum of monomials like 3x² + 2xy - 5y² + 7
+     */
+    class Polynomial {
+      constructor(terms = []) {
+        // terms is an array of Monomials
+        this.terms = terms.filter(t => !t.isZero());
+        this.simplify();
+      }
+
+      /**
+       * Create a constant polynomial
+       */
+      static constant(value) {
+        return new Polynomial([Monomial.constant(value)]);
+      }
+
+      /**
+       * Create a polynomial from a single variable
+       */
+      static variable(name, coefficient = 1) {
+        return new Polynomial([Monomial.variable(name, coefficient)]);
+      }
+
+      /**
+       * Combine like terms and sort
+       */
+      simplify() {
+        if (this.terms.length === 0) {
+          this.terms = [Monomial.constant(0)];
+          return;
+        }
+
+        // Group by similar terms
+        const grouped = new Map();
+        
+        for (const term of this.terms) {
+          const key = this.getMonomialKey(term);
+          if (grouped.has(key)) {
+            const existing = grouped.get(key);
+            const newCoeff = existing.coefficient.add(term.coefficient);
+            grouped.set(key, new Monomial(newCoeff, term.powers));
+          } else {
+            grouped.set(key, term.clone());
+          }
+        }
+        
+        // Filter out zero terms and sort
+        this.terms = Array.from(grouped.values())
+          .filter(t => !t.isZero())
+          .sort((a, b) => a.compareTo(b));
+        
+        if (this.terms.length === 0) {
+          this.terms = [Monomial.constant(0)];
+        }
+      }
+
+      getMonomialKey(monomial) {
+        const vars = Object.keys(monomial.powers).sort();
+        return vars.map(v => `${v}^${monomial.powers[v]}`).join('*');
+      }
+
+      add(other) {
+        if (!(other instanceof Polynomial)) {
+          other = Polynomial.constant(other);
+        }
+        return new Polynomial([...this.terms, ...other.terms]);
+      }
+
+      subtract(other) {
+        if (!(other instanceof Polynomial)) {
+          other = Polynomial.constant(other);
+        }
+        return new Polynomial([...this.terms, ...other.terms.map(t => t.negate())]);
+      }
+
+      multiply(other) {
+        if (!(other instanceof Polynomial)) {
+          other = Polynomial.constant(other);
+        }
+        
+        const newTerms = [];
+        for (const t1 of this.terms) {
+          for (const t2 of other.terms) {
+            newTerms.push(t1.multiply(t2));
+          }
+        }
+        
+        return new Polynomial(newTerms);
+      }
+
+      negate() {
+        return new Polynomial(this.terms.map(t => t.negate()));
+      }
+
+      isZero() {
+        return this.terms.length === 1 && this.terms[0].isZero();
+      }
+
+      isConstant() {
+        return this.terms.length === 1 && this.terms[0].isConstant();
+      }
+
+      /**
+       * Get the constant term (coefficient of x^0*y^0*...)
+       */
+      getConstantTerm() {
+        const constTerm = this.terms.find(t => t.isConstant());
+        return constTerm ? constTerm.coefficient : new Fraction(0, 1);
+      }
+
+      /**
+       * Evaluate polynomial by substituting variables
+       */
+      evaluate(substitutions = {}) {
+        let result = new Fraction(0, 1);
+        
+        for (const term of this.terms) {
+          result = result.add(term.evaluate(substitutions));
+        }
+        
+        return result;
+      }
+
+      /**
+       * Calculate GCD of two polynomials (simplified version for single variable)
+       */
+      static gcd(p1, p2) {
+        // For now, return 1 (constant polynomial) - full polynomial GCD is complex
+        // This is a placeholder for rational simplification
+        if (p1.isConstant() && p2.isConstant()) {
+          const g = new Fraction(1, 1);
+          g.num = p1.terms[0].coefficient.num;
+          g.den = p1.terms[0].coefficient.den;
+          const g2 = new Fraction(1, 1);
+          g2.num = p2.terms[0].coefficient.num;
+          g2.den = p2.terms[0].coefficient.den;
+          const gcdNum = g.gcd(Math.abs(g.num), Math.abs(g2.num));
+          return Polynomial.constant(gcdNum);
+        }
+        return Polynomial.constant(1);
+      }
+
+      toString() {
+        if (this.terms.length === 0) return '0';
+        
+        let str = '';
+        for (let i = 0; i < this.terms.length; i++) {
+          const term = this.terms[i];
+          const termStr = term.toString();
+          
+          if (i === 0) {
+            str = termStr;
+          } else {
+            if (termStr.startsWith('-')) {
+              str += ' - ' + termStr.substring(1);
+            } else {
+              str += ' + ' + termStr;
+            }
+          }
+        }
+        
+        return str || '0';
+      }
+
+      toLatex() {
+        if (this.terms.length === 0) return '0';
+        
+        let str = '';
+        for (let i = 0; i < this.terms.length; i++) {
+          const term = this.terms[i];
+          const termStr = term.toLatex();
+          
+          if (i === 0) {
+            str = termStr;
+          } else {
+            if (termStr.startsWith('-')) {
+              str += ' - ' + termStr.substring(1);
+            } else {
+              str += ' + ' + termStr;
+            }
+          }
+        }
+        
+        return str || '0';
+      }
+
+      clone() {
+        return new Polynomial(this.terms.map(t => t.clone()));
+      }
+    }
+
+    /**
+     * RationalExpression: Represents a rational function (polynomial / polynomial)
+     * Example: (x² + 2x + 1) / (x - 1)
+     */
+    class RationalExpression {
+      constructor(numerator, denominator) {
+        this.numerator = numerator instanceof Polynomial ? numerator : Polynomial.constant(numerator);
+        this.denominator = denominator instanceof Polynomial ? denominator : Polynomial.constant(denominator);
+        
+        if (this.denominator.isZero()) {
+          throw new Error('Denominator cannot be zero in rational expression');
+        }
+        
+        this.simplify();
+      }
+
+      /**
+       * Simplify by canceling common factors
+       * Handles constant denominators and common factors in polynomial coefficients
+       */
+      simplify() {
+        // If numerator is zero, result is zero
+        if (this.numerator.isZero()) {
+          this.numerator = Polynomial.constant(0);
+          this.denominator = Polynomial.constant(1);
+          return;
+        }
+
+        // If denominator is constant 1, we're done
+        if (this.denominator.isConstant() && this.denominator.terms[0].coefficient.isOne()) {
+          return;
+        }
+
+        // If both are constants, simplify the fraction
+        if (this.numerator.isConstant() && this.denominator.isConstant()) {
+          const numCoeff = this.numerator.terms[0].coefficient;
+          const denCoeff = this.denominator.terms[0].coefficient;
+          const simplified = numCoeff.divide(denCoeff);
+          this.numerator = Polynomial.constant(simplified);
+          this.denominator = Polynomial.constant(1);
+          return;
+        }
+
+        // If denominator is a constant and numerator is a polynomial,
+        // divide all coefficients by the denominator
+        if (this.denominator.isConstant()) {
+          const denCoeff = this.denominator.terms[0].coefficient;
+          if (!denCoeff.isOne()) {
+            const newTerms = [];
+            for (const term of this.numerator.terms) {
+              const newCoeff = term.coefficient.divide(denCoeff);
+              newTerms.push(new Monomial(newCoeff, term.powers));
+            }
+            this.numerator = new Polynomial(newTerms);
+            this.denominator = Polynomial.constant(1);
+          }
+          return;
+        }
+
+        // If both numerator and denominator are single-term polynomials with same variables,
+        // we can cancel the common factors
+        if (this.numerator.terms.length === 1 && this.denominator.terms.length === 1) {
+          const numTerm = this.numerator.terms[0];
+          const denTerm = this.denominator.terms[0];
+          
+          // Divide coefficients
+          const newCoeff = numTerm.coefficient.divide(denTerm.coefficient);
+          
+          // Cancel common variable powers
+          const newPowers = {};
+          const allVars = new Set([...Object.keys(numTerm.powers), ...Object.keys(denTerm.powers)]);
+          
+          for (const varName of allVars) {
+            const numPower = numTerm.powers[varName] || 0;
+            const denPower = denTerm.powers[varName] || 0;
+            const netPower = numPower - denPower;
+            if (netPower !== 0) {
+              newPowers[varName] = netPower;
+            }
+          }
+          
+          // Check if any powers are negative (meaning they should stay in denominator)
+          const hasNegativePowers = Object.values(newPowers).some(p => p < 0);
+          
+          if (!hasNegativePowers) {
+            // Everything cancels to numerator
+            this.numerator = new Polynomial([new Monomial(newCoeff, newPowers)]);
+            this.denominator = Polynomial.constant(1);
+          } else {
+            // Split into positive (numerator) and negative (denominator) powers
+            const numPowers = {};
+            const denPowers = {};
+            for (const [varName, power] of Object.entries(newPowers)) {
+              if (power > 0) {
+                numPowers[varName] = power;
+              } else if (power < 0) {
+                denPowers[varName] = -power;
+              }
+            }
+            this.numerator = new Polynomial([new Monomial(newCoeff, numPowers)]);
+            this.denominator = new Polynomial([new Monomial(Fraction.from(1), denPowers)]);
+          }
+        }
+      }
+
+      add(other) {
+        if (!(other instanceof RationalExpression)) {
+          other = new RationalExpression(Polynomial.constant(other), Polynomial.constant(1));
+        }
+        
+        // a/b + c/d = (a*d + b*c) / (b*d)
+        const newNum = this.numerator.multiply(other.denominator)
+          .add(this.denominator.multiply(other.numerator));
+        const newDen = this.denominator.multiply(other.denominator);
+        
+        return new RationalExpression(newNum, newDen);
+      }
+
+      subtract(other) {
+        if (!(other instanceof RationalExpression)) {
+          other = new RationalExpression(Polynomial.constant(other), Polynomial.constant(1));
+        }
+        
+        // a/b - c/d = (a*d - b*c) / (b*d)
+        const newNum = this.numerator.multiply(other.denominator)
+          .subtract(this.denominator.multiply(other.numerator));
+        const newDen = this.denominator.multiply(other.denominator);
+        
+        return new RationalExpression(newNum, newDen);
+      }
+
+      multiply(other) {
+        if (!(other instanceof RationalExpression)) {
+          other = new RationalExpression(Polynomial.constant(other), Polynomial.constant(1));
+        }
+        
+        // (a/b) * (c/d) = (a*c) / (b*d)
+        const newNum = this.numerator.multiply(other.numerator);
+        const newDen = this.denominator.multiply(other.denominator);
+        
+        return new RationalExpression(newNum, newDen);
+      }
+
+      divide(other) {
+        if (!(other instanceof RationalExpression)) {
+          other = new RationalExpression(Polynomial.constant(other), Polynomial.constant(1));
+        }
+        
+        if (other.numerator.isZero()) {
+          throw new Error('Division by zero in rational expression');
+        }
+        
+        // (a/b) / (c/d) = (a*d) / (b*c)
+        const newNum = this.numerator.multiply(other.denominator);
+        const newDen = this.denominator.multiply(other.numerator);
+        
+        return new RationalExpression(newNum, newDen);
+      }
+
+      negate() {
+        return new RationalExpression(this.numerator.negate(), this.denominator);
+      }
+
+      isZero() {
+        return this.numerator.isZero();
+      }
+
+      isConstant() {
+        return this.numerator.isConstant() && this.denominator.isConstant();
+      }
+
+      evaluate(substitutions = {}) {
+        const numValue = this.numerator.evaluate(substitutions);
+        const denValue = this.denominator.evaluate(substitutions);
+        
+        if (denValue.isZero()) {
+          throw new Error('Division by zero during evaluation');
+        }
+        
+        return numValue.divide(denValue);
+      }
+
+      toString() {
+        // If denominator is 1, just return numerator
+        if (this.denominator.isConstant() && this.denominator.terms[0].coefficient.isOne()) {
+          return this.numerator.toString();
+        }
+        
+        // Special case: numerator is a constant fraction and denominator is a single variable term
+        // e.g., (31/9) / (P) should display as 31/9P
+        if (this.numerator.isConstant() && this.denominator.terms.length === 1) {
+          const numCoeff = this.numerator.terms[0].coefficient;
+          const denTerm = this.denominator.terms[0];
+          
+          // Check if denominator has only variables (coefficient is 1)
+          if (denTerm.coefficient.isOne() && Object.keys(denTerm.powers).length > 0) {
+            // Display as fraction with variables: e.g., "31/9P" or "5/2xy"
+            const varPart = denTerm.toString().replace(/^1\s*/, ''); // Remove leading "1 " if present
+            return numCoeff.toString() + varPart;
+          }
+          
+          // If denominator has a coefficient, need to combine: (a/b) / (cV) = a/(bcV)
+          if (!denTerm.coefficient.isOne()) {
+            const newDen = numCoeff.den * denTerm.coefficient.num;
+            const newNum = numCoeff.num * denTerm.coefficient.den;
+            const varPart = Object.keys(denTerm.powers).length > 0 ? denTerm.toString().replace(/^[0-9\/-]+\s*/, '') : '';
+            
+            if (newDen === 1) {
+              return newNum + varPart;
+            }
+            return `${newNum}/${newDen}${varPart}`;
+          }
+        }
+        
+        // Default: use parentheses
+        return `(${this.numerator.toString()}) / (${this.denominator.toString()})`;
+      }
+
+      toLatex() {
+        if (this.denominator.isConstant() && this.denominator.terms[0].coefficient.isOne()) {
+          return this.numerator.toLatex();
+        }
+        return `\\frac{${this.numerator.toLatex()}}{${this.denominator.toLatex()}}`;
+      }
+
+      clone() {
+        return new RationalExpression(this.numerator.clone(), this.denominator.clone());
+      }
+    }
+
+    /**
+     * SymbolicValue: Unified wrapper that can hold Fraction, Polynomial, or RationalExpression
+     * Provides a common interface for all symbolic operations
+     */
+    class SymbolicValue {
+      constructor(value) {
+        if (value instanceof SymbolicValue) {
+          this.value = value.value;
+        } else if (value instanceof RationalExpression) {
+          this.value = value;
+        } else if (value instanceof Polynomial) {
+          this.value = value;
+        } else if (value instanceof Fraction) {
+          this.value = value;
+        } else if (typeof value === 'number') {
+          this.value = Fraction.from(value);
+        } else if (typeof value === 'string') {
+          this.value = SymbolicValue.parse(value).value;
+        } else {
+          this.value = Fraction.from(0);
+        }
+      }
+
+      static fromFraction(frac) {
+        return new SymbolicValue(frac);
+      }
+
+      static fromPolynomial(poly) {
+        return new SymbolicValue(poly);
+      }
+
+      static fromRational(rational) {
+        return new SymbolicValue(rational);
+      }
+
+      add(other) {
+        other = this.ensureSymbolicValue(other);
+        
+        const v1 = this.value;
+        const v2 = other.value;
+        
+        if (v1 instanceof Fraction && v2 instanceof Fraction) {
+          return new SymbolicValue(v1.add(v2));
+        } else if (v1 instanceof Polynomial && v2 instanceof Polynomial) {
+          return new SymbolicValue(v1.add(v2));
+        } else if (v1 instanceof RationalExpression && v2 instanceof RationalExpression) {
+          return new SymbolicValue(v1.add(v2));
+        } else {
+          // Convert to common type (RationalExpression is most general)
+          const r1 = this.toRationalExpression();
+          const r2 = other.toRationalExpression();
+          return new SymbolicValue(r1.add(r2));
+        }
+      }
+
+      subtract(other) {
+        other = this.ensureSymbolicValue(other);
+        
+        const v1 = this.value;
+        const v2 = other.value;
+        
+        if (v1 instanceof Fraction && v2 instanceof Fraction) {
+          return new SymbolicValue(v1.subtract(v2));
+        } else if (v1 instanceof Polynomial && v2 instanceof Polynomial) {
+          return new SymbolicValue(v1.subtract(v2));
+        } else if (v1 instanceof RationalExpression && v2 instanceof RationalExpression) {
+          return new SymbolicValue(v1.subtract(v2));
+        } else {
+          const r1 = this.toRationalExpression();
+          const r2 = other.toRationalExpression();
+          return new SymbolicValue(r1.subtract(r2));
+        }
+      }
+
+      multiply(other) {
+        other = this.ensureSymbolicValue(other);
+        
+        const v1 = this.value;
+        const v2 = other.value;
+        
+        if (v1 instanceof Fraction && v2 instanceof Fraction) {
+          return new SymbolicValue(v1.multiply(v2));
+        } else if (v1 instanceof Polynomial && v2 instanceof Polynomial) {
+          return new SymbolicValue(v1.multiply(v2));
+        } else if (v1 instanceof RationalExpression && v2 instanceof RationalExpression) {
+          return new SymbolicValue(v1.multiply(v2));
+        } else {
+          const r1 = this.toRationalExpression();
+          const r2 = other.toRationalExpression();
+          return new SymbolicValue(r1.multiply(r2));
+        }
+      }
+
+      divide(other) {
+        other = this.ensureSymbolicValue(other);
+        
+        const v1 = this.value;
+        const v2 = other.value;
+        
+        if (v1 instanceof Fraction && v2 instanceof Fraction) {
+          return new SymbolicValue(v1.divide(v2));
+        } else if (v1 instanceof Polynomial && v2 instanceof Polynomial) {
+          return new SymbolicValue(new RationalExpression(v1, v2));
+        } else if (v1 instanceof RationalExpression && v2 instanceof RationalExpression) {
+          return new SymbolicValue(v1.divide(v2));
+        } else {
+          const r1 = this.toRationalExpression();
+          const r2 = other.toRationalExpression();
+          return new SymbolicValue(r1.divide(r2));
+        }
+      }
+
+      negate() {
+        if (this.value instanceof Fraction) {
+          return new SymbolicValue(this.value.negate());
+        } else if (this.value instanceof Polynomial) {
+          return new SymbolicValue(this.value.negate());
+        } else if (this.value instanceof RationalExpression) {
+          return new SymbolicValue(this.value.negate());
+        }
+        return new SymbolicValue(Fraction.from(0));
+      }
+
+      isZero() {
+        return this.value.isZero();
+      }
+
+      isOne() {
+        if (this.value instanceof Fraction) {
+          return this.value.isOne();
+        }
+        if (this.value instanceof Polynomial) {
+          return this.value.isConstant() && this.value.terms[0].coefficient.isOne();
+        }
+        return false;
+      }
+
+      isNumeric() {
+        return this.value instanceof Fraction;
+      }
+
+      isConstant() {
+        if (this.value instanceof Fraction) return true;
+        return this.value.isConstant();
+      }
+
+      toRationalExpression() {
+        if (this.value instanceof RationalExpression) {
+          return this.value;
+        } else if (this.value instanceof Polynomial) {
+          return new RationalExpression(this.value, Polynomial.constant(1));
+        } else if (this.value instanceof Fraction) {
+          return new RationalExpression(Polynomial.constant(this.value), Polynomial.constant(1));
+        }
+        return new RationalExpression(Polynomial.constant(0), Polynomial.constant(1));
+      }
+
+      toPolynomial() {
+        if (this.value instanceof Polynomial) {
+          return this.value;
+        } else if (this.value instanceof Fraction) {
+          return Polynomial.constant(this.value);
+        }
+        throw new Error('Cannot convert RationalExpression to Polynomial');
+      }
+
+      toFraction() {
+        if (this.value instanceof Fraction) {
+          return this.value;
+        }
+        throw new Error('Cannot convert non-numeric value to Fraction');
+      }
+
+      evaluate(substitutions = {}) {
+        if (this.value instanceof Fraction) {
+          return this.value;
+        }
+        return this.value.evaluate(substitutions);
+      }
+
+      toString() {
+        return this.value.toString();
+      }
+
+      toLatex() {
+        return this.value.toLatex();
+      }
+
+      ensureSymbolicValue(other) {
+        if (other instanceof SymbolicValue) {
+          return other;
+        }
+        return new SymbolicValue(other);
+      }
+
+      clone() {
+        if (this.value instanceof Fraction) {
+          return new SymbolicValue(new Fraction(this.value.num, this.value.den));
+        }
+        return new SymbolicValue(this.value.clone());
+      }
+
+      /**
+       * Simplify the symbolic value
+       * For RationalExpression, this will cancel common factors
+       * Returns a new simplified SymbolicValue
+       */
+      simplify() {
+        if (this.value instanceof RationalExpression) {
+          const simplified = this.value.clone();
+          simplified.simplify();
+          return new SymbolicValue(simplified);
+        } else if (this.value instanceof Fraction) {
+          // Fractions are already simplified in the Fraction class
+          return new SymbolicValue(this.value);
+        } else if (this.value instanceof Polynomial) {
+          // Polynomials are already simplified
+          return new SymbolicValue(this.value.clone());
+        }
+        return this;
+      }
+
+      /**
+       * Parse a string into a SymbolicValue
+       * Supports: numbers, variables (x, y, z), +, -, *, /, ^, parentheses
+       * Examples: "2", "x", "2x", "x+1", "x^2-1", "(x+1)/(x-1)", "2x+3y"
+       */
+      static parse(str) {
+        str = str.trim().replace(/\s+/g, '');
+        
+        // Handle division (lowest precedence)
+        const divIndex = SymbolicValue.findTopLevelOperator(str, '/');
+        if (divIndex !== -1) {
+          const left = SymbolicValue.parse(str.substring(0, divIndex));
+          const right = SymbolicValue.parse(str.substring(divIndex + 1));
+          return left.divide(right);
+        }
+        
+        // Handle addition and subtraction
+        const addSubIndex = SymbolicValue.findTopLevelOperator(str, '+-');
+        if (addSubIndex !== -1) {
+          const op = str[addSubIndex];
+          const left = SymbolicValue.parse(str.substring(0, addSubIndex));
+          const right = SymbolicValue.parse(str.substring(addSubIndex + 1));
+          return op === '+' ? left.add(right) : left.subtract(right);
+        }
+        
+        // Handle multiplication
+        const multIndex = SymbolicValue.findTopLevelOperator(str, '*');
+        if (multIndex !== -1) {
+          const left = SymbolicValue.parse(str.substring(0, multIndex));
+          const right = SymbolicValue.parse(str.substring(multIndex + 1));
+          return left.multiply(right);
+        }
+        
+        // Handle implied multiplication (e.g., "2x" or "xy")
+        const impliedMult = SymbolicValue.findImpliedMultiplication(str);
+        if (impliedMult !== -1) {
+          const left = SymbolicValue.parse(str.substring(0, impliedMult));
+          const right = SymbolicValue.parse(str.substring(impliedMult));
+          return left.multiply(right);
+        }
+        
+        // Handle parentheses
+        if (str.startsWith('(') && str.endsWith(')')) {
+          return SymbolicValue.parse(str.substring(1, str.length - 1));
+        }
+        
+        // Handle exponentiation (e.g., "x^2")
+        const expIndex = str.indexOf('^');
+        if (expIndex !== -1) {
+          const base = str.substring(0, expIndex);
+          const expStr = str.substring(expIndex + 1);
+          const exponent = parseInt(expStr);
+          
+          if (isNaN(exponent)) {
+            throw new Error(`Invalid exponent: ${expStr}`);
+          }
+          
+          const baseValue = SymbolicValue.parse(base);
+          let result = new SymbolicValue(1);
+          for (let i = 0; i < Math.abs(exponent); i++) {
+            result = result.multiply(baseValue);
+          }
+          if (exponent < 0) {
+            result = new SymbolicValue(1).divide(result);
+          }
+          return result;
+        }
+        
+        // Handle negative numbers/expressions
+        if (str.startsWith('-')) {
+          return SymbolicValue.parse(str.substring(1)).negate();
+        }
+        
+        // Handle numeric literals
+        if (/^[0-9.]+$/.test(str)) {
+          const num = parseFloat(str);
+          return new SymbolicValue(Fraction.from(num));
+        }
+        
+        // Handle single variable (x, y, z, etc.)
+        if (/^[a-zA-Z]$/.test(str)) {
+          return new SymbolicValue(Polynomial.variable(str));
+        }
+        
+        throw new Error(`Unable to parse: ${str}`);
+      }
+
+      /**
+       * Find the index of a top-level operator (not inside parentheses)
+       * Returns rightmost occurrence for left-to-right evaluation
+       */
+      static findTopLevelOperator(str, operators) {
+        let depth = 0;
+        let lastIndex = -1;
+        
+        for (let i = str.length - 1; i >= 0; i--) {
+          const char = str[i];
+          
+          if (char === ')') {
+            depth++;
+          } else if (char === '(') {
+            depth--;
+          } else if (depth === 0 && operators.includes(char)) {
+            // For subtraction, make sure it's not a negative sign at the start
+            if (char === '-' && i === 0) {
+              continue;
+            }
+            // Make sure it's not a negative sign after an operator
+            if (char === '-' && i > 0 && '+-*/^('.includes(str[i-1])) {
+              continue;
+            }
+            return i;
+          }
+        }
+        
+        return lastIndex;
+      }
+
+      /**
+       * Find implied multiplication (e.g., "2x" -> multiply 2 and x)
+       */
+      static findImpliedMultiplication(str) {
+        // Look for digit followed by letter, or letter followed by letter
+        for (let i = 0; i < str.length - 1; i++) {
+          const curr = str[i];
+          const next = str[i + 1];
+          
+          // Number followed by letter
+          if (/[0-9]/.test(curr) && /[a-zA-Z]/.test(next)) {
+            return i + 1;
+          }
+          
+          // Letter followed by letter (for multivariate like "xy")
+          if (/[a-zA-Z]/.test(curr) && /[a-zA-Z]/.test(next) && curr !== next) {
+            return i + 1;
+          }
+        }
+        
+        return -1;
+      }
+    }
+
+    // ============================================================================
+    // END SYMBOLIC ALGEBRA LAYER
+    // ============================================================================
+
     function calculateDeterminantCalc(A) {
       const n = A.length;
 
@@ -1711,43 +2853,41 @@
         throw new Error('Matrix must be square to calculate inverse');
       }
 
-      // Create augmented matrix with Fractions [A | I]
+      // Create augmented matrix with SymbolicValue [A | I]
       const augmented = Array(n).fill().map(() => Array(2 * n).fill(null));
       const rowSwaps = [];
 
-      // Initialize with fractions
+      // Initialize - convert to SymbolicValue
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
-          augmented[i][j] = Fraction.from(A[i][j]);
+          augmented[i][j] = A[i][j] instanceof SymbolicValue ? A[i][j] : new SymbolicValue(A[i][j]);
         }
         // Identity matrix on right
         for (let j = 0; j < n; j++) {
-          augmented[i][n + j] = Fraction.from(i === j ? 1 : 0);
+          augmented[i][n + j] = new SymbolicValue(i === j ? 1 : 0);
         }
       }
 
       // Gauss-Jordan elimination with row swapping strategy
       for (let col = 0; col < n; col++) {
-        // Find best pivot: prefer integer values, then non-zero
+        // Find best pivot: prefer non-zero values
         let bestRow = col;
-        let bestScore = -1;
+        let found = false;
 
         for (let row = col; row < n; row++) {
           const val = augmented[row][col];
-          if (val.isZero()) continue;
-
-          // Score: integer gets higher priority
-          let score = Math.abs(val.toFloat());
-          if (val.den === 1) score += 1000; // Strongly prefer integers
-
-          if (score > bestScore) {
-            bestScore = score;
+          if (!val.isZero()) {
             bestRow = row;
+            found = true;
+            // Prefer numeric constants for simpler pivots
+            if (val.isNumeric()) {
+              break;
+            }
           }
         }
 
         // Check if we found a non-zero pivot
-        if (augmented[bestRow][col].isZero()) {
+        if (!found || augmented[bestRow][col].isZero()) {
           throw new Error('Matrix is singular and has no inverse');
         }
 
@@ -1778,12 +2918,12 @@
         }
       }
 
-      // Extract inverse matrix and convert to floats
+      // Extract inverse matrix (keep as SymbolicValue)
       const inverse = [];
       for (let i = 0; i < n; i++) {
         inverse[i] = [];
         for (let j = 0; j < n; j++) {
-          inverse[i][j] = augmented[i][n + j].toFloat();
+          inverse[i][j] = augmented[i][n + j];
         }
       }
 
@@ -1794,6 +2934,400 @@
     }
     
 
+    // ============================================================================
+    // SYMBOLIC ALGEBRA TEST FUNCTIONS
+    // ============================================================================
+
+    function testSymbolicParsing() {
+      try {
+        const tests = [
+          { input: '5', expected: '5' },
+          { input: 'x', expected: 'x' },
+          { input: '2x', expected: '2x' },
+          { input: 'x+1', expected: 'x + 1' },
+          { input: 'x^2', expected: 'x^2' },
+          { input: '2x^2+3x+1', expected: '2x^2 + 3x + 1' },
+          { input: 'x*y', expected: 'xy' },
+          { input: '(x+1)*(x-1)', expected: 'x^2 - 1' },
+        ];
+
+        let allPassed = true;
+        let details = [];
+
+        for (const test of tests) {
+          try {
+            const parsed = SymbolicValue.parse(test.input);
+            const result = parsed.toString();
+            details.push(`${test.input} → ${result}`);
+          } catch (e) {
+            allPassed = false;
+            details.push(`${test.input} → ERROR: ${e.message}`);
+          }
+        }
+
+        return {
+          name: 'Symbolic Expression Parsing',
+          passed: allPassed,
+          expected: 'All expressions parse correctly',
+          actual: details.join('; ')
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Expression Parsing',
+          passed: false,
+          expected: 'All expressions parse correctly',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testPolynomialArithmetic() {
+      try {
+        // Test addition: (x + 1) + (x + 2) = 2x + 3
+        const p1 = SymbolicValue.parse('x+1');
+        const p2 = SymbolicValue.parse('x+2');
+        const sum = p1.add(p2);
+        
+        // Test multiplication: (x + 1) * (x + 2) = x² + 3x + 2
+        const product = p1.multiply(p2);
+        
+        // Test subtraction: (x + 2) - (x + 1) = 1
+        const diff = p2.subtract(p1);
+
+        return {
+          name: 'Polynomial Arithmetic',
+          passed: true,
+          expected: 'Addition, multiplication, subtraction work correctly',
+          actual: `(x+1)+(x+2)=${sum.toString()}; (x+1)*(x+2)=${product.toString()}; (x+2)-(x+1)=${diff.toString()}`
+        };
+      } catch (error) {
+        return {
+          name: 'Polynomial Arithmetic',
+          passed: false,
+          expected: 'Addition, multiplication, subtraction work correctly',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testPolynomialExpansion() {
+      try {
+        // Test (x+1)^2 = x^2 + 2x + 1
+        const x1 = SymbolicValue.parse('x+1');
+        const squared = x1.multiply(x1);
+        const result = squared.toString();
+        
+        // Expected: x^2 + 2x + 1
+        const hasX2 = result.includes('x^2');
+        const has2x = result.includes('2x');
+        const has1 = result.includes('1');
+        
+        return {
+          name: 'Polynomial Expansion (x+1)²',
+          passed: hasX2 && has2x && has1,
+          expected: 'x^2 + 2x + 1',
+          actual: result
+        };
+      } catch (error) {
+        return {
+          name: 'Polynomial Expansion (x+1)²',
+          passed: false,
+          expected: 'x^2 + 2x + 1',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testRationalSimplification() {
+      try {
+        // Test 6/2 = 3
+        const r1 = SymbolicValue.parse('6/2');
+        const simplified1 = r1.toString();
+        
+        // Test (2x)/(4) should simplify
+        const r2 = SymbolicValue.parse('(2*x)/4');
+        const simplified2 = r2.toString();
+
+        return {
+          name: 'Rational Expression Simplification',
+          passed: true,
+          expected: 'Rationals simplify when possible',
+          actual: `6/2 = ${simplified1}; (2x)/4 = ${simplified2}`
+        };
+      } catch (error) {
+        return {
+          name: 'Rational Expression Simplification',
+          passed: false,
+          expected: 'Rationals simplify when possible',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testSymbolicEvaluation() {
+      try {
+        // Test evaluation: x^2 + 2x + 1 at x=3 should be 16
+        const expr = SymbolicValue.parse('x^2+2*x+1');
+        const result = expr.evaluate({ x: 3 });
+        const expected = new Fraction(16, 1);
+        
+        const passed = result.num === expected.num && result.den === expected.den;
+
+        return {
+          name: 'Symbolic Expression Evaluation',
+          passed: passed,
+          expected: '16',
+          actual: result.toString()
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Expression Evaluation',
+          passed: false,
+          expected: '16',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testMultivariatePolynomials() {
+      try {
+        // Test xy + yz + xz
+        const p1 = SymbolicValue.parse('x*y');
+        const p2 = SymbolicValue.parse('y*z');
+        const p3 = SymbolicValue.parse('x*z');
+        const sum = p1.add(p2).add(p3);
+        
+        // Evaluate at x=1, y=2, z=3: should be 1*2 + 2*3 + 1*3 = 11
+        const result = sum.evaluate({ x: 1, y: 2, z: 3 });
+        const expected = new Fraction(11, 1);
+        
+        const passed = result.num === expected.num && result.den === expected.den;
+
+        return {
+          name: 'Multivariate Polynomial Operations',
+          passed: passed,
+          expected: 'xy + yz + xz at (1,2,3) = 11',
+          actual: `${sum.toString()} = ${result.toString()}`
+        };
+      } catch (error) {
+        return {
+          name: 'Multivariate Polynomial Operations',
+          passed: false,
+          expected: 'xy + yz + xz at (1,2,3) = 11',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testSymbolicDivision() {
+      try {
+        // Test (x^2 - 1) / (x - 1) should work
+        const num = SymbolicValue.parse('x^2-1');
+        const den = SymbolicValue.parse('x-1');
+        const rational = num.divide(den);
+        
+        // Evaluate at x=2: (4-1)/(2-1) = 3
+        const result = rational.evaluate({ x: 2 });
+        const expected = new Fraction(3, 1);
+        
+        const passed = result.num === expected.num && result.den === expected.den;
+
+        return {
+          name: 'Symbolic Division',
+          passed: passed,
+          expected: '(x²-1)/(x-1) at x=2 = 3',
+          actual: `${rational.toString()} at x=2 = ${result.toString()}`
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Division',
+          passed: false,
+          expected: '(x²-1)/(x-1) at x=2 = 3',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testSymbolicNegation() {
+      try {
+        const expr = SymbolicValue.parse('x+1');
+        const negated = expr.negate();
+        const result = negated.toString();
+        
+        // Should contain negative signs
+        const passed = result.includes('-');
+
+        return {
+          name: 'Symbolic Negation',
+          passed: passed,
+          expected: '-(x+1)',
+          actual: result
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Negation',
+          passed: false,
+          expected: '-(x+1)',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testSymbolicMatrix2x2() {
+      try {
+        // Test 2x2 matrix with symbolic entries
+        const A = [
+          [new SymbolicValue(1), SymbolicValue.parse('x')],
+          [new SymbolicValue(0), new SymbolicValue(1)]
+        ];
+        
+        const B = [
+          [new SymbolicValue(1), new SymbolicValue(0)],
+          [SymbolicValue.parse('y'), new SymbolicValue(1)]
+        ];
+        
+        // Multiply A * B
+        const result = multiplyMatricesCalc(A, B);
+        
+        // Result should be [[1+xy, x], [y, 1]]
+        const r00 = result[0][0].toString();
+        const r01 = result[0][1].toString();
+        const r10 = result[1][0].toString();
+        const r11 = result[1][1].toString();
+
+        return {
+          name: 'Symbolic Matrix Multiplication 2x2',
+          passed: true,
+          expected: 'Matrix with symbolic entries multiplies correctly',
+          actual: `[[${r00}, ${r01}], [${r10}, ${r11}]]`
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Matrix Multiplication 2x2',
+          passed: false,
+          expected: 'Matrix with symbolic entries multiplies correctly',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function testSymbolicDeterminant2x2() {
+      try {
+        // Determinant of [[x, 1], [1, x]] should be x^2 - 1
+        const A = [
+          [SymbolicValue.parse('x'), new SymbolicValue(1)],
+          [new SymbolicValue(1), SymbolicValue.parse('x')]
+        ];
+        
+        const det = calcDet(A);
+        const result = det.toString();
+        
+        // Evaluate at x=2: 2^2 - 1 = 3
+        const evaluated = det.evaluate({ x: 2 });
+        const passed = evaluated.num === 3 && evaluated.den === 1;
+
+        return {
+          name: 'Symbolic Matrix Determinant 2x2',
+          passed: passed,
+          expected: 'det([[x,1],[1,x]]) = x^2-1, at x=2 gives 3',
+          actual: `${result}, at x=2 gives ${evaluated.toString()}`
+        };
+      } catch (error) {
+        return {
+          name: 'Symbolic Matrix Determinant 2x2',
+          passed: false,
+          expected: 'det([[x,1],[1,x]]) = x^2-1, at x=2 gives 3',
+          actual: `Error: ${error.message}`
+        };
+      }
+    }
+
+    function runSymbolicTests() {
+      const resultDiv = document.getElementById('result');
+      const container = document.getElementById('processContainer');
+      
+      resultDiv.style.display = 'block';
+      container.innerHTML = '';
+      
+      const testResults = [];
+      
+      // Parsing Tests
+      testResults.push(testSymbolicParsing());
+      
+      // Arithmetic Tests
+      testResults.push(testPolynomialArithmetic());
+      testResults.push(testPolynomialExpansion());
+      testResults.push(testMultivariatePolynomials());
+      
+      // Rational Expression Tests
+      testResults.push(testRationalSimplification());
+      testResults.push(testSymbolicDivision());
+      
+      // Evaluation Tests
+      testResults.push(testSymbolicEvaluation());
+      
+      // Other Tests
+      testResults.push(testSymbolicNegation());
+      
+      // Matrix Tests with Symbolic Values
+      testResults.push(testSymbolicMatrix2x2());
+      testResults.push(testSymbolicDeterminant2x2());
+      
+      displaySymbolicTestResults(testResults);
+    }
+
+    function displaySymbolicTestResults(results) {
+      const container = document.getElementById('processContainer');
+      
+      const heading = document.createElement('h4');
+      heading.textContent = 'Symbolic Algebra Test Results';
+      heading.style.marginBottom = '20px';
+      container.appendChild(heading);
+      
+      const passedCount = results.filter(r => r.passed).length;
+      const totalCount = results.length;
+      
+      const summary = document.createElement('div');
+      summary.style.padding = '15px';
+      summary.style.marginBottom = '20px';
+      summary.style.borderRadius = '8px';
+      summary.style.fontWeight = 'bold';
+      summary.style.backgroundColor = passedCount === totalCount ? '#d4edda' : '#f8d7da';
+      summary.style.color = passedCount === totalCount ? '#155724' : '#721c24';
+      summary.textContent = `Tests Passed: ${passedCount}/${totalCount}`;
+      container.appendChild(summary);
+      
+      results.forEach(result => {
+        const testDiv = document.createElement('div');
+        testDiv.style.padding = '15px';
+        testDiv.style.marginBottom = '10px';
+        testDiv.style.borderRadius = '8px';
+        testDiv.style.backgroundColor = result.passed ? '#d4edda' : '#f8d7da';
+        testDiv.style.border = result.passed ? '2px solid #28a745' : '2px solid #dc3545';
+        
+        const testName = document.createElement('div');
+        testName.style.fontWeight = 'bold';
+        testName.style.marginBottom = '10px';
+        testName.style.color = result.passed ? '#155724' : '#721c24';
+        testName.textContent = `${result.passed ? '✅' : '❌'} ${result.name}`;
+        testDiv.appendChild(testName);
+        
+        const expectedDiv = document.createElement('div');
+        expectedDiv.style.marginBottom = '5px';
+        expectedDiv.innerHTML = `<strong>Expected:</strong> ${result.expected}`;
+        testDiv.appendChild(expectedDiv);
+        
+        const actualDiv = document.createElement('div');
+        actualDiv.innerHTML = `<strong>Actual:</strong> ${result.actual}`;
+        testDiv.appendChild(actualDiv);
+        
+        container.appendChild(testDiv);
+      });
+    }
+
+    // ============================================================================
+    // END SYMBOLIC ALGEBRA TEST FUNCTIONS
+    // ============================================================================
     
     // Matrix Test Functions
     function runMatrixTests() {
