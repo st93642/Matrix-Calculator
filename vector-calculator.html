@@ -1602,17 +1602,17 @@
                 // Add points
                 if (P1) {
                   if (dim === 2) {
-                    api.evalCommand(`P1 = Point((${P1[0]}, ${P1[1]}))`);
+                    api.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
                   } else {
-                    api.evalCommand(`P1 = Point((${P1[0]}, ${P1[1]}, ${P1[2]}))`);
+                    api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
                   }
                 }
 
                 if (P2) {
                   if (dim === 2) {
-                    api.evalCommand(`P2 = Point((${P2[0]}, ${P2[1]}))`);
+                    api.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
                   } else {
-                    api.evalCommand(`P2 = Point((${P2[0]}, ${P2[1]}, ${P2[2]}))`);
+                    api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
                   }
                 }
               } catch (e) {
@@ -1752,17 +1752,17 @@
           // Add input points
           if (inputs.P1) {
             if (dim === 2) {
-              api.evalCommand(`P1 = Point((${inputs.P1[0]}, ${inputs.P1[1]}))`);
+              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
             } else {
-              api.evalCommand(`P1 = Point((${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]}))`);
+              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
             }
           }
 
           if (inputs.P2) {
             if (dim === 2) {
-              api.evalCommand(`P2 = Point((${inputs.P2[0]}, ${inputs.P2[1]}))`);
+              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
             } else {
-              api.evalCommand(`P2 = Point((${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]}))`);
+              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
             }
           }
 
