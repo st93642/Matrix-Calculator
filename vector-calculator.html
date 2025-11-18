@@ -848,7 +848,10 @@
       setTimeout(() => {
         const btn = document.getElementById(plotButtonId);
         if (btn) {
-          btn.onclick = () => plotOperationResult('Cross Product', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+          const resultCopy = result;
+          const ACopy = A;
+          const BCopy = B;
+          btn.onclick = () => plotOperationResult('Cross Product', resultCopy, {A: ACopy, B: BCopy});
         }
       }, 0);
     }
@@ -978,7 +981,10 @@
       setTimeout(() => {
         const btn = document.getElementById(plotButtonId);
         if (btn) {
-          btn.onclick = () => plotOperationResult('Orthogonal Projection', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+          const resultCopy = result;
+          const ACopy = A;
+          const BCopy = B;
+          btn.onclick = () => plotOperationResult('Orthogonal Projection', resultCopy, {A: ACopy, B: BCopy});
         }
       }, 0);
     }
@@ -1065,7 +1071,10 @@
       setTimeout(() => {
         const btn = document.getElementById(plotButtonId);
         if (btn) {
-          btn.onclick = () => plotOperationResult('Vector from Points', ${JSON.stringify(result)}, {P1: ${JSON.stringify(P1)}, P2: ${JSON.stringify(P2)}});
+          const resultCopy = result;
+          const P1Copy = P1;
+          const P2Copy = P2;
+          btn.onclick = () => plotOperationResult('Vector from Points', resultCopy, {P1: P1Copy, P2: P2Copy});
         }
       }, 0);
     }
@@ -1117,11 +1126,17 @@
       setTimeout(() => {
         const btn1 = document.getElementById(plotBtnId1);
         if (btn1) {
-          btn1.onclick = () => plotOperationResult('Vector Addition', ${JSON.stringify(resultAdd)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+          const resultAddCopy = resultAdd;
+          const ACopy = A;
+          const BCopy = B;
+          btn1.onclick = () => plotOperationResult('Vector Addition', resultAddCopy, {A: ACopy, B: BCopy});
         }
         const btn2 = document.getElementById(plotBtnId2);
         if (btn2) {
-          btn2.onclick = () => plotOperationResult('Vector Subtraction', ${JSON.stringify(resultSub)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+          const resultSubCopy = resultSub;
+          const ACopy = A;
+          const BCopy = B;
+          btn2.onclick = () => plotOperationResult('Vector Subtraction', resultSubCopy, {A: ACopy, B: BCopy});
         }
       }, 0);
     }
@@ -1179,7 +1194,9 @@
       setTimeout(() => {
         const btn = document.getElementById(plotButtonId);
         if (btn) {
-          btn.onclick = () => plotOperationResult('Scalar Multiplication', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}});
+          const resultCopy = result;
+          const ACopy = A;
+          btn.onclick = () => plotOperationResult('Scalar Multiplication', resultCopy, {A: ACopy});
         }
       }, 0);
     }
@@ -1232,7 +1249,9 @@
       setTimeout(() => {
         const btn = document.getElementById(plotButtonId);
         if (btn) {
-          btn.onclick = () => plotOperationResult('Point Distance', null, {P1: ${JSON.stringify(P1)}, P2: ${JSON.stringify(P2)}});
+          const P1Copy = P1;
+          const P2Copy = P2;
+          btn.onclick = () => plotOperationResult('Point Distance', null, {P1: P1Copy, P2: P2Copy});
         }
       }, 0);
     }
@@ -1413,7 +1432,12 @@
         setTimeout(() => {
           const btn = document.getElementById(plotButtonId);
           if (btn) {
-            btn.onclick = () => plotOperationResult(${JSON.stringify(title)}, ${JSON.stringify(result)}, {A: ${JSON.stringify(u)}, B: ${JSON.stringify(v)}, C: ${JSON.stringify(w)}});
+            const titleCopy = title;
+            const resultCopy = result;
+            const uCopy = u;
+            const vCopy = v;
+            const wCopy = w;
+            btn.onclick = () => plotOperationResult(titleCopy, resultCopy, {A: uCopy, B: vCopy, C: wCopy});
           }
         }, 0);
       } catch (error) {
