@@ -18,6 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vector Calculator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -355,6 +356,21 @@
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
+    
+    #canvas3d {
+      width: 100%;
+      height: 500px;
+      border: 2px solid #667eea;
+      border-radius: 12px;
+      display: block;
+      background: linear-gradient(180deg, #f0f0f0 0%, #e8e8e8 100%);
+      margin: 20px 0;
+    }
+    
+    .canvas-container {
+      margin: 20px 0;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -453,6 +469,12 @@
       <button class="btn-operation btn-viz" onclick="plotVectors()">📊 Plot Vectors & Points</button>
     </div>
     
+    <!-- 3D Visualization Canvas -->
+    <div class="canvas-container" id="canvasContainer" style="display: none;">
+      <div class="section-header">3D Visualization</div>
+      <canvas id="canvas3d"></canvas>
+    </div>
+
     <!-- Results Section -->
     <div class="result-section" id="resultSection">
       <div class="result-header">Calculation Results</div>
@@ -1364,84 +1386,44 @@
         return;
       }
 
-      // Build Desmos expressions
-      let expressions = [];
+      // Prepare data for 3D visualization
+      const data = {
+        dim: dim,
+        vectors: { A, B, C },
+        points: { P1, P2 }
+      };
 
-      // Add points
-      if (P1) {
-        if (dim === 2) {
-          expressions.push({ latex: `P_1 = (${P1[0]}, ${P1[1]})` });
-        } else {
-          expressions.push({ latex: `P_1 = (${P1[0]}, ${P1[1]}, ${P1[2]})` });
-        }
-      }
-
-      if (P2) {
-        if (dim === 2) {
-          expressions.push({ latex: `P_2 = (${P2[0]}, ${P2[1]})` });
-        } else {
-          expressions.push({ latex: `P_2 = (${P2[0]}, ${P2[1]}, ${P2[2]})` });
-        }
-      }
-
-      // Add vectors as parametric lines from origin
-      if (A) {
-        if (dim === 2) {
-          expressions.push({ latex: `\\left(t${A[0]}, t${A[1]}\\right)` });
-        } else {
-          expressions.push({ latex: `\\left(t${A[0]}, t${A[1]}, t${A[2]}\\right)` });
-        }
-      }
-
-      if (B) {
-        if (dim === 2) {
-          expressions.push({ latex: `\\left(s${B[0]}, s${B[1]}\\right)` });
-        } else {
-          expressions.push({ latex: `\\left(s${B[0]}, s${B[1]}, s${B[2]}\\right)` });
-        }
-      }
-
-      if (C) {
-        if (dim === 2) {
-          expressions.push({ latex: `\\left(u${C[0]}, u${C[1]}\\right)` });
-        } else {
-          expressions.push({ latex: `\\left(u${C[0]}, u${C[1]}, u${C[2]}\\right)` });
-        }
-      }
-
-      // Open Desmos in new tab
-      const desmosUrl = dim === 2 ? 'https://www.desmos.com/calculator' : 'https://www.desmos.com/3d';
-      const queryString = encodeURIComponent(JSON.stringify(expressions));
-      window.open(`${desmosUrl}?expressions=${queryString}`, '_blank');
+      // Create 3D visualization
+      render3DVisualization(data);
 
       const steps = [{
-        title: 'Desmos Visualization',
+        title: '3D Visualization',
         content: `
           <div class="alert alert-info">
-            <strong>📊 Opening Desmos ${dim}D Graphing Calculator</strong><br><br>
-            Your vectors and points are now being plotted in Desmos. A new tab should open automatically.<br><br>
+            <strong>📊 3D Vector & Points Visualization</strong><br><br>
+            Your vectors and points are now displayed in the 3D view below.<br><br>
             <strong>Elements:</strong>
-            ${P1 ? `<br>• Point P₁: ${VectorModule.formatVector(P1)}` : ''}
-            ${P2 ? `<br>• Point P₂: ${VectorModule.formatVector(P2)}` : ''}
-            ${A ? `<br>• Vector A: ${VectorModule.formatVector(A)}` : ''}
-            ${B ? `<br>• Vector B: ${VectorModule.formatVector(B)}` : ''}
-            ${C ? `<br>• Vector C: ${VectorModule.formatVector(C)}` : ''}
+            ${P1 ? `<br>• Point P₁: ${VectorModule.formatVector(P1)} (red sphere)` : ''}
+            ${P2 ? `<br>• Point P₂: ${VectorModule.formatVector(P2)} (green sphere)` : ''}
+            ${A ? `<br>• Vector A: ${VectorModule.formatVector(A)} (red line)` : ''}
+            ${B ? `<br>• Vector B: ${VectorModule.formatVector(B)} (green line)` : ''}
+            ${C ? `<br>• Vector C: ${VectorModule.formatVector(C)} (blue line)` : ''}
             <br><br>
-            <em>Vectors are shown as parametric lines from the origin (parameter values: t, s, u)</em>
+            <em>Coordinate axes: Red=X, Green=Y, Blue=Z. Use mouse to rotate view.</em>
           </div>
         `
       }];
 
       const summary = `
-        <div class="summary-line"><strong>Service:</strong> Desmos ${dim}D Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> Embedded 3D Visualization</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Elements:</strong> Vectors + Points</div>
+        <div class="summary-line"><strong>Elements:</strong> Vectors + Points + Axes</div>
         ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
         ${B ? '<div class="summary-line"><strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '</div>' : ''}
         ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
         ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
         ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
-        <div class="summary-result">Vectors and points plotted in Desmos graphing calculator</div>
+        <div class="summary-result">3D visualization of vectors and points</div>
       `;
 
       showResult('Coordinate System & Elements Plotting', summary, steps);
@@ -1450,33 +1432,29 @@
     function plotCoordinateSystem() {
       const dim = parseInt(document.getElementById('dimension').value);
 
-      // Build Desmos coordinate system with origin point
-      let expressions = [];
+      // Create empty data for coordinate system only
+      const data = {
+        dim: dim,
+        vectors: { A: null, B: null, C: null },
+        points: { P1: null, P2: null }
+      };
 
-      if (dim === 2) {
-        expressions.push({ latex: 'O = (0, 0)' });
-      } else {
-        expressions.push({ latex: 'O = (0, 0, 0)' });
-      }
-
-      // Open Desmos in new tab
-      const desmosUrl = dim === 2 ? 'https://www.desmos.com/calculator' : 'https://www.desmos.com/3d';
-      const queryString = encodeURIComponent(JSON.stringify(expressions));
-      window.open(`${desmosUrl}?expressions=${queryString}`, '_blank');
+      // Create 3D visualization with just axes
+      render3DVisualization(data);
 
       const steps = [{
         title: 'Right-Handed Coordinate System',
         content: `
           <div class="alert alert-info">
-            <strong>📐 Desmos ${dim}D Coordinate System</strong><br><br>
-            A new tab has opened with Desmos showing the ${dim}D coordinate system.
+            <strong>📐 ${dim}D Coordinate System</strong><br><br>
+            The coordinate system is displayed in the 3D view below.
             <br><br>
             ${dim === 2 ?
-              '<strong>2D System:</strong> X-axis points right, Y-axis points up. Standard mathematical convention where positive rotation is counterclockwise.' :
-              '<strong>3D System:</strong> Right-hand rule - when you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
+              '<strong>2D System:</strong> X-axis (red) points right, Y-axis (green) points up. Standard mathematical convention where positive rotation is counterclockwise.' :
+              '<strong>3D System:</strong> Right-hand rule - Red=X-axis, Green=Y-axis, Blue=Z-axis. When you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
             }
             <br><br>
-            <em>The origin point O is marked in the coordinate system.</em>
+            <em>Use mouse to rotate and explore the coordinate system.</em>
           </div>
         `
       }];
@@ -1484,8 +1462,8 @@
       const summary = `
         <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Service:</strong> Desmos ${dim}D Calculator</div>
-        <div class="summary-result">Coordinate system opened in Desmos graphing calculator</div>
+        <div class="summary-line"><strong>Service:</strong> Embedded 3D Visualization</div>
+        <div class="summary-result">Coordinate system displayed in 3D view</div>
       `;
 
       showResult('Coordinate System', summary, steps);
@@ -1603,9 +1581,133 @@
       `;
       
       showResult(`${operationName} Visualization`, summary, steps);
-    }
-    
-    const TestRunner = (() => {
+      }
+
+      let scene, camera, renderer;
+
+      function initThreeJS() {
+      if (renderer) return;
+
+      const canvas = document.getElementById('canvas3d');
+      const width = canvas.clientWidth;
+      const height = 500;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf0f0f0);
+
+      camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+      camera.position.set(5, 5, 5);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+      // Add lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(10, 10, 10);
+      scene.add(directionalLight);
+
+      // Enable mouse rotation
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          const deltaX = e.clientX - previousMousePosition.x;
+          const deltaY = e.clientY - previousMousePosition.y;
+
+          scene.rotation.y += deltaX * 0.005;
+          scene.rotation.x += deltaY * 0.005;
+
+          previousMousePosition = { x: e.clientX, y: e.clientY };
+        }
+      });
+
+      canvas.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      animate();
+      }
+
+      function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+      }
+
+      function render3DVisualization(data) {
+      // Show canvas container
+      document.getElementById('canvasContainer').style.display = 'block';
+
+      // Initialize Three.js if not already done
+      initThreeJS();
+
+      // Clear previous objects
+      while(scene.children.length > 0) {
+        scene.remove(scene.children[0]);
+      }
+
+      // Re-add lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(10, 10, 10);
+      scene.add(directionalLight);
+
+      const arrowLength = 5;
+
+      // Draw coordinate axes
+      const axisLength = arrowLength;
+      // X axis (red)
+      const xArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), axisLength, 0xff0000, 0.3, 0.2);
+      scene.add(xArrow);
+
+      // Y axis (green)
+      const yArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), axisLength, 0x00ff00, 0.3, 0.2);
+      scene.add(yArrow);
+
+      // Z axis (blue)
+      const zArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), axisLength, 0x0000ff, 0.3, 0.2);
+      scene.add(zArrow);
+
+      // Draw vectors
+      const colors = { A: 0xff6b6b, B: 0x51cf66, C: 0x4dabf7 };
+      const positions = { A: data.vectors.A, B: data.vectors.B, C: data.vectors.C };
+
+      Object.entries(positions).forEach(([name, vec]) => {
+        if (vec) {
+          const start = new THREE.Vector3(0, 0, 0);
+          const direction = new THREE.Vector3(vec[0], vec[1], vec[2] || 0).normalize();
+          const length = new THREE.Vector3(vec[0], vec[1], vec[2] || 0).length();
+          const arrow = new THREE.ArrowHelper(direction, start, length, colors[name], 0.25, 0.15);
+          scene.add(arrow);
+        }
+      });
+
+      // Draw points
+      const pointColors = { P1: 0xff6b6b, P2: 0x51cf66 };
+      const points = { P1: data.points.P1, P2: data.points.P2 };
+
+      Object.entries(points).forEach(([name, point]) => {
+        if (point) {
+          const geometry = new THREE.SphereGeometry(0.2, 32, 32);
+          const material = new THREE.MeshStandardMaterial({ color: pointColors[name] });
+          const sphere = new THREE.Mesh(geometry, material);
+          sphere.position.set(point[0], point[1], point[2] || 0);
+          scene.add(sphere);
+        }
+      });
+      }
+
+      const TestRunner = (() => {
       const tests = [];
 
       const assert = (condition, message) => {
