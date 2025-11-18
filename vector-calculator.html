@@ -367,7 +367,7 @@
       <br><br>
       <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
       <br><br>
-      <strong>📊 Visualization:</strong> Click "Plot Vectors" or "Coordinate System" to visualize (2D opens Desmos in new tab, 3D displayed on page). Individual operation results also have "Plot" buttons for vector visualization.
+      <strong>📊 Visualization:</strong> Click "Plot Vectors" or "Coordinate System" to open GeoGebra with step-by-step instructions. Copy and paste the generated commands into GeoGebra's input field to see your vectors plotted. Works for both 2D and 3D!
     </div>
     
     <!-- Dimension Control -->
@@ -1345,9 +1345,9 @@
      function copyCommandsToClipboard(commandsText) {
        const commands = commandsText.replace(/\\n/g, '\n');
        navigator.clipboard.writeText(commands).then(() => {
-         alert('Commands copied to clipboard! Now paste them in GeoGebra.');
+         alert('✓ Commands copied to clipboard!\n\nNow:\n1. Go to the GeoGebra tab\n2. Click in the input field (bottom of screen)\n3. Paste the commands\n4. Press Enter to plot');
        }).catch(() => {
-         alert('Failed to copy. Please copy manually from the commands box above.');
+         alert('Failed to copy. Please manually copy the commands from the box below.');
        });
      }
      
@@ -1364,94 +1364,91 @@
         return;
       }
 
-      // For 2D, use Desmos; for 3D, use simple Canvas visualization
-      if (dim === 2) {
-        // Build Desmos URL with parametric curves for vectors
-        let expressions = [];
+      // Generate GeoGebra commands
+      let commands = [];
 
-        // Add vectors as parametric lines
-        if (A) {
-          expressions.push(`\\left(${A[0]}t, ${A[1]}t\\right)`);
-        }
-        if (B) {
-          expressions.push(`\\left(${B[0]}t, ${B[1]}t\\right)`);
-        }
-        if (C) {
-          expressions.push(`\\left(${C[0]}t, ${C[1]}t\\right)`);
-        }
-
-        // Add points as static points
-        if (P1) {
-          expressions.push(`\\left(${P1[0]}, ${P1[1]}\\right)`);
-        }
-        if (P2) {
-          expressions.push(`\\left(${P2[0]}, ${P2[1]}\\right)`);
-        }
-
-        const desmosUrl = `https://www.desmos.com/calculator?expressions=${encodeURIComponent(JSON.stringify(expressions.map(e => ({latex: e}))))}`;
-        window.open(desmosUrl, '_blank');
-      } else {
-        // For 3D, create inline canvas visualization
-        create3DVisualization({ A, B, C, P1, P2 });
+      // Add vectors as arrows from origin
+      if (A) {
+        commands.push(`VectorA = Vector({0,0${dim === 3 ? ',0' : ''}}, {${A[0]},${A[1]}${dim === 3 ? ',' + A[2] : ''}})`);
+      }
+      if (B) {
+        commands.push(`VectorB = Vector({0,0${dim === 3 ? ',0' : ''}}, {${B[0]},${B[1]}${dim === 3 ? ',' + B[2] : ''}})`);
+      }
+      if (C) {
+        commands.push(`VectorC = Vector({0,0${dim === 3 ? ',0' : ''}}, {${C[0]},${C[1]}${dim === 3 ? ',' + C[2] : ''}})`);
       }
 
+      // Add points
+      if (P1) {
+        commands.push(`P1 = {${P1[0]},${P1[1]}${dim === 3 ? ',' + P1[2] : ''}}`);
+      }
+      if (P2) {
+        commands.push(`P2 = {${P2[0]},${P2[1]}${dim === 3 ? ',' + P2[2] : ''}}`);
+      }
+
+      // Open GeoGebra
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
+      window.open(geogebraUrl, '_blank');
+
+      const commandsText = commands.join('\\n');
+      const commandsHtml = commands.map((cmd, idx) => `<div style="background:#f5f5f5; padding:8px; margin:5px 0; border-left:4px solid #667eea; font-family:monospace;">${idx+1}. ${cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('');
+
       const steps = [{
-        title: 'Vector Visualization',
+        title: 'GeoGebra Command Instructions',
         content: `
-          <div class="alert alert-info">
-            <strong>📊 Opening Vector Visualization</strong><br><br>
-            Your vectors and points are displayed in ${dim}D visualization.<br><br>
-            <strong>Elements:</strong>
-            ${A ? `<br>• Vector A: ${VectorModule.formatVector(A)}` : ''}
-            ${B ? `<br>• Vector B: ${VectorModule.formatVector(B)}` : ''}
-            ${C ? `<br>• Vector C: ${VectorModule.formatVector(C)}` : ''}
-            ${P1 ? `<br>• Point P₁: ${VectorModule.formatVector(P1)}` : ''}
-            ${P2 ? `<br>• Point P₂: ${VectorModule.formatVector(P2)}` : ''}
-            <br><br>
-            <em>${dim === 2 ? 'Desmos graphing calculator is opening in a new tab.' : 'Visualization displayed below.'}</em>
+          <div class="alert alert-warning">
+            <strong>📋 Copy & Paste Commands into GeoGebra</strong><br><br>
+            A GeoGebra ${dim}D tab has opened. Follow these steps:<br><br>
+            <strong>Steps:</strong>
+            <ol style="margin-left: 20px;">
+              <li>In the GeoGebra tab, find the <strong>input field</strong> at the bottom of the screen</li>
+              <li>Click the <strong>"Copy Commands"</strong> button below to copy all commands</li>
+              <li>Paste the commands in the GeoGebra input field (Ctrl+V or Cmd+V)</li>
+              <li>Press <strong>Enter</strong> after each command to plot</li>
+              <li>Your vectors and points will appear in the 3D view</li>
+            </ol>
+            <br>
+            ${commandsHtml}
+            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText}')">📋 Copy All Commands</button>
           </div>
         `
       }];
 
       const summary = `
-        <div class="summary-line"><strong>Service:</strong> ${dim === 2 ? 'Desmos' : 'Canvas 3D'}</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Elements:</strong> Vectors + Points</div>
+        <div class="summary-line"><strong>Commands Generated:</strong> ${commands.length}</div>
         ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
         ${B ? '<div class="summary-line"><strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '</div>' : ''}
         ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
         ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
         ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
-        <div class="summary-result">Vector visualization generated</div>
+        <div class="summary-result">GeoGebra commands ready to paste</div>
       `;
 
-      showResult('Coordinate System & Elements Plotting', summary, steps);
+      showResult('Vector Visualization - GeoGebra Commands', summary, steps);
      }
     
     function plotCoordinateSystem() {
       const dim = parseInt(document.getElementById('dimension').value);
 
-      if (dim === 2) {
-        // Open Desmos with empty canvas for coordinate system
-        window.open('https://www.desmos.com/calculator', '_blank');
-      } else {
-        // For 3D, create inline visualization
-        create3DVisualization({ A: null, B: null, C: null, P1: null, P2: null });
-      }
+      // Open GeoGebra
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
+      window.open(geogebraUrl, '_blank');
 
       const steps = [{
         title: 'Right-Handed Coordinate System',
         content: `
           <div class="alert alert-info">
-            <strong>📐 ${dim}D Coordinate System</strong><br><br>
-            The ${dim}D coordinate system is displayed.
+            <strong>📐 GeoGebra ${dim}D Coordinate System</strong><br><br>
+            A GeoGebra tab has opened showing the ${dim}D coordinate system.
             <br><br>
             ${dim === 2 ?
-              '<strong>2D System:</strong> X-axis (horizontal) points right, Y-axis (vertical) points up. Standard mathematical convention where positive rotation is counterclockwise.' :
-              '<strong>3D System:</strong> Right-hand rule - When you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
+              '<strong>2D System:</strong> X-axis (horizontal) points right, Y-axis (vertical) points up. Positive angles measured counterclockwise.' :
+              '<strong>3D System:</strong> Right-hand rule - When you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis (toward you).'
             }
             <br><br>
-            <em>${dim === 2 ? 'Desmos graphing calculator opened in new tab.' : 'Visualization displayed below.'}</em>
+            <em>The coordinate axes are ready for plotting vectors and points.</em>
           </div>
         `
       }];
@@ -1459,8 +1456,8 @@
       const summary = `
         <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Service:</strong> ${dim === 2 ? 'Desmos' : 'Canvas 3D'}</div>
-        <div class="summary-result">Coordinate system displayed</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra</div>
+        <div class="summary-result">GeoGebra ${dim}D coordinate system opened</div>
       `;
 
       showResult('Coordinate System', summary, steps);
@@ -1469,82 +1466,67 @@
     function plotOperationResult(operationName, result, inputs = {}) {
       const dim = parseInt(document.getElementById('dimension').value);
       
-      if (dim === 2) {
-        // For 2D, build Desmos expressions
-        let expressions = [];
-        
-        // Add input vectors as parametric lines
-        if (inputs.A) {
-          expressions.push(`\\left(${inputs.A[0]}t, ${inputs.A[1]}t\\right)`);
-        }
-        if (inputs.B) {
-          expressions.push(`\\left(${inputs.B[0]}t, ${inputs.B[1]}t\\right)`);
-        }
-        if (inputs.C) {
-          expressions.push(`\\left(${inputs.C[0]}t, ${inputs.C[1]}t\\right)`);
-        }
-        
-        // Add result vector
-        if (Array.isArray(result)) {
-          expressions.push(`\\left(${result[0]}t, ${result[1]}t\\right)`);
-        }
-        
-        const desmosUrl = `https://www.desmos.com/calculator?expressions=${encodeURIComponent(JSON.stringify(expressions.map(e => ({latex: e}))))}`;
-        window.open(desmosUrl, '_blank');
-      } else {
-        // For 3D, use canvas visualization
-        create3DVisualization({ 
-          A: inputs.A, 
-          B: inputs.B, 
-          C: inputs.C, 
-          P1: inputs.P1, 
-          P2: inputs.P2,
-          result: Array.isArray(result) ? result : (result.vec ? result.vec : null)
-        });
+      // Generate GeoGebra commands for result
+      let commands = [];
+      
+      // Add input vectors
+      if (inputs.A) {
+        commands.push(`VectorA = Vector({0,0${dim === 3 ? ',0' : ''}}, {${inputs.A[0]},${inputs.A[1]}${dim === 3 ? ',' + inputs.A[2] : ''}})`);
+      }
+      if (inputs.B) {
+        commands.push(`VectorB = Vector({0,0${dim === 3 ? ',0' : ''}}, {${inputs.B[0]},${inputs.B[1]}${dim === 3 ? ',' + inputs.B[2] : ''}})`);
+      }
+      if (inputs.C) {
+        commands.push(`VectorC = Vector({0,0${dim === 3 ? ',0' : ''}}, {${inputs.C[0]},${inputs.C[1]}${dim === 3 ? ',' + inputs.C[2] : ''}})`);
       }
       
+      // Add result vector in red color
+      if (Array.isArray(result)) {
+        commands.push(`Result = Vector({0,0${dim === 3 ? ',0' : ''}}, {${result[0]},${result[1]}${dim === 3 ? ',' + result[2] : ''}})`);
+        commands.push(`SetColor(Result, Red)`);
+      } else if (typeof result === 'object' && result.vec) {
+        commands.push(`Result = Vector({0,0${dim === 3 ? ',0' : ''}}, {${result.vec[0]},${result.vec[1]}${dim === 3 ? ',' + result.vec[2] : ''}})`);
+        commands.push(`SetColor(Result, Red)`);
+      }
+      
+      // Open GeoGebra
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
+      window.open(geogebraUrl, '_blank');
+      
+      const commandsText = commands.join('\\n');
+      const commandsHtml = commands.map((cmd, idx) => `<div style="background:#f5f5f5; padding:8px; margin:5px 0; border-left:4px solid #667eea; font-family:monospace;">${idx+1}. ${cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('');
+      
       const steps = [{
-        title: 'Operation Result Visualization',
+        title: 'Operation Result - GeoGebra Commands',
         content: `
-          <div class="alert alert-info">
-            <strong>📊 Plotting ${operationName} Result</strong><br><br>
-            Your operation result is displayed in ${dim}D visualization with input vectors.<br><br>
-            <em>${dim === 2 ? 'Desmos graphing calculator opened in new tab.' : 'Visualization displayed below.'}</em>
+          <div class="alert alert-warning">
+            <strong>📊 Copy & Paste Commands to Visualize ${operationName}</strong><br><br>
+            A GeoGebra tab has opened. Follow these steps:<br><br>
+            <strong>Steps:</strong>
+            <ol style="margin-left: 20px;">
+              <li>In the GeoGebra tab, find the <strong>input field</strong> at the bottom</li>
+              <li>Click the <strong>"Copy Commands"</strong> button to copy all commands</li>
+              <li>Paste the commands in the GeoGebra input field</li>
+              <li>Press <strong>Enter</strong> after each command</li>
+              <li>The result vector will appear in red</li>
+            </ol>
+            <br>
+            ${commandsHtml}
+            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText}')">📋 Copy All Commands</button>
           </div>
         `
       }];
       
       const summary = `
         <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
-        <div class="summary-line"><strong>Service:</strong> ${dim === 2 ? 'Desmos' : 'Canvas 3D'}</div>
-        <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-result">Operation result visualization generated</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D</div>
+        <div class="summary-line"><strong>Commands Generated:</strong> ${commands.length}</div>
+        <div class="summary-line"><strong>Result Vector:</strong> ${Array.isArray(result) ? VectorModule.formatVector(result) : (result.vec ? VectorModule.formatVector(result.vec) : 'Scalar')}</div>
+        <div class="summary-result">GeoGebra commands ready to paste</div>
       `;
       
       showResult(`${operationName} Visualization`, summary, steps);
     }
-     
-     function create3DVisualization(data) {
-       // Show vectors and points in a text-based summary for now
-       const {A, B, C, P1, P2, result} = data;
-       
-       const summaryContent = `
-         <div class="alert alert-info">
-           <strong>3D Vector Visualization</strong><br><br>
-           <strong>Coordinate System:</strong> Right-handed (X, Y, Z)<br>
-           ${A ? `<strong>Vector A:</strong> ${VectorModule.formatVector(A)}<br>` : ''}
-           ${B ? `<strong>Vector B:</strong> ${VectorModule.formatVector(B)}<br>` : ''}
-           ${C ? `<strong>Vector C:</strong> ${VectorModule.formatVector(C)}<br>` : ''}
-           ${P1 ? `<strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}<br>` : ''}
-           ${P2 ? `<strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}<br>` : ''}
-           ${result ? `<strong>Result Vector:</strong> ${VectorModule.formatVector(result)}<br>` : ''}
-           <br>
-           <em>For advanced 3D visualization, open the vectors in your preferred 3D graphing software.</em>
-         </div>
-       `;
-       
-       document.getElementById('resultSummary').insertAdjacentHTML('afterend', summaryContent);
-     }
      
      const TestRunner = (() => {
       const tests = [];
