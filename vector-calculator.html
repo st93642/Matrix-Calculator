@@ -729,17 +729,17 @@
     function showResult(title, summary, steps, plotButton = null) {
       stepDelay = 0;
       clearResults();
-      
+
       const resultSection = document.getElementById('resultSection');
       const summaryDiv = document.getElementById('resultSummary');
-      
-      let summaryHtml = `<div class="result-header">" + title + "</div>${summary}`;
+
+      let summaryHtml = `<div class="result-header">${title}</div>${summary}`;
       if (plotButton) {
         summaryHtml += `<div style="margin-top: 15px; text-align: center;">${plotButton}</div>`;
       }
       summaryDiv.innerHTML = summaryHtml;
       resultSection.classList.add('show');
-      
+
       steps.forEach(step => {
         addStep(step.title, step.content);
       });
@@ -835,14 +835,22 @@
         <div class="summary-line"><strong>Operation:</strong> Cross Product (A × B)</div>
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
-      
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Cross Product', [" + result.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A × B</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot A × B</button>
         </div>
       `;
-      
+
       showResult('Cross Product Result', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          btn.onclick = () => plotOperationResult('Cross Product', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+        }
+      }, 0);
     }
     
     function calculateNorm() {
@@ -957,14 +965,22 @@
         <div class="summary-line"><strong>Operation:</strong> Projection of A onto B</div>
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
-      
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Orthogonal Projection', [" + result.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot proj_B(A)</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot proj_B(A)</button>
         </div>
       `;
-      
+
       showResult('Orthogonal Projection', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          btn.onclick = () => plotOperationResult('Orthogonal Projection', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+        }
+      }, 0);
     }
     
     function calculateTriple() {
@@ -1036,14 +1052,22 @@
         <div class="summary-line"><strong>Operation:</strong> Vector from P₁ to P₂</div>
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
-      
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector from Points', [" + result.join(',') + "], {P1: [" + P1.join(',') + "], P2: [" + P2.join(',') + "]})" style="margin: 5px;">📊 Plot Vector P₁P₂</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Vector P₁P₂</button>
         </div>
       `;
-      
+
       showResult('Vector from Points', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          btn.onclick = () => plotOperationResult('Vector from Points', ${JSON.stringify(result)}, {P1: ${JSON.stringify(P1)}, P2: ${JSON.stringify(P2)}});
+        }
+      }, 0);
     }
     
     function calculateAdd() {
@@ -1078,15 +1102,28 @@
         <div class="summary-line"><strong>Addition:</strong> A + B = <span class="vector-display">${VectorModule.formatVector(resultAdd)}</span></div>
         <div class="summary-line"><strong>Subtraction:</strong> A - B = <span class="vector-display">${VectorModule.formatVector(resultSub)}</span></div>
       `;
-      
+
+      const plotBtnId1 = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
+      const plotBtnId2 = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Addition', [" + resultAdd.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A + B</button>
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Subtraction', [" + resultSub.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A - B</button>
+          <button id="${plotBtnId1}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot A + B</button>
+          <button id="${plotBtnId2}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot A - B</button>
         </div>
       `;
-      
+
       showResult('Vector Addition & Subtraction', summary, stepsAdd, plotButton);
+
+      setTimeout(() => {
+        const btn1 = document.getElementById(plotBtnId1);
+        if (btn1) {
+          btn1.onclick = () => plotOperationResult('Vector Addition', ${JSON.stringify(resultAdd)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+        }
+        const btn2 = document.getElementById(plotBtnId2);
+        if (btn2) {
+          btn2.onclick = () => plotOperationResult('Vector Subtraction', ${JSON.stringify(resultSub)}, {A: ${JSON.stringify(A)}, B: ${JSON.stringify(B)}});
+        }
+      }, 0);
     }
     
     function calculateScalar() {
@@ -1129,14 +1166,22 @@
         <div class="summary-line"><strong>Operation:</strong> Scalar Multiplication</div>
         <div class="summary-result">Result: <span class="vector-display">${VectorModule.formatVector(result)}</span></div>
       `;
-      
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Scalar Multiplication', [" + result.join(',') + "], {A: [" + A.join(',') + "]})" style="margin: 5px;">📊 Plot k×A</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot k×A</button>
         </div>
       `;
-      
+
       showResult('Scalar Multiplication', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          btn.onclick = () => plotOperationResult('Scalar Multiplication', ${JSON.stringify(result)}, {A: ${JSON.stringify(A)}});
+        }
+      }, 0);
     }
     
     function calculateDistance() {
@@ -1174,14 +1219,22 @@
         <div class="summary-line"><strong>Operation:</strong> Distance Between Points</div>
         <div class="summary-result">Result: <span class="vector-display">${result.toFixed(6)}</span></div>
       `;
-      
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Point Distance', null, {P1: [" + P1.join(',') + "], P2: [" + P2.join(',') + "]})" style="margin: 5px;">📊 Plot Points</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Points</button>
         </div>
       `;
-      
+
       showResult('Point Distance', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          btn.onclick = () => plotOperationResult('Point Distance', null, {P1: ${JSON.stringify(P1)}, P2: ${JSON.stringify(P2)}});
+        }
+      }, 0);
     }
     
     function calculateExercise(exerciseType) {
@@ -1348,13 +1401,21 @@
         }
         
         // Add plot buttons for exercises
+        const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
         const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('" + title + "', [" + result.join(',') + "], {A: [" + u.join(',') + "], B: [" + v.join(',') + "], C: [" + w.join(',') + "]})" style="margin: 5px;">📊 Plot Result</button>
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Result</button>
         </div>
         `;
 
         showResult(title, summary, steps, plotButton);
+
+        setTimeout(() => {
+          const btn = document.getElementById(plotButtonId);
+          if (btn) {
+            btn.onclick = () => plotOperationResult(${JSON.stringify(title)}, ${JSON.stringify(result)}, {A: ${JSON.stringify(u)}, B: ${JSON.stringify(v)}, C: ${JSON.stringify(w)}});
+          }
+        }, 0);
       } catch (error) {
         showError(error.message);
       }
