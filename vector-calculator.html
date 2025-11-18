@@ -1362,20 +1362,33 @@
      let ggbApplet = null;
      let ggbAPI = null;
      let currentMode = null;
-     
+     let appletInitPromise = null;
+     let appletInitResolve = null;
+     let appletInitReject = null;
+
+     // Global callback that GeoGebra calls when the applet is ready
+     window.ggbOnInit = function() {
+       if (appletInitResolve) {
+         appletInitResolve();
+       }
+     };
+
      function initGeoGebra(is3D = false) {
-             const mode = is3D ? '3D' : '2D';
+            const mode = is3D ? '3D' : '2D';
 
              // If mode changed, reset the applet
              if (currentMode && currentMode !== mode) {
                ggbApplet = null;
                ggbAPI = null;
+               appletInitPromise = null;
+               appletInitResolve = null;
+               appletInitReject = null;
                document.getElementById('ggb-element').innerHTML = '';
              }
 
              // If applet already exists in correct mode, return it
-             if (ggbApplet && currentMode === mode && ggbAPI) {
-               return Promise.resolve(ggbAPI);
+             if (appletInitPromise && currentMode === mode) {
+               return appletInitPromise;
              }
 
              currentMode = mode;
@@ -1394,7 +1407,9 @@
                "allowStyleBar": true,
                "showLogging": false,
                "showZoomButtons": true,
-               "showFullscreenButton": true
+               "showFullscreenButton": true,
+               "onInitCallbackIfLoaded": window.ggbOnInit,
+               "appletOnLoad": window.ggbOnInit
              };
 
              try {
@@ -1404,44 +1419,38 @@
                // Show the container
                document.getElementById('ggb-element').classList.add('show');
 
-               // Return promise that resolves when API is ready with timeout
-               return new Promise((resolve, reject) => {
+               // Return promise that resolves when applet is loaded
+               appletInitPromise = new Promise((resolve, reject) => {
                  const timeout = setTimeout(() => {
-                   reject(new Error('GeoGebra applet failed to load within 10 seconds'));
-                 }, 10000);
+                   reject(new Error('GeoGebra applet failed to load within 30 seconds'));
+                 }, 30000);
 
-                 // Try to get API with retries
-                 const tryGetAPI = (attempts = 0) => {
-                   if (attempts > 20) {
-                     clearTimeout(timeout);
-                     reject(new Error('Failed to get GeoGebra API after multiple attempts'));
-                     return;
-                   }
-
-                   try {
-                     if (ggbApplet && typeof ggbApplet.getAPI === 'function') {
-                       ggbApplet.getAPI().then(api => {
-                         if (api && typeof api.reset === 'function') {
-                           clearTimeout(timeout);
-                           ggbAPI = api;
-                           resolve(api);
-                         } else {
-                           setTimeout(() => tryGetAPI(attempts + 1), 500);
-                         }
-                       }).catch(() => {
-                         setTimeout(() => tryGetAPI(attempts + 1), 500);
-                       });
-                     } else {
-                       setTimeout(() => tryGetAPI(attempts + 1), 500);
-                     }
-                   } catch (e) {
-                     setTimeout(() => tryGetAPI(attempts + 1), 500);
+                 appletInitResolve = () => {
+                   clearTimeout(timeout);
+                   // Get the API after applet loads
+                   if (ggbApplet && typeof ggbApplet.getAPI === 'function') {
+                     ggbApplet.getAPI().then(api => {
+                       if (api && typeof api.reset === 'function') {
+                         ggbAPI = api;
+                         resolve(api);
+                       } else {
+                         reject(new Error('GeoGebra API is not fully initialized'));
+                       }
+                     }).catch(err => {
+                       reject(new Error('Failed to get GeoGebra API: ' + err.message));
+                     });
+                   } else {
+                     reject(new Error('GeoGebra applet object is not available'));
                    }
                  };
 
-                 // Start trying to get API after a short delay
-                 setTimeout(() => tryGetAPI(), 1000);
+                 appletInitReject = (error) => {
+                   clearTimeout(timeout);
+                   reject(error);
+                 };
                });
+
+               return appletInitPromise;
              } catch (error) {
                return Promise.reject(new Error('Failed to initialize GeoGebra applet: ' + error.message));
              }
