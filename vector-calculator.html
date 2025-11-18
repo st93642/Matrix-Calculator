@@ -1748,7 +1748,24 @@
               api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
             }
           }
-          
+
+          // Add input points
+          if (inputs.P1) {
+            if (dim === 2) {
+              api.evalCommand(`P1 = Point((${inputs.P1[0]}, ${inputs.P1[1]}))`);
+            } else {
+              api.evalCommand(`P1 = Point((${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]}))`);
+            }
+          }
+
+          if (inputs.P2) {
+            if (dim === 2) {
+              api.evalCommand(`P2 = Point((${inputs.P2[0]}, ${inputs.P2[1]}))`);
+            } else {
+              api.evalCommand(`P2 = Point((${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]}))`);
+            }
+          }
+
           // Add result vector in red color
           if (Array.isArray(result)) {
             if (dim === 2) {
