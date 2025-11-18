@@ -1361,9 +1361,24 @@
      
      let ggbApplet = null;
      let ggbAPI = null;
+     let currentMode = null;
      
      function initGeoGebra(is3D = false) {
-       if (ggbApplet) return Promise.resolve(ggbAPI);
+       const mode = is3D ? '3D' : '2D';
+       
+       // If mode changed, reset the applet
+       if (currentMode && currentMode !== mode) {
+         ggbApplet = null;
+         ggbAPI = null;
+         document.getElementById('ggb-element').innerHTML = '';
+       }
+       
+       // If applet already exists in correct mode, return it
+       if (ggbApplet && currentMode === mode) {
+         return Promise.resolve(ggbAPI);
+       }
+       
+       currentMode = mode;
        
        const parameters = {
          "appName": is3D ? "graphing3d" : "graphing",
@@ -1451,17 +1466,17 @@
           // Add points
           if (P1) {
             if (dim === 2) {
-              api.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
+              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]})`);
             } else {
-              api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
+              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]}, ${P1[2]})`);
             }
           }
 
           if (P2) {
             if (dim === 2) {
-              api.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
+              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]})`);
             } else {
-              api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
+              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]}, ${P2[2]})`);
             }
           }
         } catch (e) {
@@ -1586,14 +1601,14 @@
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, Red)`);
+            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
           } else if (typeof result === 'object' && result.vec) {
             if (dim === 2) {
               api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, Red)`);
+            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
           }
         } catch (e) {
           console.error('Error plotting operation result:', e);
