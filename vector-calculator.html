@@ -18,6 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vector Calculator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://www.geogebra.org/apps/deployggb.js"></script>
   <style>
     * {
       margin: 0;
@@ -153,17 +154,28 @@
     }
     
     .buttons {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 10px;
-      flex-wrap: wrap;
       margin-bottom: 25px;
+      max-width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .buttons {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .buttons {
+        grid-template-columns: 1fr;
+      }
     }
     
     .btn-operation {
-      flex: 1;
-      min-width: 120px;
-      padding: 10px 14px;
-      font-size: 0.85em;
+      padding: 12px 16px;
+      font-size: 0.9em;
       font-weight: 600;
       border: none;
       border-radius: 10px;
@@ -171,9 +183,9 @@
       transition: all 0.3s;
       color: white;
       text-align: center;
-      white-space: nowrap;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
+      width: 100%;
     }
     
     .btn-operation:hover {
@@ -315,6 +327,48 @@
     .info-box strong {
       color: #0066cc;
     }
+    
+    .geogebra-commands {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .copy-commands-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+    
+    .copy-commands-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    #ggb-element {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #667eea;
+      border-radius: 12px;
+      margin: 20px 0;
+      display: none;
+    }
+    
+    #ggb-element.show {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -327,7 +381,7 @@
       <br><br>
       <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
       <br><br>
-      <strong>📊 Visualization:</strong> Click "Plot Vectors" to see coordinate system with vectors and points plotted in GeoGebra. Individual operation results also have "Plot" buttons for targeted visualization. Opens in new tab.
+      <strong>📊 Visualization:</strong> Click "Plot Vectors" or any operation's plot button to see your vectors and points plotted instantly in an embedded GeoGebra canvas. Interact with the view using your mouse (rotate, pan, zoom). Works for both 2D and 3D!
     </div>
     
     <!-- Dimension Control -->
@@ -412,6 +466,9 @@
       <button class="btn-operation btn-viz" onclick="plotCoordinateSystem()">📐 Coordinate System</button>
       <button class="btn-operation btn-viz" onclick="plotVectors()">📊 Plot Vectors & Points</button>
     </div>
+    
+    <!-- GeoGebra Embedded Container -->
+    <div id="ggb-element"></div>
     
     <!-- Results Section -->
     <div class="result-section" id="resultSection">
@@ -1300,261 +1357,290 @@
       } catch (error) {
         showError(error.message);
       }
-    }
-    
-    function plotVectors() {
+     }
+     
+     let ggbApplet = null;
+     let ggbAPI = null;
+     let currentMode = null;
+     
+     function initGeoGebra(is3D = false) {
+       const mode = is3D ? '3D' : '2D';
+       
+       // If mode changed, reset the applet
+       if (currentMode && currentMode !== mode) {
+         ggbApplet = null;
+         ggbAPI = null;
+         document.getElementById('ggb-element').innerHTML = '';
+       }
+       
+       // If applet already exists in correct mode, return it
+       if (ggbApplet && currentMode === mode) {
+         return Promise.resolve(ggbAPI);
+       }
+       
+       currentMode = mode;
+       
+       const parameters = {
+         "appName": is3D ? "graphing3d" : "graphing",
+         "width": 800,
+         "height": 600,
+         "showToolBar": true,
+         "showAlgebraInput": true,
+         "showMenuBar": true,
+         "enableLabelDrags": false,
+         "enableRightClick": true,
+         "errorDialogsActive": true,
+         "useBrowserForJS": true,
+         "allowStyleBar": true,
+         "showLogging": false,
+         "showZoomButtons": true,
+         "showFullscreenButton": true
+       };
+       
+       ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
+       ggbApplet.inject('ggb-element');
+       
+       // Show the container
+       document.getElementById('ggb-element').classList.add('show');
+       
+       // Return promise that resolves when API is ready
+       return ggbApplet.getAPI().then(api => {
+         ggbAPI = api;
+         return api;
+       });
+     }
+     
+     function copyCommandsToClipboard(commandsText) {
+       const commands = commandsText.replace(/\\n/g, '\n');
+       navigator.clipboard.writeText(commands).then(() => {
+         alert('✓ Commands copied to clipboard!');
+       }).catch(() => {
+         alert('Failed to copy. Please manually copy the commands.');
+       });
+     }
+     
+     function plotVectors() {
       const dim = parseInt(document.getElementById('dimension').value);
       const A = getVectorInput('vecA');
       const B = getVectorInput('vecB');
       const C = getVectorInput('vecC');
       const P1 = getVectorInput('p1');
       const P2 = getVectorInput('p2');
-      
+
       if (!A && !B && !C && !P1 && !P2) {
         showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
         return;
       }
-      
-      // Build GeoGebra commands with coordinate system and elements
-      let commands = [];
-      
-      // Add coordinate axes
-      if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis');
-      } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
-      }
-      
-      // Add points
-      if (P1) {
-        if (dim === 2) {
-          commands.push(`P1 = (${P1[0]}, ${P1[1]})`);
-        } else {
-          commands.push(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
+
+      // Initialize GeoGebra applet and wait for API
+      initGeoGebra(dim === 3).then(api => {
+        try {
+          // Clear previous objects
+          api.reset();
+
+          // Add vectors as arrows from origin
+          if (A) {
+            if (dim === 2) {
+              api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
+            } else {
+              api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
+            }
+          }
+
+          if (B) {
+            if (dim === 2) {
+              api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
+            } else {
+              api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
+            }
+          }
+
+          if (C) {
+            if (dim === 2) {
+              api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
+            } else {
+              api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
+            }
+          }
+
+          // Add points
+          if (P1) {
+            if (dim === 2) {
+              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]})`);
+            } else {
+              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]}, ${P1[2]})`);
+            }
+          }
+
+          if (P2) {
+            if (dim === 2) {
+              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]})`);
+            } else {
+              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]}, ${P2[2]})`);
+            }
+          }
+        } catch (e) {
+          console.error('Error plotting vectors:', e);
+          showError('Error plotting vectors: ' + e.message);
         }
-      }
-      
-      if (P2) {
-        if (dim === 2) {
-          commands.push(`P2 = (${P2[0]}, ${P2[1]})`);
-        } else {
-          commands.push(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
-        }
-      }
-      
-      // Add vectors from origin
-      if (A) {
-        if (dim === 2) {
-          commands.push(`VectorA = Vector((0,0),(${A[0]},${A[1]}))`);
-        } else {
-          commands.push(`VectorA = Vector((0,0,0),(${A[0]},${A[1]},${A[2]}))`);
-        }
-      }
-      
-      if (B) {
-        if (dim === 2) {
-          commands.push(`VectorB = Vector((0,0),(${B[0]},${B[1]}))`);
-        } else {
-          commands.push(`VectorB = Vector((0,0,0),(${B[0]},${B[1]},${B[2]}))`);
-        }
-      }
-      
-      if (C) {
-        if (dim === 2) {
-          commands.push(`VectorC = Vector((0,0),(${C[0]},${C[1]}))`);
-        } else {
-          commands.push(`VectorC = Vector((0,0,0),(${C[0]},${C[1]},${C[2]}))`);
-        }
-      }
-      
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C'); // URL encode comma
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
-      window.open(geogebraUrl, '_blank');
-      
-      // Show confirmation to user
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
+
       const steps = [{
-        title: 'External Plotting Service',
+        title: 'GeoGebra Embedded Visualization',
         content: `
-          <div class="alert alert-info">
-            <strong>📊 Opening GeoGebra Graphing Calculator</strong><br><br>
-            Your vectors and points have been sent to GeoGebra for visualization:<br><br>
-            ${A ? '<strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '<br>' : ''}
-            ${B ? '<strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '<br>' : ''}
-            ${C ? '<strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '<br>' : ''}
-            ${P1 ? '<strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '<br>' : ''}
-            ${P2 ? '<strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '<br>' : ''}
-            <br>
-            <em>A new tab should open with coordinate system, vectors, and points plotted. If the popup is blocked, please allow popups for this site.</em>
+          <div class="alert alert-success">
+            <strong>✓ Vectors plotted in GeoGebra!</strong><br><br>
+            Your vectors and points are displayed below. You can interact with the GeoGebra view:
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Use mouse to rotate/pan the view</li>
+              <li>Scroll to zoom in/out</li>
+              <li>Drag objects to move them</li>
+              <li>Use toolbar for additional tools</li>
+            </ul>
           </div>
         `
       }];
-      
+
       const summary = `
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Embedded ${dim}D</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Elements:</strong> Coordinate System + Vectors + Points</div>
+        <div class="summary-line"><strong>Status:</strong> ✓ Plotted</div>
         ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
         ${B ? '<div class="summary-line"><strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '</div>' : ''}
         ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
         ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
         ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
-        <div class="summary-result">Coordinate system with vectors and points plotted in external graphing calculator</div>
+        <div class="summary-result">Vectors and points displayed in interactive GeoGebra view</div>
       `;
-      
-      showResult('Coordinate System & Elements Plotting', summary, steps);
-    }
+
+      showResult('Vector Visualization', summary, steps);
+     }
     
     function plotCoordinateSystem() {
       const dim = parseInt(document.getElementById('dimension').value);
-      
-      // Build GeoGebra commands with just coordinate system
-      let commands = [];
-      
-      // Add coordinate axes
-      if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'Origin = (0,0)');
-      } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis', 'Origin = (0,0,0)');
-      }
-      
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C');
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
-      window.open(geogebraUrl, '_blank');
-      
-      // Show confirmation
+
+      // Initialize GeoGebra applet
+      initGeoGebra(dim === 3).then(api => {
+        try {
+          api.reset();
+        } catch (e) {
+          console.error('Error initializing coordinate system:', e);
+        }
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
+
       const steps = [{
         title: 'Right-Handed Coordinate System',
         content: `
-          <div class="alert alert-info">
-            <strong>📐 Opening GeoGebra Graphing Calculator</strong><br><br>
-            A ${dim}D right-handed coordinate system has been opened for visualization.<br><br>
-            ${dim === 2 ? 
-              '<strong>2D System:</strong> X-axis points right, Y-axis points up. This follows standard mathematical convention where positive rotation is counterclockwise.' :
-              '<strong>3D System:</strong> Following the right-hand rule - when you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
+          <div class="alert alert-success">
+            <strong>✓ Coordinate System Ready!</strong><br><br>
+            The ${dim}D right-handed coordinate system is displayed below.
+            <br><br>
+            ${dim === 2 ?
+              '<strong>2D System:</strong> X-axis (horizontal) points right, Y-axis (vertical) points up. Positive angles are measured counterclockwise.' :
+              '<strong>3D System:</strong> Right-hand rule - When you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis (toward you).'
             }
             <br><br>
-            <em>A new tab should open with the coordinate system. If the popup is blocked, please allow popups for this site.</em>
+            <em>Ready to plot vectors and points!</em>
           </div>
         `
       }];
-      
+
       const summary = `
         <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
-        <div class="summary-result">Coordinate system opened in external graphing calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Embedded</div>
+        <div class="summary-result">✓ Coordinate system displayed</div>
       `;
-      
+
       showResult('Coordinate System', summary, steps);
     }
     
     function plotOperationResult(operationName, result, inputs = {}) {
       const dim = parseInt(document.getElementById('dimension').value);
       
-      // Build GeoGebra commands with coordinate system and operation result
-      let commands = [];
-      
-      // Add coordinate axes
-      if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis');
-      } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
-      }
-      
-      // Add input vectors/points
-      if (inputs.A) {
-        if (dim === 2) {
-          commands.push(`VectorA = Vector((0,0),(${inputs.A[0]},${inputs.A[1]}))`);
-        } else {
-          commands.push(`VectorA = Vector((0,0,0),(${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
+      // Initialize GeoGebra applet and wait for API
+      initGeoGebra(dim === 3).then(api => {
+        try {
+          api.reset();
+          
+          // Add input vectors
+          if (inputs.A) {
+            if (dim === 2) {
+              api.evalCommand(`VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`);
+            } else {
+              api.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
+            }
+          }
+          
+          if (inputs.B) {
+            if (dim === 2) {
+              api.evalCommand(`VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`);
+            } else {
+              api.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
+            }
+          }
+          
+          if (inputs.C) {
+            if (dim === 2) {
+              api.evalCommand(`VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`);
+            } else {
+              api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
+            }
+          }
+          
+          // Add result vector in red color
+          if (Array.isArray(result)) {
+            if (dim === 2) {
+              api.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
+            } else {
+              api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
+            }
+            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
+          } else if (typeof result === 'object' && result.vec) {
+            if (dim === 2) {
+              api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
+            } else {
+              api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+            }
+            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
+          }
+        } catch (e) {
+          console.error('Error plotting operation result:', e);
+          showError('Error plotting result: ' + e.message);
         }
-      }
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
       
-      if (inputs.B) {
-        if (dim === 2) {
-          commands.push(`VectorB = Vector((0,0),(${inputs.B[0]},${inputs.B[1]}))`);
-        } else {
-          commands.push(`VectorB = Vector((0,0,0),(${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
-        }
-      }
-      
-      if (inputs.C) {
-        if (dim === 2) {
-          commands.push(`VectorC = Vector((0,0),(${inputs.C[0]},${inputs.C[1]}))`);
-        } else {
-          commands.push(`VectorC = Vector((0,0,0),(${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
-        }
-      }
-      
-      if (inputs.P1) {
-        if (dim === 2) {
-          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
-        } else {
-          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
-        }
-      }
-      
-      if (inputs.P2) {
-        if (dim === 2) {
-          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
-        } else {
-          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
-        }
-      }
-      
-      // Add result based on operation type
-      if (Array.isArray(result)) {
-        // Vector result
-        if (dim === 2) {
-          commands.push(`Result = Vector((0,0),(${result[0]},${result[1]}))`);
-        } else {
-          commands.push(`Result = Vector((0,0,0),(${result[0]},${result[1]},${result[2]}))`);
-        }
-      } else if (typeof result === 'object' && result.vec) {
-        // Vector component result
-        if (dim === 2) {
-          commands.push(`Result = Vector((0,0),(${result.vec[0]},${result.vec[1]}))`);
-        } else {
-          commands.push(`Result = Vector((0,0,0),(${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
-        }
-      }
-      
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C');
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
-      window.open(geogebraUrl, '_blank');
-      
-      // Show confirmation
       const steps = [{
         title: 'Operation Result Visualization',
         content: `
-          <div class="alert alert-info">
-            <strong>📊 Plotting ${operationName} Result</strong><br><br>
-            The operation result has been sent to GeoGebra for visualization along with the input elements.<br><br>
-            <em>A new tab should open with the coordinate system and operation visualization. If the popup is blocked, please allow popups for this site.</em>
+          <div class="alert alert-success">
+            <strong>✓ Operation result plotted!</strong><br><br>
+            Input vectors are shown in blue, the result vector in red. Use the GeoGebra controls to explore the visualization.
           </div>
         `
       }];
       
       const summary = `
         <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
-        <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-result">Operation result plotted with inputs in external graphing calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra Embedded ${dim}D</div>
+        <div class="summary-line"><strong>Status:</strong> ✓ Plotted</div>
+        <div class="summary-line"><strong>Result:</strong> ${Array.isArray(result) ? VectorModule.formatVector(result) : (result.vec ? VectorModule.formatVector(result.vec) : 'Scalar')}</div>
+        <div class="summary-result">Result displayed in red on GeoGebra visualization</div>
       `;
       
       showResult(`${operationName} Visualization`, summary, steps);
     }
-    
-    const TestRunner = (() => {
+     
+     const TestRunner = (() => {
       const tests = [];
 
       const assert = (condition, message) => {
