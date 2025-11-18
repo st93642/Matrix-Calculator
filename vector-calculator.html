@@ -1360,9 +1360,10 @@
      }
      
      let ggbApplet = null;
+     let ggbAPI = null;
      
      function initGeoGebra(is3D = false) {
-       if (ggbApplet) return ggbApplet;
+       if (ggbApplet) return Promise.resolve(ggbAPI);
        
        const parameters = {
          "appName": is3D ? "graphing3d" : "graphing",
@@ -1387,7 +1388,11 @@
        // Show the container
        document.getElementById('ggb-element').classList.add('show');
        
-       return ggbApplet;
+       // Return promise that resolves when API is ready
+       return ggbApplet.getAPI().then(api => {
+         ggbAPI = api;
+         return api;
+       });
      }
      
      function copyCommandsToClipboard(commandsText) {
@@ -1412,61 +1417,61 @@
         return;
       }
 
-      // Initialize GeoGebra applet
-      const applet = initGeoGebra(dim === 3);
-
-      // Wait for GeoGebra to load, then add objects
-      setTimeout(() => {
+      // Initialize GeoGebra applet and wait for API
+      initGeoGebra(dim === 3).then(api => {
         try {
           // Clear previous objects
-          applet.reset();
+          api.reset();
 
           // Add vectors as arrows from origin
           if (A) {
             if (dim === 2) {
-              applet.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
+              api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
             } else {
-              applet.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
+              api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
             }
           }
 
           if (B) {
             if (dim === 2) {
-              applet.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
+              api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
             } else {
-              applet.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
+              api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
             }
           }
 
           if (C) {
             if (dim === 2) {
-              applet.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
+              api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
             } else {
-              applet.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
+              api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
             }
           }
 
           // Add points
           if (P1) {
             if (dim === 2) {
-              applet.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
+              api.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
             } else {
-              applet.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
+              api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
             }
           }
 
           if (P2) {
             if (dim === 2) {
-              applet.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
+              api.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
             } else {
-              applet.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
+              api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
             }
           }
         } catch (e) {
           console.error('Error plotting vectors:', e);
           showError('Error plotting vectors: ' + e.message);
         }
-      }, 1000);
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
 
       const steps = [{
         title: 'GeoGebra Embedded Visualization',
@@ -1503,16 +1508,16 @@
       const dim = parseInt(document.getElementById('dimension').value);
 
       // Initialize GeoGebra applet
-      const applet = initGeoGebra(dim === 3);
-      
-      // Wait for GeoGebra to load
-      setTimeout(() => {
+      initGeoGebra(dim === 3).then(api => {
         try {
-          applet.reset();
+          api.reset();
         } catch (e) {
           console.error('Error initializing coordinate system:', e);
         }
-      }, 1000);
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
 
       const steps = [{
         title: 'Right-Handed Coordinate System',
@@ -1544,60 +1549,60 @@
     function plotOperationResult(operationName, result, inputs = {}) {
       const dim = parseInt(document.getElementById('dimension').value);
       
-      // Initialize GeoGebra applet
-      const applet = initGeoGebra(dim === 3);
-      
-      // Wait for GeoGebra to load, then add objects
-      setTimeout(() => {
+      // Initialize GeoGebra applet and wait for API
+      initGeoGebra(dim === 3).then(api => {
         try {
-          applet.reset();
+          api.reset();
           
           // Add input vectors
           if (inputs.A) {
             if (dim === 2) {
-              applet.evalCommand(`VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`);
+              api.evalCommand(`VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`);
             } else {
-              applet.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
+              api.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
             }
           }
           
           if (inputs.B) {
             if (dim === 2) {
-              applet.evalCommand(`VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`);
+              api.evalCommand(`VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`);
             } else {
-              applet.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
+              api.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
             }
           }
           
           if (inputs.C) {
             if (dim === 2) {
-              applet.evalCommand(`VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`);
+              api.evalCommand(`VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`);
             } else {
-              applet.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
+              api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
             }
           }
           
           // Add result vector in red color
           if (Array.isArray(result)) {
             if (dim === 2) {
-              applet.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
+              api.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
             } else {
-              applet.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
+              api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
             }
-            applet.evalCommand(`SetColor(Result, Red)`);
+            api.evalCommand(`SetColor(Result, Red)`);
           } else if (typeof result === 'object' && result.vec) {
             if (dim === 2) {
-              applet.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
+              api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
             } else {
-              applet.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+              api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
             }
-            applet.evalCommand(`SetColor(Result, Red)`);
+            api.evalCommand(`SetColor(Result, Red)`);
           }
         } catch (e) {
           console.error('Error plotting operation result:', e);
           showError('Error plotting result: ' + e.message);
         }
-      }, 1000);
+      }).catch(err => {
+        console.error('Failed to initialize GeoGebra:', err);
+        showError('Failed to initialize GeoGebra: ' + err.message);
+      });
       
       const steps = [{
         title: 'Operation Result Visualization',
