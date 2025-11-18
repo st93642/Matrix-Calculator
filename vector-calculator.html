@@ -675,7 +675,7 @@
       const resultSection = document.getElementById('resultSection');
       const summaryDiv = document.getElementById('resultSummary');
       
-      let summaryHtml = `<div class="result-header">${title}</div>${summary}`;
+      let summaryHtml = `<div class="result-header">" + title + "</div>${summary}`;
       if (plotButton) {
         summaryHtml += `<div style="margin-top: 15px; text-align: center;">${plotButton}</div>`;
       }
@@ -780,7 +780,7 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Cross Product', [${result.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A × B</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Cross Product', [" + result.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A × B</button>
         </div>
       `;
       
@@ -902,7 +902,7 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Orthogonal Projection', [${result.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot proj_B(A)</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Orthogonal Projection', [" + result.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot proj_B(A)</button>
         </div>
       `;
       
@@ -981,7 +981,7 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector from Points', [${result.join(',')}], {P1: [${P1.join(',')}], P2: [${P2.join(',')]}]})" style="margin: 5px;">📊 Plot Vector P₁P₂</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector from Points', [" + result.join(',') + "], {P1: [" + P1.join(',') + "], P2: [" + P2.join(',') + "]})" style="margin: 5px;">📊 Plot Vector P₁P₂</button>
         </div>
       `;
       
@@ -1023,8 +1023,8 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Addition', [${resultAdd.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A + B</button>
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Subtraction', [${resultSub.join(',')}], {A: [${A.join(',')}], B: [${B.join(',')]}]})" style="margin: 5px;">📊 Plot A - B</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Addition', [" + resultAdd.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A + B</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Vector Subtraction', [" + resultSub.join(',') + "], {A: [" + A.join(',') + "], B: [" + B.join(',') + "]})" style="margin: 5px;">📊 Plot A - B</button>
         </div>
       `;
       
@@ -1074,7 +1074,7 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Scalar Multiplication', [${result.join(',')}], {A: [${A.join(',')}]})" style="margin: 5px;">📊 Plot k×A</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Scalar Multiplication', [" + result.join(',') + "], {A: [" + A.join(',') + "]})" style="margin: 5px;">📊 Plot k×A</button>
         </div>
       `;
       
@@ -1119,7 +1119,7 @@
       
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('Point Distance', null, {P1: [${P1.join(',')}], P2: [${P2.join(',')]}]})" style="margin: 5px;">📊 Plot Points</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('Point Distance', null, {P1: [" + P1.join(',') + "], P2: [" + P2.join(',') + "]})" style="margin: 5px;">📊 Plot Points</button>
         </div>
       `;
       
@@ -1292,7 +1292,7 @@
         // Add plot buttons for exercises
       const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('${title}', [${result.join(',')}], {u: [${u.join(',')}], v: [${v.join(',')}], w: [${w.join(',')]}]})" style="margin: 5px;">📊 Plot Result</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('" + title + "', [" + result.join(',') + "], {u: [" + u.join(',') + "], v: [" + v.join(',') + "], w: [" + w.join(',') + "]})" style="margin: 5px;">📊 Plot Result</button>
         </div>
       `;
       
