@@ -1445,20 +1445,184 @@
       }
      }
      
-     let ggbApplet = null;
-           let ggbAPI = null;
-           let currentMode = null;
-           let appletInitPromise = null;
-           let appletInitResolve = null;
-           let appletInitReject = null;
+let ggbApplet = null;
+let ggbAPI = null;
+let currentMode = null;
+let appletInitPromise = null;
+let appletInitResolve = null;
+let appletInitReject = null;
 
-           // Global callback that GeoGebra calls when the applet is ready
-           window.ggbOnInit = function() {
-             console.log('GeoGebra callback triggered');
-             if (appletInitResolve) {
-               appletInitResolve();
-             }
-           };
+const trackedGeoObjects = new Set();
+const GEO_DEFAULT_VECTOR_COLOR = { r: 33, g: 150, b: 243 };
+const GEO_RESULT_VECTOR_COLOR = { r: 220, g: 53, b: 69 };
+const GEO_POINT_P1_COLOR = { r: 255, g: 152, b: 0 };
+const GEO_POINT_P2_COLOR = { r: 0, g: 200, b: 83 };
+
+function registerGeoObject(name) {
+  if (name) {
+    trackedGeoObjects.add(name);
+  }
+}
+
+function deleteGeoObject(api, name) {
+  if (!api || !name) {
+    return;
+  }
+
+  let objectExists = true;
+
+  if (typeof api.exists === 'function') {
+    try {
+      objectExists = api.exists(name);
+    } catch (error) {
+      objectExists = true;
+    }
+  } else if (typeof api.getObjectType === 'function') {
+    try {
+      objectExists = !!api.getObjectType(name);
+    } catch (error) {
+      objectExists = false;
+    }
+  }
+
+  if (!objectExists) {
+    return;
+  }
+
+  try {
+    if (typeof api.deleteObject === 'function') {
+      api.deleteObject(name);
+    } else if (typeof api.evalCommand === 'function') {
+      api.evalCommand(`Delete(${name})`);
+    }
+  } catch (error) {
+    console.warn('Failed to delete GeoGebra object:', name, error);
+  }
+}
+
+const GEO_PROTECTED_NAME_PATTERNS = [/axis/i, /plane/i, /grid/i, /view/i, /origin/i];
+
+function shouldPreserveGeoObject(api, name) {
+  if (!name) {
+    return true;
+  }
+
+  if (GEO_PROTECTED_NAME_PATTERNS.some(pattern => pattern.test(name))) {
+    return true;
+  }
+
+  if (typeof api.getObjectType === 'function') {
+    try {
+      const type = api.getObjectType(name);
+      if (!type) {
+        return false;
+      }
+      const normalizedType = String(type).toLowerCase();
+      if (normalizedType.includes('axis') || normalizedType.includes('plane') || normalizedType.includes('grid') || normalizedType.includes('view')) {
+        return true;
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function clearAllGeoGebraObjects(api) {
+  if (!api || typeof api.getAllObjectNames !== 'function') {
+    return;
+  }
+
+  try {
+    let names = api.getAllObjectNames();
+
+    if (typeof names === 'string') {
+      names = names.split(/[\n,]/).map(name => name.trim()).filter(Boolean);
+    }
+
+    if (Array.isArray(names) && names.length) {
+      names.forEach(name => {
+        if (!shouldPreserveGeoObject(api, name)) {
+          deleteGeoObject(api, name);
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('Failed to enumerate GeoGebra objects:', error);
+  }
+}
+
+function safeResetGeoGebra(api) {
+  if (!api) {
+    return;
+  }
+
+  try {
+    if (typeof api.reset === 'function') {
+      api.reset();
+    } else if (ggbApplet && typeof ggbApplet.reset === 'function') {
+      ggbApplet.reset();
+    }
+  } catch (error) {
+    console.warn('Failed to reset GeoGebra applet:', error);
+  }
+}
+
+function prepareGeoGebra(api) {
+  if (!api) {
+    return;
+  }
+
+  const namesToRemove = trackedGeoObjects.size ? Array.from(trackedGeoObjects) : [];
+
+  safeResetGeoGebra(api);
+
+  if (namesToRemove.length) {
+    namesToRemove.forEach(name => deleteGeoObject(api, name));
+  }
+
+  clearAllGeoGebraObjects(api);
+
+  trackedGeoObjects.clear();
+}
+
+function setVectorStyle(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness = 5) {
+  if (!api || !name || typeof api.evalCommand !== 'function') {
+    return;
+  }
+
+  try {
+    api.evalCommand(`SetColor(${name}, ${color.r}, ${color.g}, ${color.b})`);
+    api.evalCommand(`SetLineThickness(${name}, ${thickness})`);
+  } catch (error) {
+    console.warn('Failed to style vector:', name, error);
+  }
+}
+
+function setPointStyle(api, name, color = GEO_POINT_P1_COLOR) {
+  if (!api || !name || typeof api.evalCommand !== 'function') {
+    return;
+  }
+
+  const selectedColor = color || GEO_POINT_P1_COLOR;
+
+  try {
+    api.evalCommand(`SetColor(${name}, ${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b})`);
+    api.evalCommand(`SetPointSize(${name}, 6)`);
+    api.evalCommand(`SetPointStyle(${name}, 2)`);
+  } catch (error) {
+    console.warn('Failed to style point:', name, error);
+  }
+}
+
+// Global callback that GeoGebra calls when the applet is ready
+window.ggbOnInit = function() {
+  console.log('GeoGebra callback triggered');
+  if (appletInitResolve) {
+    appletInitResolve();
+  }
+};
 
            // Fallback polling mechanism
            function tryGetAPI(maxRetries = 50, delay = 200) {
@@ -1674,12 +1838,11 @@
                   throw new Error('GeoGebra API is null');
                 }
 
-                if (typeof api.reset !== 'function') {
-                  throw new Error('GeoGebra API reset method not available');
+                if (typeof api.evalCommand !== 'function') {
+                  throw new Error('GeoGebra API evalCommand method not available');
                 }
 
-                // Clear previous objects
-                api.reset();
+                prepareGeoGebra(api);
 
                 // Add vectors as arrows from origin
                 if (A) {
@@ -1688,6 +1851,8 @@
                   } else {
                     api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
                   }
+                  registerGeoObject('VectorA');
+                  setVectorStyle(api, 'VectorA');
                 }
 
                 if (B) {
@@ -1696,6 +1861,8 @@
                   } else {
                     api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
                   }
+                  registerGeoObject('VectorB');
+                  setVectorStyle(api, 'VectorB');
                 }
 
                 if (C) {
@@ -1704,6 +1871,8 @@
                   } else {
                     api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
                   }
+                  registerGeoObject('VectorC');
+                  setVectorStyle(api, 'VectorC');
                 }
 
                 // Add points
@@ -1713,6 +1882,8 @@
                   } else {
                     api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
                   }
+                  registerGeoObject('P1');
+                  setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
                 }
 
                 if (P2) {
@@ -1721,6 +1892,8 @@
                   } else {
                     api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
                   }
+                  registerGeoObject('P2');
+                  setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
                 }
               } catch (e) {
                 console.error('Error plotting vectors:', e);
@@ -1772,12 +1945,8 @@
           if (!api) {
             throw new Error('GeoGebra API is null');
           }
-          
-          if (typeof api.reset !== 'function') {
-            throw new Error('GeoGebra API reset method not available');
-          }
-          
-          api.reset();
+
+          prepareGeoGebra(api);
         } catch (e) {
           console.error('Error initializing coordinate system:', e);
           showError('Error initializing coordinate system: ' + e.message);
@@ -1825,11 +1994,11 @@
             throw new Error('GeoGebra API is null');
           }
           
-          if (typeof api.reset !== 'function') {
-            throw new Error('GeoGebra API reset method not available');
+          if (typeof api.evalCommand !== 'function') {
+            throw new Error('GeoGebra API evalCommand method not available');
           }
           
-          api.reset();
+          prepareGeoGebra(api);
           
           // Add input vectors
           if (inputs.A) {
@@ -1838,6 +2007,8 @@
             } else {
               api.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
             }
+            registerGeoObject('VectorA');
+            setVectorStyle(api, 'VectorA');
           }
           
           if (inputs.B) {
@@ -1846,6 +2017,8 @@
             } else {
               api.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
             }
+            registerGeoObject('VectorB');
+            setVectorStyle(api, 'VectorB');
           }
           
           if (inputs.C) {
@@ -1854,6 +2027,8 @@
             } else {
               api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
             }
+            registerGeoObject('VectorC');
+            setVectorStyle(api, 'VectorC');
           }
 
           // Add input points
@@ -1863,6 +2038,8 @@
             } else {
               api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
             }
+            registerGeoObject('P1');
+            setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
           }
 
           if (inputs.P2) {
@@ -1871,6 +2048,8 @@
             } else {
               api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
             }
+            registerGeoObject('P2');
+            setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
           }
 
           // Add result vector in red color
@@ -1880,14 +2059,16 @@
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, 255, 0, 0)`);
+            registerGeoObject('Result');
+            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
           } else if (typeof result === 'object' && result.vec) {
             if (dim === 2) {
               api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, 255, 0, 0)`);
+            registerGeoObject('Result');
+            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
           }
         } catch (e) {
           console.error('Error plotting operation result:', e);
