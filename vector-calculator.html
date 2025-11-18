@@ -1348,13 +1348,13 @@
         }
         
         // Add plot buttons for exercises
-      const plotButton = `
+        const plotButton = `
         <div class="plot-buttons">
-          <button class="btn-operation btn-viz" onclick="plotOperationResult('" + title + "', [" + result.join(',') + "], {u: [" + u.join(',') + "], v: [" + v.join(',') + "], w: [" + w.join(',') + "]})" style="margin: 5px;">📊 Plot Result</button>
+          <button class="btn-operation btn-viz" onclick="plotOperationResult('" + title + "', [" + result.join(',') + "], {A: [" + u.join(',') + "], B: [" + v.join(',') + "], C: [" + w.join(',') + "]})" style="margin: 5px;">📊 Plot Result</button>
         </div>
-      `;
-      
-      showResult(title, summary, steps, plotButton);
+        `;
+
+        showResult(title, summary, steps, plotButton);
       } catch (error) {
         showError(error.message);
       }
