@@ -1880,14 +1880,14 @@
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
+            api.evalCommand(`SetColor(Result, 255, 0, 0)`);
           } else if (typeof result === 'object' && result.vec) {
             if (dim === 2) {
               api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
             } else {
               api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
             }
-            api.evalCommand(`SetColor(Result, (255, 0, 0))`);
+            api.evalCommand(`SetColor(Result, 255, 0, 0)`);
           }
         } catch (e) {
           console.error('Error plotting operation result:', e);
