@@ -1364,51 +1364,88 @@
      let currentMode = null;
      
      function initGeoGebra(is3D = false) {
-       const mode = is3D ? '3D' : '2D';
-       
-       // If mode changed, reset the applet
-       if (currentMode && currentMode !== mode) {
-         ggbApplet = null;
-         ggbAPI = null;
-         document.getElementById('ggb-element').innerHTML = '';
-       }
-       
-       // If applet already exists in correct mode, return it
-       if (ggbApplet && currentMode === mode) {
-         return Promise.resolve(ggbAPI);
-       }
-       
-       currentMode = mode;
-       
-       const parameters = {
-         "appName": is3D ? "graphing3d" : "graphing",
-         "width": 800,
-         "height": 600,
-         "showToolBar": true,
-         "showAlgebraInput": true,
-         "showMenuBar": true,
-         "enableLabelDrags": false,
-         "enableRightClick": true,
-         "errorDialogsActive": true,
-         "useBrowserForJS": true,
-         "allowStyleBar": true,
-         "showLogging": false,
-         "showZoomButtons": true,
-         "showFullscreenButton": true
-       };
-       
-       ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
-       ggbApplet.inject('ggb-element');
-       
-       // Show the container
-       document.getElementById('ggb-element').classList.add('show');
-       
-       // Return promise that resolves when API is ready
-       return ggbApplet.getAPI().then(api => {
-         ggbAPI = api;
-         return api;
-       });
-     }
+             const mode = is3D ? '3D' : '2D';
+
+             // If mode changed, reset the applet
+             if (currentMode && currentMode !== mode) {
+               ggbApplet = null;
+               ggbAPI = null;
+               document.getElementById('ggb-element').innerHTML = '';
+             }
+
+             // If applet already exists in correct mode, return it
+             if (ggbApplet && currentMode === mode && ggbAPI) {
+               return Promise.resolve(ggbAPI);
+             }
+
+             currentMode = mode;
+
+             const parameters = {
+               "appName": is3D ? "graphing3d" : "graphing",
+               "width": 800,
+               "height": 600,
+               "showToolBar": true,
+               "showAlgebraInput": true,
+               "showMenuBar": true,
+               "enableLabelDrags": false,
+               "enableRightClick": true,
+               "errorDialogsActive": true,
+               "useBrowserForJS": true,
+               "allowStyleBar": true,
+               "showLogging": false,
+               "showZoomButtons": true,
+               "showFullscreenButton": true
+             };
+
+             try {
+               ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
+               ggbApplet.inject('ggb-element');
+
+               // Show the container
+               document.getElementById('ggb-element').classList.add('show');
+
+               // Return promise that resolves when API is ready with timeout
+               return new Promise((resolve, reject) => {
+                 const timeout = setTimeout(() => {
+                   reject(new Error('GeoGebra applet failed to load within 10 seconds'));
+                 }, 10000);
+
+                 // Try to get API with retries
+                 const tryGetAPI = (attempts = 0) => {
+                   if (attempts > 20) {
+                     clearTimeout(timeout);
+                     reject(new Error('Failed to get GeoGebra API after multiple attempts'));
+                     return;
+                   }
+
+                   try {
+                     if (ggbApplet && typeof ggbApplet.getAPI === 'function') {
+                       ggbApplet.getAPI().then(api => {
+                         if (api && typeof api.reset === 'function') {
+                           clearTimeout(timeout);
+                           ggbAPI = api;
+                           resolve(api);
+                         } else {
+                           setTimeout(() => tryGetAPI(attempts + 1), 500);
+                         }
+                       }).catch(() => {
+                         setTimeout(() => tryGetAPI(attempts + 1), 500);
+                       });
+                     } else {
+                       setTimeout(() => tryGetAPI(attempts + 1), 500);
+                     }
+                   } catch (e) {
+                     setTimeout(() => tryGetAPI(attempts + 1), 500);
+                   }
+                 };
+
+                 // Start trying to get API after a short delay
+                 setTimeout(() => tryGetAPI(), 1000);
+               });
+             } catch (error) {
+               return Promise.reject(new Error('Failed to initialize GeoGebra applet: ' + error.message));
+             }
+           }
      
      function copyCommandsToClipboard(commandsText) {
        const commands = commandsText.replace(/\\n/g, '\n');
@@ -1420,73 +1457,82 @@
      }
      
      function plotVectors() {
-      const dim = parseInt(document.getElementById('dimension').value);
-      const A = getVectorInput('vecA');
-      const B = getVectorInput('vecB');
-      const C = getVectorInput('vecC');
-      const P1 = getVectorInput('p1');
-      const P2 = getVectorInput('p2');
+            const dim = parseInt(document.getElementById('dimension').value);
+            const A = getVectorInput('vecA');
+            const B = getVectorInput('vecB');
+            const C = getVectorInput('vecC');
+            const P1 = getVectorInput('p1');
+            const P2 = getVectorInput('p2');
 
-      if (!A && !B && !C && !P1 && !P2) {
-        showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
-        return;
-      }
-
-      // Initialize GeoGebra applet and wait for API
-      initGeoGebra(dim === 3).then(api => {
-        try {
-          // Clear previous objects
-          api.reset();
-
-          // Add vectors as arrows from origin
-          if (A) {
-            if (dim === 2) {
-              api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
-            } else {
-              api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
+            if (!A && !B && !C && !P1 && !P2) {
+              showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
+              return;
             }
-          }
 
-          if (B) {
-            if (dim === 2) {
-              api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
-            } else {
-              api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
-            }
-          }
+            // Initialize GeoGebra applet and wait for API
+            initGeoGebra(dim === 3).then(api => {
+              try {
+                // Validate API before using
+                if (!api) {
+                  throw new Error('GeoGebra API is null');
+                }
 
-          if (C) {
-            if (dim === 2) {
-              api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
-            } else {
-              api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
-            }
-          }
+                if (typeof api.reset !== 'function') {
+                  throw new Error('GeoGebra API reset method not available');
+                }
 
-          // Add points
-          if (P1) {
-            if (dim === 2) {
-              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]})`);
-            } else {
-              api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]}, ${P1[2]})`);
-            }
-          }
+                // Clear previous objects
+                api.reset();
 
-          if (P2) {
-            if (dim === 2) {
-              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]})`);
-            } else {
-              api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]}, ${P2[2]})`);
-            }
-          }
-        } catch (e) {
-          console.error('Error plotting vectors:', e);
-          showError('Error plotting vectors: ' + e.message);
-        }
-      }).catch(err => {
-        console.error('Failed to initialize GeoGebra:', err);
-        showError('Failed to initialize GeoGebra: ' + err.message);
-      });
+                // Add vectors as arrows from origin
+                if (A) {
+                  if (dim === 2) {
+                    api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
+                  } else {
+                    api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
+                  }
+                }
+
+                if (B) {
+                  if (dim === 2) {
+                    api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
+                  } else {
+                    api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
+                  }
+                }
+
+                if (C) {
+                  if (dim === 2) {
+                    api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
+                  } else {
+                    api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
+                  }
+                }
+
+                // Add points
+                if (P1) {
+                  if (dim === 2) {
+                    api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]})`);
+                  } else {
+                    api.evalCommand(`P1 = Point(${P1[0]}, ${P1[1]}, ${P1[2]})`);
+                  }
+                }
+
+                if (P2) {
+                  if (dim === 2) {
+                    api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]})`);
+                  } else {
+                    api.evalCommand(`P2 = Point(${P2[0]}, ${P2[1]}, ${P2[2]})`);
+                  }
+                }
+              } catch (e) {
+                console.error('Error plotting vectors:', e);
+                showError('Error plotting vectors: ' + e.message);
+              }
+            }).catch(err => {
+              console.error('Failed to initialize GeoGebra:', err);
+              showError('Failed to initialize GeoGebra: ' + err.message);
+            });
 
       const steps = [{
         title: 'GeoGebra Embedded Visualization',
@@ -1525,9 +1571,19 @@
       // Initialize GeoGebra applet
       initGeoGebra(dim === 3).then(api => {
         try {
+          // Validate API before using
+          if (!api) {
+            throw new Error('GeoGebra API is null');
+          }
+          
+          if (typeof api.reset !== 'function') {
+            throw new Error('GeoGebra API reset method not available');
+          }
+          
           api.reset();
         } catch (e) {
           console.error('Error initializing coordinate system:', e);
+          showError('Error initializing coordinate system: ' + e.message);
         }
       }).catch(err => {
         console.error('Failed to initialize GeoGebra:', err);
@@ -1567,6 +1623,15 @@
       // Initialize GeoGebra applet and wait for API
       initGeoGebra(dim === 3).then(api => {
         try {
+          // Validate API before using
+          if (!api) {
+            throw new Error('GeoGebra API is null');
+          }
+          
+          if (typeof api.reset !== 'function') {
+            throw new Error('GeoGebra API reset method not available');
+          }
+          
           api.reset();
           
           // Add input vectors
