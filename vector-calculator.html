@@ -364,6 +364,7 @@
       border-radius: 12px;
       margin: 20px 0;
       display: none;
+      box-sizing: border-box;
     }
     
     #ggb-element.show {
@@ -1447,10 +1448,15 @@
 
                    currentMode = mode;
 
+                   // Get container width for responsive sizing
+                   const container = document.getElementById('ggb-element');
+                   const containerWidth = container.parentElement.offsetWidth - 40; // Account for padding
+                   const containerHeight = 600;
+
                    const parameters = {
                      "appName": is3D ? "graphing3d" : "graphing",
-                     "width": 800,
-                     "height": 600,
+                     "width": containerWidth,
+                     "height": containerHeight,
                      "showToolBar": true,
                      "showAlgebraInput": true,
                      "showMenuBar": true,
@@ -1536,8 +1542,24 @@
                      return Promise.reject(new Error('Failed to initialize GeoGebra applet: ' + error.message));
                    }
                  }
-     
-     function copyCommandsToClipboard(commandsText) {
+
+                 function handleWindowResize() {
+                 // Resize the GeoGebra applet when window is resized
+                 if (ggbApplet && typeof ggbApplet.setWidth === 'function' && typeof ggbApplet.setHeight === 'function') {
+                 const container = document.getElementById('ggb-element');
+                 const containerWidth = container.parentElement.offsetWidth - 40; // Account for padding
+                 const containerHeight = 600;
+
+                 ggbApplet.setWidth(containerWidth);
+                 ggbApplet.setHeight(containerHeight);
+                 console.log('Resized GeoGebra applet to', containerWidth, 'x', containerHeight);
+                 }
+                 }
+
+                 // Add resize listener
+                 window.addEventListener('resize', handleWindowResize);
+
+                 function copyCommandsToClipboard(commandsText) {
        const commands = commandsText.replace(/\\n/g, '\n');
        navigator.clipboard.writeText(commands).then(() => {
          alert('✓ Commands copied to clipboard!');
