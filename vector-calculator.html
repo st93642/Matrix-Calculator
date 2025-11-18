@@ -1360,101 +1360,182 @@
      }
      
      let ggbApplet = null;
-     let ggbAPI = null;
-     let currentMode = null;
-     let appletInitPromise = null;
-     let appletInitResolve = null;
-     let appletInitReject = null;
+           let ggbAPI = null;
+           let currentMode = null;
+           let appletInitPromise = null;
+           let appletInitResolve = null;
+           let appletInitReject = null;
 
-     // Global callback that GeoGebra calls when the applet is ready
-     window.ggbOnInit = function() {
-       if (appletInitResolve) {
-         appletInitResolve();
-       }
-     };
-
-     function initGeoGebra(is3D = false) {
-            const mode = is3D ? '3D' : '2D';
-
-             // If mode changed, reset the applet
-             if (currentMode && currentMode !== mode) {
-               ggbApplet = null;
-               ggbAPI = null;
-               appletInitPromise = null;
-               appletInitResolve = null;
-               appletInitReject = null;
-               document.getElementById('ggb-element').innerHTML = '';
+           // Global callback that GeoGebra calls when the applet is ready
+           window.ggbOnInit = function() {
+             console.log('GeoGebra callback triggered');
+             if (appletInitResolve) {
+               appletInitResolve();
              }
+           };
 
-             // If applet already exists in correct mode, return it
-             if (appletInitPromise && currentMode === mode) {
-               return appletInitPromise;
-             }
+           // Fallback polling mechanism
+           function tryGetAPI(maxRetries = 50, delay = 200) {
+             return new Promise((resolve, reject) => {
+               let retries = 0;
 
-             currentMode = mode;
+               function checkAPI() {
+                 retries++;
 
-             const parameters = {
-               "appName": is3D ? "graphing3d" : "graphing",
-               "width": 800,
-               "height": 600,
-               "showToolBar": true,
-               "showAlgebraInput": true,
-               "showMenuBar": true,
-               "enableLabelDrags": false,
-               "enableRightClick": true,
-               "errorDialogsActive": true,
-               "useBrowserForJS": true,
-               "allowStyleBar": true,
-               "showLogging": false,
-               "showZoomButtons": true,
-               "showFullscreenButton": true,
-               "onInitCallbackIfLoaded": window.ggbOnInit,
-               "appletOnLoad": window.ggbOnInit
-             };
+                 try {
+                   // Check if applet exists and has API
+                   if (ggbApplet && typeof ggbApplet.getAppletObject === 'function') {
+                     const appletObject = ggbApplet.getAppletObject();
+                     if (appletObject && typeof appletObject.reset === 'function') {
+                       console.log('API found via getAppletObject after', retries, 'retries');
+                       ggbAPI = appletObject;
+                       resolve(appletObject);
+                       return;
+                     }
+                   }
 
-             try {
-               ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
-               ggbApplet.inject('ggb-element');
-
-               // Show the container
-               document.getElementById('ggb-element').classList.add('show');
-
-               // Return promise that resolves when applet is loaded
-               appletInitPromise = new Promise((resolve, reject) => {
-                 const timeout = setTimeout(() => {
-                   reject(new Error('GeoGebra applet failed to load within 30 seconds'));
-                 }, 30000);
-
-                 appletInitResolve = () => {
-                   clearTimeout(timeout);
-                   // Get the API after applet loads
+                   // Alternative method: direct API access
                    if (ggbApplet && typeof ggbApplet.getAPI === 'function') {
                      ggbApplet.getAPI().then(api => {
                        if (api && typeof api.reset === 'function') {
+                         console.log('API found via getAPI after', retries, 'retries');
                          ggbAPI = api;
                          resolve(api);
-                       } else {
-                         reject(new Error('GeoGebra API is not fully initialized'));
+                         return;
                        }
-                     }).catch(err => {
-                       reject(new Error('Failed to get GeoGebra API: ' + err.message));
+                     }).catch(() => {
+                       // Continue with polling
                      });
-                   } else {
-                     reject(new Error('GeoGebra applet object is not available'));
                    }
-                 };
 
-                 appletInitReject = (error) => {
-                   clearTimeout(timeout);
-                   reject(error);
-                 };
-               });
+                   if (retries >= maxRetries) {
+                     reject(new Error('GeoGebra API not available after ' + maxRetries + ' attempts'));
+                     return;
+                   }
 
-               return appletInitPromise;
-             } catch (error) {
-               return Promise.reject(new Error('Failed to initialize GeoGebra applet: ' + error.message));
-             }
+                   setTimeout(checkAPI, delay);
+                 } catch (error) {
+                   if (retries >= maxRetries) {
+                     reject(new Error('Error accessing GeoGebra API: ' + error.message));
+                     return;
+                   }
+                   setTimeout(checkAPI, delay);
+                 }
+               }
+
+               checkAPI();
+             });
            }
+
+           function initGeoGebra(is3D = false) {
+                  const mode = is3D ? '3D' : '2D';
+
+                   // If mode changed, reset the applet
+                   if (currentMode && currentMode !== mode) {
+                     ggbApplet = null;
+                     ggbAPI = null;
+                     appletInitPromise = null;
+                     appletInitResolve = null;
+                     appletInitReject = null;
+                     document.getElementById('ggb-element').innerHTML = '';
+                   }
+
+                   // If applet already exists in correct mode, return it
+                   if (appletInitPromise && currentMode === mode) {
+                     return appletInitPromise;
+                   }
+
+                   currentMode = mode;
+
+                   const parameters = {
+                     "appName": is3D ? "graphing3d" : "graphing",
+                     "width": 800,
+                     "height": 600,
+                     "showToolBar": true,
+                     "showAlgebraInput": true,
+                     "showMenuBar": true,
+                     "enableLabelDrags": false,
+                     "enableRightClick": true,
+                     "errorDialogsActive": true,
+                     "useBrowserForJS": true,
+                     "allowStyleBar": true,
+                     "showLogging": false,
+                     "showZoomButtons": true,
+                     "showFullscreenButton": true,
+                     "appletOnLoad": "ggbOnInit"
+                   };
+
+                   try {
+                     console.log('Creating GeoGebra applet for', mode);
+                     ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
+                     ggbApplet.inject('ggb-element');
+
+                     // Show the container
+                     document.getElementById('ggb-element').classList.add('show');
+
+                     // Return promise that resolves when applet is loaded
+                     appletInitPromise = new Promise((resolve, reject) => {
+                       let callbackTriggered = false;
+                       let pollTimer = null;
+
+                       const cleanup = () => {
+                         if (pollTimer) {
+                           clearTimeout(pollTimer);
+                           pollTimer = null;
+                         }
+                       };
+
+                       const timeout = setTimeout(() => {
+                         cleanup();
+                         if (!callbackTriggered) {
+                           reject(new Error('GeoGebra applet failed to load within 30 seconds'));
+                         }
+                       }, 30000);
+
+                       appletInitResolve = () => {
+                         console.log('Callback triggered, attempting to get API');
+                         callbackTriggered = true;
+                         cleanup();
+                         clearTimeout(timeout);
+
+                         // Try to get API immediately
+                         tryGetAPI(10, 100).then(api => {
+                           resolve(api);
+                         }).catch(err => {
+                           reject(new Error('Callback triggered but failed to get API: ' + err.message));
+                         });
+                       };
+
+                       // Start polling as fallback after 2 seconds
+                       pollTimer = setTimeout(() => {
+                         if (!callbackTriggered) {
+                           console.log('Callback not triggered, starting fallback polling');
+                           tryGetAPI(40, 200).then(api => {
+                             callbackTriggered = true;
+                             cleanup();
+                             clearTimeout(timeout);
+                             resolve(api);
+                           }).catch(err => {
+                             cleanup();
+                             clearTimeout(timeout);
+                             reject(new Error('Failed to get API via polling: ' + err.message));
+                           });
+                         }
+                       }, 2000);
+
+                       appletInitReject = (error) => {
+                         cleanup();
+                         clearTimeout(timeout);
+                         reject(error);
+                       };
+                     });
+
+                     return appletInitPromise;
+                   } catch (error) {
+                     console.error('Error creating GeoGebra applet:', error);
+                     return Promise.reject(new Error('Failed to initialize GeoGebra applet: ' + error.message));
+                   }
+                 }
      
      function copyCommandsToClipboard(commandsText) {
        const commands = commandsText.replace(/\\n/g, '\n');
