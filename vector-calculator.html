@@ -153,17 +153,28 @@
     }
     
     .buttons {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 10px;
-      flex-wrap: wrap;
       margin-bottom: 25px;
+      max-width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .buttons {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .buttons {
+        grid-template-columns: 1fr;
+      }
     }
     
     .btn-operation {
-      flex: 1;
-      min-width: 120px;
-      padding: 10px 14px;
-      font-size: 0.85em;
+      padding: 12px 16px;
+      font-size: 0.9em;
       font-weight: 600;
       border: none;
       border-radius: 10px;
@@ -171,9 +182,9 @@
       transition: all 0.3s;
       color: white;
       text-align: center;
-      white-space: nowrap;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
+      width: 100%;
     }
     
     .btn-operation:hover {
@@ -314,6 +325,35 @@
     
     .info-box strong {
       color: #0066cc;
+    }
+    
+    .geogebra-commands {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .copy-commands-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+    
+    .copy-commands-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -1300,23 +1340,32 @@
       } catch (error) {
         showError(error.message);
       }
-    }
-    
-    function plotVectors() {
-      const dim = parseInt(document.getElementById('dimension').value);
-      const A = getVectorInput('vecA');
-      const B = getVectorInput('vecB');
-      const C = getVectorInput('vecC');
-      const P1 = getVectorInput('p1');
-      const P2 = getVectorInput('p2');
-      
-      if (!A && !B && !C && !P1 && !P2) {
-        showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
-        return;
-      }
-      
-      // Build GeoGebra commands with coordinate system and elements
-      let commands = [];
+     }
+     
+     function copyCommandsToClipboard(commandsText) {
+       const commands = commandsText.replace(/\\n/g, '\n');
+       navigator.clipboard.writeText(commands).then(() => {
+         alert('Commands copied to clipboard! Now paste them in GeoGebra.');
+       }).catch(() => {
+         alert('Failed to copy. Please copy manually from the commands box above.');
+       });
+     }
+     
+     function plotVectors() {
+       const dim = parseInt(document.getElementById('dimension').value);
+       const A = getVectorInput('vecA');
+       const B = getVectorInput('vecB');
+       const C = getVectorInput('vecC');
+       const P1 = getVectorInput('p1');
+       const P2 = getVectorInput('p2');
+       
+       if (!A && !B && !C && !P1 && !P2) {
+         showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
+         return;
+       }
+       
+       // Build GeoGebra commands with coordinate system and elements
+       let commands = [];
       
       // Add coordinate axes
       if (dim === 2) {
@@ -1367,33 +1416,34 @@
         }
       }
       
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C'); // URL encode comma
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
+      // Open GeoGebra in new tab
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
       window.open(geogebraUrl, '_blank');
       
-      // Show confirmation to user
+      // Show confirmation with commands to copy-paste
+      const commandsText = commands.join('\n');
       const steps = [{
-        title: 'External Plotting Service',
+        title: 'Opening GeoGebra & Copy Commands',
         content: `
           <div class="alert alert-info">
-            <strong>📊 Opening GeoGebra Graphing Calculator</strong><br><br>
-            Your vectors and points have been sent to GeoGebra for visualization:<br><br>
-            ${A ? '<strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '<br>' : ''}
-            ${B ? '<strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '<br>' : ''}
-            ${C ? '<strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '<br>' : ''}
-            ${P1 ? '<strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '<br>' : ''}
-            ${P2 ? '<strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '<br>' : ''}
-            <br>
-            <em>A new tab should open with coordinate system, vectors, and points plotted. If the popup is blocked, please allow popups for this site.</em>
+            <strong>📊 GeoGebra ${dim}D Graphing Calculator</strong><br><br>
+            A new tab has opened with GeoGebra. Please copy the commands below and paste them into GeoGebra's input field to plot your vectors and points.
+            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
+            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
+            <br><br>
+            <strong>Steps:</strong>
+            <ol style="margin-left: 20px;">
+              <li>Go to the new GeoGebra tab</li>
+              <li>Click in the input field (at the bottom of the screen)</li>
+              <li>Paste the commands above</li>
+              <li>Press Enter to plot</li>
+            </ol>
           </div>
         `
       }];
       
       const summary = `
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Graphing Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
         <div class="summary-line"><strong>Elements:</strong> Coordinate System + Vectors + Points</div>
         ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
@@ -1401,7 +1451,7 @@
         ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
         ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
         ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
-        <div class="summary-result">Coordinate system with vectors and points plotted in external graphing calculator</div>
+        <div class="summary-result">Copy commands to GeoGebra to visualize coordinate system, vectors and points</div>
       `;
       
       showResult('Coordinate System & Elements Plotting', summary, steps);
@@ -1420,26 +1470,25 @@
         commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis', 'Origin = (0,0,0)');
       }
       
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C');
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
+      // Open GeoGebra in new tab
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
       window.open(geogebraUrl, '_blank');
       
-      // Show confirmation
+      // Show confirmation with commands to copy-paste
+      const commandsText = commands.join('\n');
       const steps = [{
         title: 'Right-Handed Coordinate System',
         content: `
           <div class="alert alert-info">
-            <strong>📐 Opening GeoGebra Graphing Calculator</strong><br><br>
-            A ${dim}D right-handed coordinate system has been opened for visualization.<br><br>
-            ${dim === 2 ? 
-              '<strong>2D System:</strong> X-axis points right, Y-axis points up. This follows standard mathematical convention where positive rotation is counterclockwise.' :
-              '<strong>3D System:</strong> Following the right-hand rule - when you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
-            }
+            <strong>📐 GeoGebra ${dim}D Coordinate System</strong><br><br>
+            A new tab has opened with GeoGebra. The coordinate system is ready to use.
             <br><br>
-            <em>A new tab should open with the coordinate system. If the popup is blocked, please allow popups for this site.</em>
+            ${dim === 2 ? 
+              '<strong>2D System:</strong> X-axis points right, Y-axis points up. Standard mathematical convention.' :
+              '<strong>3D System:</strong> Right-hand rule - curl fingers from x-axis to y-axis, thumb points along z-axis.'
+            }
+            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
+            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
           </div>
         `
       }];
@@ -1447,7 +1496,7 @@
       const summary = `
         <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Calculator</div>
         <div class="summary-result">Coordinate system opened in external graphing calculator</div>
       `;
       
@@ -1525,30 +1574,29 @@
         }
       }
       
-      // Create GeoGebra URL
-      const commandString = commands.join('%2C');
-      const geogebraUrl = `https://www.geogebra.org/graphing?command=${commandString}`;
-      
-      // Open in new tab
+      // Open GeoGebra in new tab
+      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
       window.open(geogebraUrl, '_blank');
       
-      // Show confirmation
+      // Show confirmation with commands to copy-paste
+      const commandsText = commands.join('\n');
       const steps = [{
         title: 'Operation Result Visualization',
         content: `
           <div class="alert alert-info">
             <strong>📊 Plotting ${operationName} Result</strong><br><br>
-            The operation result has been sent to GeoGebra for visualization along with the input elements.<br><br>
-            <em>A new tab should open with the coordinate system and operation visualization. If the popup is blocked, please allow popups for this site.</em>
+            A new tab has opened with GeoGebra. Please copy the commands below and paste them into GeoGebra's input field.
+            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
+            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
           </div>
         `
       }];
       
       const summary = `
         <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-result">Operation result plotted with inputs in external graphing calculator</div>
+        <div class="summary-result">Copy commands to visualize operation result with inputs</div>
       `;
       
       showResult(`${operationName} Visualization`, summary, steps);
