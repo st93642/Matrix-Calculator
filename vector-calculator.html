@@ -367,7 +367,7 @@
       <br><br>
       <strong>📚 Exercise Operations:</strong> For textbook exercises, use vectors A, B, C as u, v, w respectively. The operations include linear combinations like 6u+2v, -v+u, 5(v-4u), and -3(v-8w).
       <br><br>
-      <strong>📊 Visualization:</strong> Click "Plot Vectors" to see coordinate system with vectors and points plotted in GeoGebra. Individual operation results also have "Plot" buttons for targeted visualization. Opens in new tab.
+      <strong>📊 Visualization:</strong> Click "Plot Vectors" or "Coordinate System" to visualize in Desmos graphing calculator (supports both 2D and 3D). Individual operation results also have "Plot" buttons. Opens in new tab automatically.
     </div>
     
     <!-- Dimension Control -->
@@ -1352,208 +1352,213 @@
      }
      
      function plotVectors() {
-       const dim = parseInt(document.getElementById('dimension').value);
-       const A = getVectorInput('vecA');
-       const B = getVectorInput('vecB');
-       const C = getVectorInput('vecC');
-       const P1 = getVectorInput('p1');
-       const P2 = getVectorInput('p2');
-       
-       if (!A && !B && !C && !P1 && !P2) {
-         showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
-         return;
-       }
-       
-       // Build GeoGebra commands with coordinate system and elements
-       let commands = [];
-      
-      // Add coordinate axes
-      if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis');
-      } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
+      const dim = parseInt(document.getElementById('dimension').value);
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      const C = getVectorInput('vecC');
+      const P1 = getVectorInput('p1');
+      const P2 = getVectorInput('p2');
+
+      if (!A && !B && !C && !P1 && !P2) {
+        showError('Please enter at least one vector (A, B, C) or point (P₁, P₂) to plot');
+        return;
       }
-      
+
+      // Build Desmos expressions
+      let expressions = [];
+
       // Add points
       if (P1) {
         if (dim === 2) {
-          commands.push(`P1 = (${P1[0]}, ${P1[1]})`);
+          expressions.push({ latex: `P_1 = (${P1[0]}, ${P1[1]})` });
         } else {
-          commands.push(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
+          expressions.push({ latex: `P_1 = (${P1[0]}, ${P1[1]}, ${P1[2]})` });
         }
       }
-      
+
       if (P2) {
         if (dim === 2) {
-          commands.push(`P2 = (${P2[0]}, ${P2[1]})`);
+          expressions.push({ latex: `P_2 = (${P2[0]}, ${P2[1]})` });
         } else {
-          commands.push(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
+          expressions.push({ latex: `P_2 = (${P2[0]}, ${P2[1]}, ${P2[2]})` });
         }
       }
-      
-      // Add vectors from origin
+
+      // Add vectors as parametric lines from origin
       if (A) {
         if (dim === 2) {
-          commands.push(`VectorA = Vector((0,0),(${A[0]},${A[1]}))`);
+          expressions.push({ latex: `\\left(t${A[0]}, t${A[1]}\\right)` });
         } else {
-          commands.push(`VectorA = Vector((0,0,0),(${A[0]},${A[1]},${A[2]}))`);
+          expressions.push({ latex: `\\left(t${A[0]}, t${A[1]}, t${A[2]}\\right)` });
         }
       }
-      
+
       if (B) {
         if (dim === 2) {
-          commands.push(`VectorB = Vector((0,0),(${B[0]},${B[1]}))`);
+          expressions.push({ latex: `\\left(s${B[0]}, s${B[1]}\\right)` });
         } else {
-          commands.push(`VectorB = Vector((0,0,0),(${B[0]},${B[1]},${B[2]}))`);
+          expressions.push({ latex: `\\left(s${B[0]}, s${B[1]}, s${B[2]}\\right)` });
         }
       }
-      
+
       if (C) {
         if (dim === 2) {
-          commands.push(`VectorC = Vector((0,0),(${C[0]},${C[1]}))`);
+          expressions.push({ latex: `\\left(u${C[0]}, u${C[1]}\\right)` });
         } else {
-          commands.push(`VectorC = Vector((0,0,0),(${C[0]},${C[1]},${C[2]}))`);
+          expressions.push({ latex: `\\left(u${C[0]}, u${C[1]}, u${C[2]}\\right)` });
         }
       }
-      
-      // Open GeoGebra in new tab
-      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
-      window.open(geogebraUrl, '_blank');
-      
-      // Show confirmation with commands to copy-paste
-      const commandsText = commands.join('\n');
+
+      // Open Desmos in new tab
+      const desmosUrl = dim === 2 ? 'https://www.desmos.com/calculator' : 'https://www.desmos.com/3d';
+      const queryString = encodeURIComponent(JSON.stringify(expressions));
+      window.open(`${desmosUrl}?expressions=${queryString}`, '_blank');
+
       const steps = [{
-        title: 'Opening GeoGebra & Copy Commands',
+        title: 'Desmos Visualization',
         content: `
           <div class="alert alert-info">
-            <strong>📊 GeoGebra ${dim}D Graphing Calculator</strong><br><br>
-            A new tab has opened with GeoGebra. Please copy the commands below and paste them into GeoGebra's input field to plot your vectors and points.
-            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
-            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
+            <strong>📊 Opening Desmos ${dim}D Graphing Calculator</strong><br><br>
+            Your vectors and points are now being plotted in Desmos. A new tab should open automatically.<br><br>
+            <strong>Elements:</strong>
+            ${P1 ? `<br>• Point P₁: ${VectorModule.formatVector(P1)}` : ''}
+            ${P2 ? `<br>• Point P₂: ${VectorModule.formatVector(P2)}` : ''}
+            ${A ? `<br>• Vector A: ${VectorModule.formatVector(A)}` : ''}
+            ${B ? `<br>• Vector B: ${VectorModule.formatVector(B)}` : ''}
+            ${C ? `<br>• Vector C: ${VectorModule.formatVector(C)}` : ''}
             <br><br>
-            <strong>Steps:</strong>
-            <ol style="margin-left: 20px;">
-              <li>Go to the new GeoGebra tab</li>
-              <li>Click in the input field (at the bottom of the screen)</li>
-              <li>Paste the commands above</li>
-              <li>Press Enter to plot</li>
-            </ol>
+            <em>Vectors are shown as parametric lines from the origin (parameter values: t, s, u)</em>
           </div>
         `
       }];
-      
+
       const summary = `
-        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Graphing Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> Desmos ${dim}D Graphing Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Elements:</strong> Coordinate System + Vectors + Points</div>
+        <div class="summary-line"><strong>Elements:</strong> Vectors + Points</div>
         ${A ? '<div class="summary-line"><strong>Vector A:</strong> ' + VectorModule.formatVector(A) + '</div>' : ''}
         ${B ? '<div class="summary-line"><strong>Vector B:</strong> ' + VectorModule.formatVector(B) + '</div>' : ''}
         ${C ? '<div class="summary-line"><strong>Vector C:</strong> ' + VectorModule.formatVector(C) + '</div>' : ''}
         ${P1 ? '<div class="summary-line"><strong>Point P₁:</strong> ' + VectorModule.formatVector(P1) + '</div>' : ''}
         ${P2 ? '<div class="summary-line"><strong>Point P₂:</strong> ' + VectorModule.formatVector(P2) + '</div>' : ''}
-        <div class="summary-result">Copy commands to GeoGebra to visualize coordinate system, vectors and points</div>
+        <div class="summary-result">Vectors and points plotted in Desmos graphing calculator</div>
       `;
-      
+
       showResult('Coordinate System & Elements Plotting', summary, steps);
-    }
+     }
     
     function plotCoordinateSystem() {
       const dim = parseInt(document.getElementById('dimension').value);
-      
-      // Build GeoGebra commands with just coordinate system
-      let commands = [];
-      
-      // Add coordinate axes
+
+      // Build Desmos coordinate system with origin point
+      let expressions = [];
+
       if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'Origin = (0,0)');
+        expressions.push({ latex: 'O = (0, 0)' });
       } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis', 'Origin = (0,0,0)');
+        expressions.push({ latex: 'O = (0, 0, 0)' });
       }
-      
-      // Open GeoGebra in new tab
-      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
-      window.open(geogebraUrl, '_blank');
-      
-      // Show confirmation with commands to copy-paste
-      const commandsText = commands.join('\n');
+
+      // Open Desmos in new tab
+      const desmosUrl = dim === 2 ? 'https://www.desmos.com/calculator' : 'https://www.desmos.com/3d';
+      const queryString = encodeURIComponent(JSON.stringify(expressions));
+      window.open(`${desmosUrl}?expressions=${queryString}`, '_blank');
+
       const steps = [{
         title: 'Right-Handed Coordinate System',
         content: `
           <div class="alert alert-info">
-            <strong>📐 GeoGebra ${dim}D Coordinate System</strong><br><br>
-            A new tab has opened with GeoGebra. The coordinate system is ready to use.
+            <strong>📐 Desmos ${dim}D Coordinate System</strong><br><br>
+            A new tab has opened with Desmos showing the ${dim}D coordinate system.
             <br><br>
-            ${dim === 2 ? 
-              '<strong>2D System:</strong> X-axis points right, Y-axis points up. Standard mathematical convention.' :
-              '<strong>3D System:</strong> Right-hand rule - curl fingers from x-axis to y-axis, thumb points along z-axis.'
+            ${dim === 2 ?
+              '<strong>2D System:</strong> X-axis points right, Y-axis points up. Standard mathematical convention where positive rotation is counterclockwise.' :
+              '<strong>3D System:</strong> Right-hand rule - when you curl the fingers of your right hand from the x-axis to the y-axis, your thumb points in the direction of the z-axis.'
             }
-            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
-            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
+            <br><br>
+            <em>The origin point O is marked in the coordinate system.</em>
           </div>
         `
       }];
-      
+
       const summary = `
         <div class="summary-line"><strong>System Type:</strong> Right-Handed Coordinate System</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Calculator</div>
-        <div class="summary-result">Coordinate system opened in external graphing calculator</div>
+        <div class="summary-line"><strong>Service:</strong> Desmos ${dim}D Calculator</div>
+        <div class="summary-result">Coordinate system opened in Desmos graphing calculator</div>
       `;
-      
+
       showResult('Coordinate System', summary, steps);
     }
     
     function plotOperationResult(operationName, result, inputs = {}) {
       const dim = parseInt(document.getElementById('dimension').value);
       
-      // Build GeoGebra commands with coordinate system and operation result
-      let commands = [];
-      
-      // Add coordinate axes
-      if (dim === 2) {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis');
-      } else {
-        commands.push('xAxis = xAxis', 'yAxis = yAxis', 'zAxis = zAxis');
-      }
+      // Build Desmos expressions with coordinate system and operation result
+      let expressions = [];
       
       // Add input vectors/points
       if (inputs.A) {
         if (dim === 2) {
-          commands.push(`VectorA = Vector((0,0),(${inputs.A[0]},${inputs.A[1]}))`);
+          expressions.push({ latex: `\\vec{A} = (${inputs.A[0]}, ${inputs.A[1]})` });
         } else {
-          commands.push(`VectorA = Vector((0,0,0),(${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
+          expressions.push({ latex: `\\vec{A} = (${inputs.A[0]}, ${inputs.A[1]}, ${inputs.A[2]})` });
         }
       }
       
       if (inputs.B) {
         if (dim === 2) {
-          commands.push(`VectorB = Vector((0,0),(${inputs.B[0]},${inputs.B[1]}))`);
+          expressions.push({ latex: `\\vec{B} = (${inputs.B[0]}, ${inputs.B[1]})` });
         } else {
-          commands.push(`VectorB = Vector((0,0,0),(${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
+          expressions.push({ latex: `\\vec{B} = (${inputs.B[0]}, ${inputs.B[1]}, ${inputs.B[2]})` });
         }
       }
       
       if (inputs.C) {
         if (dim === 2) {
-          commands.push(`VectorC = Vector((0,0),(${inputs.C[0]},${inputs.C[1]}))`);
+          expressions.push({ latex: `\\vec{C} = (${inputs.C[0]}, ${inputs.C[1]})` });
         } else {
-          commands.push(`VectorC = Vector((0,0,0),(${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
+          expressions.push({ latex: `\\vec{C} = (${inputs.C[0]}, ${inputs.C[1]}, ${inputs.C[2]})` });
         }
       }
       
       if (inputs.P1) {
         if (dim === 2) {
-          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
+          expressions.push({ latex: `P_1 = (${inputs.P1[0]}, ${inputs.P1[1]})` });
         } else {
-          commands.push(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
+          expressions.push({ latex: `P_1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})` });
         }
       }
       
       if (inputs.P2) {
         if (dim === 2) {
-          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
+          expressions.push({ latex: `P_2 = (${inputs.P2[0]}, ${inputs.P2[1]})` });
         } else {
-          commands.push(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
+          expressions.push({ latex: `P_2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})` });
+        }
+      }
+      
+      if (inputs.u) {
+        if (dim === 2) {
+          expressions.push({ latex: `\\vec{u} = (${inputs.u[0]}, ${inputs.u[1]})` });
+        } else {
+          expressions.push({ latex: `\\vec{u} = (${inputs.u[0]}, ${inputs.u[1]}, ${inputs.u[2]})` });
+        }
+      }
+      
+      if (inputs.v) {
+        if (dim === 2) {
+          expressions.push({ latex: `\\vec{v} = (${inputs.v[0]}, ${inputs.v[1]})` });
+        } else {
+          expressions.push({ latex: `\\vec{v} = (${inputs.v[0]}, ${inputs.v[1]}, ${inputs.v[2]})` });
+        }
+      }
+      
+      if (inputs.w) {
+        if (dim === 2) {
+          expressions.push({ latex: `\\vec{w} = (${inputs.w[0]}, ${inputs.w[1]})` });
+        } else {
+          expressions.push({ latex: `\\vec{w} = (${inputs.w[0]}, ${inputs.w[1]}, ${inputs.w[2]})` });
         }
       }
       
@@ -1561,42 +1566,40 @@
       if (Array.isArray(result)) {
         // Vector result
         if (dim === 2) {
-          commands.push(`Result = Vector((0,0),(${result[0]},${result[1]}))`);
+          expressions.push({ latex: `Result = (${result[0]}, ${result[1]})`, color: '#ff0000' });
         } else {
-          commands.push(`Result = Vector((0,0,0),(${result[0]},${result[1]},${result[2]}))`);
+          expressions.push({ latex: `Result = (${result[0]}, ${result[1]}, ${result[2]})`, color: '#ff0000' });
         }
       } else if (typeof result === 'object' && result.vec) {
         // Vector component result
         if (dim === 2) {
-          commands.push(`Result = Vector((0,0),(${result.vec[0]},${result.vec[1]}))`);
+          expressions.push({ latex: `Result = (${result.vec[0]}, ${result.vec[1]})`, color: '#ff0000' });
         } else {
-          commands.push(`Result = Vector((0,0,0),(${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+          expressions.push({ latex: `Result = (${result.vec[0]}, ${result.vec[1]}, ${result.vec[2]})`, color: '#ff0000' });
         }
       }
       
-      // Open GeoGebra in new tab
-      const geogebraUrl = dim === 2 ? 'https://www.geogebra.org/graphing' : 'https://www.geogebra.org/3d';
-      window.open(geogebraUrl, '_blank');
+      // Open Desmos in new tab
+      const desmosUrl = dim === 2 ? 'https://www.desmos.com/calculator' : 'https://www.desmos.com/3d';
+      const queryString = encodeURIComponent(JSON.stringify(expressions));
+      window.open(`${desmosUrl}?expressions=${queryString}`, '_blank');
       
-      // Show confirmation with commands to copy-paste
-      const commandsText = commands.join('\n');
       const steps = [{
         title: 'Operation Result Visualization',
         content: `
           <div class="alert alert-info">
             <strong>📊 Plotting ${operationName} Result</strong><br><br>
-            A new tab has opened with GeoGebra. Please copy the commands below and paste them into GeoGebra's input field.
-            <div class="geogebra-commands">${commandsText.split('\n').map(cmd => cmd.replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</div>
-            <button class="copy-commands-btn" onclick="copyCommandsToClipboard('${commandsText.split('\n').join('\\n')}')">📋 Copy Commands</button>
+            Your operation result is now being plotted in Desmos. A new tab should open automatically.<br><br>
+            <em>Input vectors are shown in blue, result vector in red.</em>
           </div>
         `
       }];
       
       const summary = `
         <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
-        <div class="summary-line"><strong>Service:</strong> GeoGebra ${dim}D Calculator</div>
+        <div class="summary-line"><strong>Service:</strong> Desmos ${dim}D Calculator</div>
         <div class="summary-line"><strong>Dimension:</strong> ${dim}D</div>
-        <div class="summary-result">Copy commands to visualize operation result with inputs</div>
+        <div class="summary-result">Operation result plotted with inputs in Desmos</div>
       `;
       
       showResult(`${operationName} Visualization`, summary, steps);
