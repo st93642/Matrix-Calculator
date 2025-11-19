@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vector Calculator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+  <script src="https://www.geogebra.org/apps/deployggb.js?v=2025"></script>
   <style>
     * {
       margin: 0;
@@ -1703,27 +1703,40 @@ window.ggbOnInit = function() {
                    const containerHeight = 600;
 
                    const parameters = {
-                     "appName": is3D ? "graph3d" : "graphing",
-                     "width": containerWidth,
-                     "height": containerHeight,
-                     "showToolBar": true,
-                     "showAlgebraInput": true,
-                     "showMenuBar": true,
-                     "enableLabelDrags": false,
-                     "enableRightClick": true,
-                     "errorDialogsActive": true,
-                     "useBrowserForJS": true,
-                     "allowStyleBar": true,
-                     "showLogging": false,
-                     "showZoomButtons": true,
-                     "showFullscreenButton": true,
-                     "appletOnLoad": "ggbOnInit"
-                   };
+                                         "appName": is3D ? "graph3d" : "graphing",
+                                         "width": containerWidth,
+                                         "height": containerHeight,
+                                         "showToolBar": true,
+                                         "showAlgebraInput": true,
+                                         "showMenuBar": true,
+                                         "enableLabelDrags": false,
+                                         "enableRightClick": true,
+                                         "errorDialogsActive": true,
+                                         "useBrowserForJS": true,
+                                         "allowStyleBar": true,
+                                         "showLogging": false,
+                                         "showZoomButtons": true,
+                                         "showFullscreenButton": true,
+                                         "appletOnLoad": "ggbOnInit",
+                                         "3D": is3D
+                                       };
 
                    try {
-                     console.log('Creating GeoGebra applet for', mode);
-                     ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
-                     ggbApplet.inject('ggb-element');
+                                         console.log('Creating GeoGebra applet for', mode, 'with appName:', is3D ? "graph3d" : "graphing");
+                                         console.log('Parameters:', JSON.stringify(parameters, null, 2));
+
+                                         // Try different construction methods
+                                         if (is3D) {
+                                           // Force 3D by using suite with perspective selector
+                                           parameters.appName = "suite";
+                                           parameters.showPerspectiveSelector = true;
+                                           console.log('Forcing 3D with suite app and perspective selector');
+                                         }
+
+                                         ggbApplet = new GGBApplet(parameters, true, 'ggb-element');
+                                         console.log('GGBApplet created:', ggbApplet);
+                                         ggbApplet.inject('ggb-element');
+                                         console.log('Applet injected');
 
                      // Show the container
                      document.getElementById('ggb-element').classList.add('show');
