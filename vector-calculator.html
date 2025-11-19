@@ -1486,13 +1486,16 @@ function deleteGeoObject(api, name) {
   }
 
   if (!objectExists) {
+    console.log('deleteGeoObject: Object does not exist:', name);
     return;
   }
 
   try {
     if (typeof api.deleteObject === 'function') {
+      console.log('deleteGeoObject: Deleting via deleteObject:', name);
       api.deleteObject(name);
     } else if (typeof api.evalCommand === 'function') {
+      console.log('deleteGeoObject: Deleting via Delete() command:', name);
       api.evalCommand(`Delete(${name})`);
     }
   } catch (error) {
@@ -1530,26 +1533,33 @@ function shouldPreserveGeoObject(api, name) {
 }
 
 function clearAllGeoGebraObjects(api) {
-  if (!api || typeof api.getAllObjectNames !== 'function') {
+  if (!api) {
     return;
   }
 
-  try {
-    let names = api.getAllObjectNames();
+  // First, try to delete common vector and point names directly
+  const commonNames = ['VectorA', 'VectorB', 'VectorC', 'P1', 'P2', 'Result'];
+  commonNames.forEach(name => deleteGeoObject(api, name));
 
-    if (typeof names === 'string') {
-      names = names.split(/[\n,]/).map(name => name.trim()).filter(Boolean);
-    }
+  // Then try to delete all other objects if API supports it
+  if (typeof api.getAllObjectNames === 'function') {
+    try {
+      let names = api.getAllObjectNames();
 
-    if (Array.isArray(names) && names.length) {
-      names.forEach(name => {
-        if (!shouldPreserveGeoObject(api, name)) {
-          deleteGeoObject(api, name);
-        }
-      });
+      if (typeof names === 'string') {
+        names = names.split(/[\n,]/).map(name => name.trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(names) && names.length) {
+        names.forEach(name => {
+          if (!shouldPreserveGeoObject(api, name)) {
+            deleteGeoObject(api, name);
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to enumerate GeoGebra objects:', error);
     }
-  } catch (error) {
-    console.warn('Failed to enumerate GeoGebra objects:', error);
   }
 }
 
@@ -1571,20 +1581,29 @@ function safeResetGeoGebra(api) {
 
 function prepareGeoGebra(api) {
   if (!api) {
+    console.warn('prepareGeoGebra: API not available');
     return;
   }
 
+  console.log('prepareGeoGebra: Starting cleanup - tracked objects:', trackedGeoObjects.size);
+
+  // First, clear all tracked objects that we created in previous plots
   const namesToRemove = trackedGeoObjects.size ? Array.from(trackedGeoObjects) : [];
-
-  safeResetGeoGebra(api);
-
   if (namesToRemove.length) {
+    console.log('prepareGeoGebra: Deleting tracked objects:', namesToRemove);
     namesToRemove.forEach(name => deleteGeoObject(api, name));
   }
+  trackedGeoObjects.clear();
 
+  // Then clear all other non-protected objects
+  console.log('prepareGeoGebra: Clearing all non-protected objects');
   clearAllGeoGebraObjects(api);
 
-  trackedGeoObjects.clear();
+  // Finally, try to reset the applet for a clean slate
+  console.log('prepareGeoGebra: Attempting safe reset');
+  safeResetGeoGebra(api);
+
+  console.log('prepareGeoGebra: Cleanup complete');
 }
 
 function setVectorStyle(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness = 5) {
