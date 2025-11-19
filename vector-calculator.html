@@ -1453,10 +1453,10 @@ let appletInitResolve = null;
 let appletInitReject = null;
 
 const trackedGeoObjects = new Set();
-const GEO_DEFAULT_VECTOR_COLOR = { r: 33, g: 150, b: 243 };
-const GEO_RESULT_VECTOR_COLOR = { r: 220, g: 53, b: 69 };
-const GEO_POINT_P1_COLOR = { r: 255, g: 152, b: 0 };
-const GEO_POINT_P2_COLOR = { r: 0, g: 200, b: 83 };
+const GEO_DEFAULT_VECTOR_COLOR = { r: 0, g: 100, b: 200 }; // Dark blue
+const GEO_RESULT_VECTOR_COLOR = { r: 200, g: 0, b: 0 }; // Dark red  
+const GEO_POINT_P1_COLOR = { r: 200, g: 100, b: 0 }; // Dark orange
+const GEO_POINT_P2_COLOR = { r: 0, g: 150, b: 0 }; // Dark green
 
 function registerGeoObject(name) {
   if (name) {
@@ -1593,8 +1593,31 @@ function setVectorStyle(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness =
   }
 
   try {
+    // First ensure the object exists
+    if (typeof api.exists === 'function' && !api.exists(name)) {
+      console.warn('Vector object does not exist yet:', name);
+      return;
+    }
+    
+    // Apply color using multiple methods for reliability
     api.evalCommand(`SetColor(${name}, ${color.r}, ${color.g}, ${color.b})`);
+    
+    // Try alternative named color method as backup
+    const namedColor = color === GEO_RESULT_VECTOR_COLOR ? "Red" : "Blue";
+    setTimeout(() => {
+      try {
+        if (api.exists && api.exists(name)) {
+          api.evalCommand(`SetColor(${name}, "${namedColor}")`);
+        }
+      } catch (e) {
+        // Ignore backup method errors
+      }
+    }, 100);
+    
+    // Set line thickness
     api.evalCommand(`SetLineThickness(${name}, ${thickness})`);
+    
+    console.log(`Applied color (${color.r}, ${color.g}, ${color.b}) to vector:`, name);
   } catch (error) {
     console.warn('Failed to style vector:', name, error);
   }
@@ -1608,9 +1631,36 @@ function setPointStyle(api, name, color = GEO_POINT_P1_COLOR) {
   const selectedColor = color || GEO_POINT_P1_COLOR;
 
   try {
+    // First ensure the object exists
+    if (typeof api.exists === 'function' && !api.exists(name)) {
+      console.warn('Point object does not exist yet:', name);
+      return;
+    }
+    
+    // Apply color using multiple methods for reliability
     api.evalCommand(`SetColor(${name}, ${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b})`);
+    
+    // Try alternative named color method as backup
+    let namedColor = "Orange";
+    if (selectedColor === GEO_POINT_P2_COLOR) {
+      namedColor = "Green";
+    }
+    
+    setTimeout(() => {
+      try {
+        if (api.exists && api.exists(name)) {
+          api.evalCommand(`SetColor(${name}, "${namedColor}")`);
+        }
+      } catch (e) {
+        // Ignore backup method errors
+      }
+    }, 100);
+    
+    // Set point properties
     api.evalCommand(`SetPointSize(${name}, 6)`);
     api.evalCommand(`SetPointStyle(${name}, 2)`);
+    
+    console.log(`Applied color (${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b}) to point:`, name);
   } catch (error) {
     console.warn('Failed to style point:', name, error);
   }
@@ -1844,6 +1894,9 @@ window.ggbOnInit = function() {
 
                 prepareGeoGebra(api);
 
+                // Create all objects first, then apply styles with delay
+                const createdObjects = [];
+
                 // Add vectors as arrows from origin
                 if (A) {
                   if (dim === 2) {
@@ -1852,7 +1905,7 @@ window.ggbOnInit = function() {
                     api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
                   }
                   registerGeoObject('VectorA');
-                  setVectorStyle(api, 'VectorA');
+                  createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
                 }
 
                 if (B) {
@@ -1862,7 +1915,7 @@ window.ggbOnInit = function() {
                     api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
                   }
                   registerGeoObject('VectorB');
-                  setVectorStyle(api, 'VectorB');
+                  createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
                 }
 
                 if (C) {
@@ -1872,7 +1925,7 @@ window.ggbOnInit = function() {
                     api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
                   }
                   registerGeoObject('VectorC');
-                  setVectorStyle(api, 'VectorC');
+                  createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
                 }
 
                 // Add points
@@ -1883,7 +1936,7 @@ window.ggbOnInit = function() {
                     api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
                   }
                   registerGeoObject('P1');
-                  setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
+                  createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
                 }
 
                 if (P2) {
@@ -1893,8 +1946,19 @@ window.ggbOnInit = function() {
                     api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
                   }
                   registerGeoObject('P2');
-                  setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
+                  createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
                 }
+
+                // Apply styles after a short delay to ensure objects exist
+                setTimeout(() => {
+                  createdObjects.forEach(obj => {
+                    if (obj.type === 'vector') {
+                      setVectorStyle(api, obj.name, obj.color);
+                    } else if (obj.type === 'point') {
+                      setPointStyle(api, obj.name, obj.color);
+                    }
+                  });
+                }, 200);
               } catch (e) {
                 console.error('Error plotting vectors:', e);
                 showError('Error plotting vectors: ' + e.message);
@@ -2000,6 +2064,9 @@ window.ggbOnInit = function() {
           
           prepareGeoGebra(api);
           
+          // Create all objects first, then apply styles with delay
+          const createdObjects = [];
+          
           // Add input vectors
           if (inputs.A) {
             if (dim === 2) {
@@ -2008,7 +2075,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
             }
             registerGeoObject('VectorA');
-            setVectorStyle(api, 'VectorA');
+            createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
           }
           
           if (inputs.B) {
@@ -2018,7 +2085,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
             }
             registerGeoObject('VectorB');
-            setVectorStyle(api, 'VectorB');
+            createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
           }
           
           if (inputs.C) {
@@ -2028,7 +2095,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
             }
             registerGeoObject('VectorC');
-            setVectorStyle(api, 'VectorC');
+            createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
           }
 
           // Add input points
@@ -2039,7 +2106,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
             }
             registerGeoObject('P1');
-            setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
+            createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
           }
 
           if (inputs.P2) {
@@ -2049,7 +2116,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
             }
             registerGeoObject('P2');
-            setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
+            createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
           }
 
           // Add result vector in red color
@@ -2060,7 +2127,7 @@ window.ggbOnInit = function() {
               api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
             }
             registerGeoObject('Result');
-            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
+            createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
           } else if (typeof result === 'object' && result.vec) {
             if (dim === 2) {
               api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
@@ -2068,8 +2135,20 @@ window.ggbOnInit = function() {
               api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
             }
             registerGeoObject('Result');
-            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
+            createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
           }
+
+          // Apply styles after a short delay to ensure objects exist
+          setTimeout(() => {
+            createdObjects.forEach(obj => {
+              if (obj.type === 'vector') {
+                const thickness = obj.name === 'Result' ? 6 : 5;
+                setVectorStyle(api, obj.name, obj.color, thickness);
+              } else if (obj.type === 'point') {
+                setPointStyle(api, obj.name, obj.color);
+              }
+            });
+          }, 200);
         } catch (e) {
           console.error('Error plotting operation result:', e);
           showError('Error plotting result: ' + e.message);
