@@ -1845,7 +1845,7 @@ window.ggbOnInit = function() {
                 prepareGeoGebra(api);
 
                 // Add vectors as arrows from origin
-                if (A) {
+                if (A && A.length === dim) {
                   if (dim === 2) {
                     api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
                   } else {
@@ -1855,7 +1855,7 @@ window.ggbOnInit = function() {
                   setVectorStyle(api, 'VectorA');
                 }
 
-                if (B) {
+                if (B && B.length === dim) {
                   if (dim === 2) {
                     api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
                   } else {
@@ -1865,7 +1865,7 @@ window.ggbOnInit = function() {
                   setVectorStyle(api, 'VectorB');
                 }
 
-                if (C) {
+                if (C && C.length === dim) {
                   if (dim === 2) {
                     api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
                   } else {
@@ -1876,7 +1876,7 @@ window.ggbOnInit = function() {
                 }
 
                 // Add points
-                if (P1) {
+                if (P1 && P1.length === dim) {
                   if (dim === 2) {
                     api.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
                   } else {
@@ -1886,7 +1886,7 @@ window.ggbOnInit = function() {
                   setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
                 }
 
-                if (P2) {
+                if (P2 && P2.length === dim) {
                   if (dim === 2) {
                     api.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
                   } else {
@@ -2001,7 +2001,7 @@ window.ggbOnInit = function() {
           prepareGeoGebra(api);
           
           // Add input vectors
-          if (inputs.A) {
+          if (inputs.A && inputs.A.length === dim) {
             if (dim === 2) {
               api.evalCommand(`VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`);
             } else {
@@ -2010,8 +2010,8 @@ window.ggbOnInit = function() {
             registerGeoObject('VectorA');
             setVectorStyle(api, 'VectorA');
           }
-          
-          if (inputs.B) {
+
+          if (inputs.B && inputs.B.length === dim) {
             if (dim === 2) {
               api.evalCommand(`VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`);
             } else {
@@ -2020,8 +2020,8 @@ window.ggbOnInit = function() {
             registerGeoObject('VectorB');
             setVectorStyle(api, 'VectorB');
           }
-          
-          if (inputs.C) {
+
+          if (inputs.C && inputs.C.length === dim) {
             if (dim === 2) {
               api.evalCommand(`VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`);
             } else {
@@ -2032,43 +2032,51 @@ window.ggbOnInit = function() {
           }
 
           // Add input points
-          if (inputs.P1) {
-            if (dim === 2) {
-              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
-            } else {
-              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
-            }
-            registerGeoObject('P1');
-            setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
-          }
+           if (inputs.P1 && inputs.P1.length === dim) {
+             if (dim === 2) {
+               api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
+             } else {
+               api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
+             }
+             registerGeoObject('P1');
+             setPointStyle(api, 'P1', GEO_POINT_P1_COLOR);
+           }
 
-          if (inputs.P2) {
-            if (dim === 2) {
-              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
-            } else {
-              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
-            }
-            registerGeoObject('P2');
-            setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
-          }
+           if (inputs.P2 && inputs.P2.length === dim) {
+             if (dim === 2) {
+               api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
+             } else {
+               api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
+             }
+             registerGeoObject('P2');
+             setPointStyle(api, 'P2', GEO_POINT_P2_COLOR);
+           }
 
           // Add result vector in red color
           if (Array.isArray(result)) {
-            if (dim === 2) {
-              api.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
+            if (result.length === dim) {
+              if (dim === 2) {
+                api.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
+              } else {
+                api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
+              }
+              registerGeoObject('Result');
+              setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
             } else {
-              api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
+              throw new Error(`Result vector has ${result.length} dimensions but ${dim}D mode is selected. Please recalculate the result in the correct dimension.`);
             }
-            registerGeoObject('Result');
-            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
           } else if (typeof result === 'object' && result.vec) {
-            if (dim === 2) {
-              api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
+            if (result.vec.length === dim) {
+              if (dim === 2) {
+                api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
+              } else {
+                api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+              }
+              registerGeoObject('Result');
+              setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
             } else {
-              api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
+              throw new Error(`Result vector has ${result.vec.length} dimensions but ${dim}D mode is selected. Please recalculate the result in the correct dimension.`);
             }
-            registerGeoObject('Result');
-            setVectorStyle(api, 'Result', GEO_RESULT_VECTOR_COLOR, 6);
           }
         } catch (e) {
           console.error('Error plotting operation result:', e);
