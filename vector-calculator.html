@@ -5,7 +5,7 @@
 <!--  By: st93642@students.tsi.lv                          TT    SSSSSSS II -->
 <!--                                                       TT         SS II -->
 <!--  Created: Nov 18 2025 00:31 st93642                   TT    SSSSSSS II -->
-<!--  Updated: Nov 19 2025 19:30 st93642                                    -->
+<!--  Updated: Dec 17 2025 19:37 st93642                                    -->
 <!--                                                                        -->
 <!--   Transport and Telecommunication Institute - Riga, Latvia             -->
 <!--                       https://tsi.lv                                   -->
@@ -1451,12 +1451,90 @@ let currentMode = null;
 let appletInitPromise = null;
 let appletInitResolve = null;
 let appletInitReject = null;
+let ggbCommandsReady = false;  // Track if GeoGebra commands are loaded
 
 const trackedGeoObjects = new Set();
 const GEO_DEFAULT_VECTOR_COLOR = { r: 0, g: 100, b: 200 }; // Dark blue
 const GEO_RESULT_VECTOR_COLOR = { r: 200, g: 0, b: 0 }; // Dark red  
 const GEO_POINT_P1_COLOR = { r: 200, g: 100, b: 0 }; // Dark orange
 const GEO_POINT_P2_COLOR = { r: 0, g: 150, b: 0 }; // Dark green
+
+// Check if WebGL is available
+function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    return !!gl;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Safe command execution - waits for commands to be ready
+async function safeEvalCommand(api, command, maxRetries = 20, delay = 250) {
+  if (!api) return false;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      // Try asyncEvalCommand first (newer GeoGebra)
+      if (typeof api.asyncEvalCommand === 'function') {
+        await api.asyncEvalCommand(command);
+        return true;
+      }
+      
+      // Fall back to evalCommand
+      if (typeof api.evalCommand === 'function') {
+        const result = api.evalCommand(command);
+        // If it didn't throw, it worked
+        return result !== false;
+      }
+    } catch (error) {
+      // Check if it's a "commands not loaded" error
+      if (error.message && error.message.includes('not loaded')) {
+        console.log(`Command not ready yet, retrying (${i + 1}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      // Other errors - log and return false
+      console.warn('safeEvalCommand error:', error.message);
+      return false;
+    }
+  }
+  console.warn('safeEvalCommand: Max retries exceeded for command:', command);
+  return false;
+}
+
+// Wait for GeoGebra to be fully ready (including commands)
+function waitForGeoGebraReady(api, maxWait = 10000) {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    
+    function check() {
+      // Try a simple test command
+      try {
+        if (api && typeof api.evalCommand === 'function') {
+          // Try to evaluate a simple expression
+          api.evalCommand('a_test_var = 1');
+          api.deleteObject('a_test_var');
+          ggbCommandsReady = true;
+          resolve(true);
+          return;
+        }
+      } catch (e) {
+        // Commands not ready yet
+      }
+      
+      if (Date.now() - startTime < maxWait) {
+        setTimeout(check, 200);
+      } else {
+        console.warn('GeoGebra commands did not become ready in time');
+        resolve(false);
+      }
+    }
+    
+    check();
+  });
+}
 
 function registerGeoObject(name) {
   if (name) {
@@ -1606,121 +1684,175 @@ function prepareGeoGebra(api) {
   console.log('prepareGeoGebra: Cleanup complete');
 }
 
-function setVectorStyle(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness = 5) {
-  if (!api || !name || typeof api.evalCommand !== 'function') {
+// Async version of setVectorStyle that waits for commands to be ready
+async function setVectorStyleAsync(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness = 5) {
+  if (!api || !name) {
     return;
   }
 
   try {
-    // First ensure the object exists
+    // Wait a bit for object to be created
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if object exists
     if (typeof api.exists === 'function' && !api.exists(name)) {
       console.warn('Vector object does not exist yet:', name);
       return;
     }
     
-    // Apply color using multiple methods for reliability
-    api.evalCommand(`SetColor(${name}, ${color.r}, ${color.g}, ${color.b})`);
+    // Use setColor API method directly if available (more reliable)
+    if (typeof api.setColor === 'function') {
+      api.setColor(name, color.r, color.g, color.b);
+    } else {
+      await safeEvalCommand(api, `SetColor(${name}, ${color.r}, ${color.g}, ${color.b})`);
+    }
     
-    // Try alternative named color method as backup
-    const namedColor = color === GEO_RESULT_VECTOR_COLOR ? "Red" : "Blue";
-    setTimeout(() => {
-      try {
-        if (api.exists && api.exists(name)) {
-          api.evalCommand(`SetColor(${name}, "${namedColor}")`);
-        }
-      } catch (e) {
-        // Ignore backup method errors
-      }
-    }, 100);
+    // Use setLineThickness API method directly if available
+    if (typeof api.setLineThickness === 'function') {
+      api.setLineThickness(name, thickness);
+    } else {
+      await safeEvalCommand(api, `SetLineThickness(${name}, ${thickness})`);
+    }
     
-    // Set line thickness
-    api.evalCommand(`SetLineThickness(${name}, ${thickness})`);
-    
-    console.log(`Applied color (${color.r}, ${color.g}, ${color.b}) to vector:`, name);
+    console.log(`Applied style to vector:`, name);
   } catch (error) {
-    console.warn('Failed to style vector:', name, error);
+    console.warn('Failed to style vector:', name, error.message);
   }
 }
 
-function setPointStyle(api, name, color = GEO_POINT_P1_COLOR) {
-  if (!api || !name || typeof api.evalCommand !== 'function') {
+// Async version of setPointStyle that waits for commands to be ready
+async function setPointStyleAsync(api, name, color = GEO_POINT_P1_COLOR) {
+  if (!api || !name) {
     return;
   }
 
   const selectedColor = color || GEO_POINT_P1_COLOR;
 
   try {
-    // First ensure the object exists
+    // Wait a bit for object to be created
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if object exists
     if (typeof api.exists === 'function' && !api.exists(name)) {
       console.warn('Point object does not exist yet:', name);
       return;
     }
     
-    // Apply color using multiple methods for reliability
-    api.evalCommand(`SetColor(${name}, ${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b})`);
-    
-    // Try alternative named color method as backup
-    let namedColor = "Orange";
-    if (selectedColor === GEO_POINT_P2_COLOR) {
-      namedColor = "Green";
+    // Use setColor API method directly if available (more reliable)
+    if (typeof api.setColor === 'function') {
+      api.setColor(name, selectedColor.r, selectedColor.g, selectedColor.b);
+    } else {
+      await safeEvalCommand(api, `SetColor(${name}, ${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b})`);
     }
     
-    setTimeout(() => {
-      try {
-        if (api.exists && api.exists(name)) {
-          api.evalCommand(`SetColor(${name}, "${namedColor}")`);
-        }
-      } catch (e) {
-        // Ignore backup method errors
-      }
-    }, 100);
+    // Use API methods directly if available
+    if (typeof api.setPointSize === 'function') {
+      api.setPointSize(name, 6);
+    } else {
+      await safeEvalCommand(api, `SetPointSize(${name}, 6)`);
+    }
     
-    // Set point properties
-    api.evalCommand(`SetPointSize(${name}, 6)`);
-    api.evalCommand(`SetPointStyle(${name}, 2)`);
+    if (typeof api.setPointStyle === 'function') {
+      api.setPointStyle(name, 2);
+    } else {
+      await safeEvalCommand(api, `SetPointStyle(${name}, 2)`);
+    }
     
-    console.log(`Applied color (${selectedColor.r}, ${selectedColor.g}, ${selectedColor.b}) to point:`, name);
+    console.log(`Applied style to point:`, name);
   } catch (error) {
-    console.warn('Failed to style point:', name, error);
+    console.warn('Failed to style point:', name, error.message);
   }
 }
 
+function setVectorStyle(api, name, color = GEO_DEFAULT_VECTOR_COLOR, thickness = 5) {
+  // Call async version
+  setVectorStyleAsync(api, name, color, thickness);
+}
+
+function setPointStyle(api, name, color = GEO_POINT_P1_COLOR) {
+  // Call async version
+  setPointStyleAsync(api, name, color);
+}
+
 // Global callback that GeoGebra calls when the applet is ready
-window.ggbOnInit = function() {
-  console.log('GeoGebra callback triggered');
+// The API object is passed as the first argument when using appletOnLoad as a function
+window.ggbOnInit = function(api) {
+  console.log('GeoGebra callback triggered, API received:', !!api);
+  
+  // If api is passed directly (newer GeoGebra versions)
+  if (api && typeof api.evalCommand === 'function') {
+    console.log('API received directly in callback');
+    ggbAPI = api;
+    if (appletInitResolve) {
+      appletInitResolve(api);
+    }
+    return;
+  }
+  
+  // Fallback: try to get API from global ggbApplet
   if (appletInitResolve) {
     appletInitResolve();
   }
 };
 
-           // Fallback polling mechanism
+           // Fallback polling mechanism - check multiple ways to access API
            function tryGetAPI(maxRetries = 50, delay = 200) {
              return new Promise((resolve, reject) => {
                let retries = 0;
+               let resolved = false;
 
                function checkAPI() {
+                 if (resolved) return;
                  retries++;
 
                  try {
-                   // Check if applet exists and has API
+                   // Method 1: Check if ggbAPI was already set by callback
+                   if (ggbAPI && typeof ggbAPI.evalCommand === 'function') {
+                     console.log('API already available via ggbAPI');
+                     resolved = true;
+                     resolve(ggbAPI);
+                     return;
+                   }
+
+                   // Method 2: Try window.ggbApplet global (set by GeoGebra when id matches)
+                   const globalApplet = window.ggbApplet || window['ggb-element'];
+                   if (globalApplet && typeof globalApplet.evalCommand === 'function') {
+                     console.log('API found via global ggbApplet after', retries, 'retries');
+                     ggbAPI = globalApplet;
+                     resolved = true;
+                     resolve(globalApplet);
+                     return;
+                   }
+
+                   // Method 3: Check if applet exists and has getAppletObject
                    if (ggbApplet && typeof ggbApplet.getAppletObject === 'function') {
                      const appletObject = ggbApplet.getAppletObject();
-                     if (appletObject && typeof appletObject.reset === 'function') {
+                     if (appletObject && typeof appletObject.evalCommand === 'function') {
                        console.log('API found via getAppletObject after', retries, 'retries');
                        ggbAPI = appletObject;
+                       resolved = true;
                        resolve(appletObject);
                        return;
                      }
                    }
 
-                   // Alternative method: direct API access
+                   // Method 4: Try document.ggbApplet 
+                   if (document.ggbApplet && typeof document.ggbApplet.evalCommand === 'function') {
+                     console.log('API found via document.ggbApplet after', retries, 'retries');
+                     ggbAPI = document.ggbApplet;
+                     resolved = true;
+                     resolve(document.ggbApplet);
+                     return;
+                   }
+
+                   // Method 5: Alternative - try getAPI promise
                    if (ggbApplet && typeof ggbApplet.getAPI === 'function') {
                      ggbApplet.getAPI().then(api => {
-                       if (api && typeof api.reset === 'function') {
+                       if (!resolved && api && typeof api.evalCommand === 'function') {
                          console.log('API found via getAPI after', retries, 'retries');
                          ggbAPI = api;
+                         resolved = true;
                          resolve(api);
-                         return;
                        }
                      }).catch(() => {
                        // Continue with polling
@@ -1734,6 +1866,7 @@ window.ggbOnInit = function() {
 
                    setTimeout(checkAPI, delay);
                  } catch (error) {
+                   console.warn('Error checking API (attempt ' + retries + '):', error.message);
                    if (retries >= maxRetries) {
                      reject(new Error('Error accessing GeoGebra API: ' + error.message));
                      return;
@@ -1772,7 +1905,9 @@ window.ggbOnInit = function() {
                    const containerHeight = 600;
 
                    const parameters = {
-                     "appName": is3D ? "graphing3d" : "graphing",
+                     // Use "3d" for 3D Graphing Calculator, "graphing" for 2D
+                     // See: https://geogebra.github.io/docs/reference/en/GeoGebra_App_Parameters/
+                     "appName": is3D ? "3d" : "graphing",
                      "width": containerWidth,
                      "height": containerHeight,
                      "showToolBar": true,
@@ -1783,15 +1918,24 @@ window.ggbOnInit = function() {
                      "errorDialogsActive": true,
                      "useBrowserForJS": true,
                      "allowStyleBar": true,
-                     "showLogging": false,
+                     "showLogging": true,  // Enable logging for debugging
                      "showZoomButtons": true,
                      "showFullscreenButton": true,
-                     "appletOnLoad": "ggbOnInit"
+                     // Use function for appletOnLoad to receive API directly
+                     "appletOnLoad": function(api) {
+                       console.log('GeoGebra appletOnLoad fired, API:', !!api);
+                       if (api && typeof api.evalCommand === 'function') {
+                         ggbAPI = api;
+                       }
+                       window.ggbOnInit(api);
+                     },
+                     // Set an ID so we can access via window[id]
+                     "id": "ggb-element"
                    };
 
                    try {
                      console.log('Creating GeoGebra applet for', mode);
-                     ggbApplet = new GGBApplet(parameters, '5.0', 'ggb-element');
+                     ggbApplet = new GGBApplet(parameters, true);  // Use HTML5 only (true)
                      ggbApplet.inject('ggb-element');
 
                      // Show the container
@@ -1816,25 +1960,40 @@ window.ggbOnInit = function() {
                          }
                        }, 30000);
 
-                       appletInitResolve = () => {
-                         console.log('Callback triggered, attempting to get API');
+                       appletInitResolve = (apiFromCallback) => {
+                         console.log('Callback triggered, API from callback:', !!apiFromCallback);
                          callbackTriggered = true;
                          cleanup();
                          clearTimeout(timeout);
 
-                         // Try to get API immediately
-                         tryGetAPI(10, 100).then(api => {
+                         // If API was passed directly from callback, use it
+                         if (apiFromCallback && typeof apiFromCallback.evalCommand === 'function') {
+                           console.log('Using API passed directly from callback');
+                           ggbAPI = apiFromCallback;
+                           resolve(apiFromCallback);
+                           return;
+                         }
+
+                         // If ggbAPI was already set, use it
+                         if (ggbAPI && typeof ggbAPI.evalCommand === 'function') {
+                           console.log('Using pre-set ggbAPI');
+                           resolve(ggbAPI);
+                           return;
+                         }
+
+                         // Otherwise try polling
+                         tryGetAPI(20, 100).then(api => {
                            resolve(api);
                          }).catch(err => {
                            reject(new Error('Callback triggered but failed to get API: ' + err.message));
                          });
                        };
 
-                       // Start polling as fallback after 2 seconds
+                       // Start polling as fallback after 3 seconds (give more time)
                        pollTimer = setTimeout(() => {
                          if (!callbackTriggered) {
                            console.log('Callback not triggered, starting fallback polling');
-                           tryGetAPI(40, 200).then(api => {
+                           tryGetAPI(60, 250).then(api => {  // More retries, longer delay
                              callbackTriggered = true;
                              cleanup();
                              clearTimeout(timeout);
@@ -1845,7 +2004,7 @@ window.ggbOnInit = function() {
                              reject(new Error('Failed to get API via polling: ' + err.message));
                            });
                          }
-                       }, 2000);
+                       }, 3000);
 
                        appletInitReject = (error) => {
                          cleanup();
@@ -1886,7 +2045,7 @@ window.ggbOnInit = function() {
        });
      }
      
-     function plotVectors() {
+     async function plotVectors() {
             const dim = parseInt(document.getElementById('dimension').value);
             const A = getVectorInput('vecA');
             const B = getVectorInput('vecB');
@@ -1899,93 +2058,97 @@ window.ggbOnInit = function() {
               return;
             }
 
+            // Check WebGL availability for 3D mode (warning only, GeoGebra may still work)
+            if (dim === 3 && !isWebGLAvailable()) {
+              console.warn('WebGL is not available. 3D visualization may not work properly.');
+            }
+
             // Initialize GeoGebra applet and wait for API
-            initGeoGebra(dim === 3).then(api => {
-              try {
-                // Validate API before using
-                if (!api) {
-                  throw new Error('GeoGebra API is null');
-                }
-
-                if (typeof api.evalCommand !== 'function') {
-                  throw new Error('GeoGebra API evalCommand method not available');
-                }
-
-                prepareGeoGebra(api);
-
-                // Create all objects first, then apply styles with delay
-                const createdObjects = [];
-
-                // Add vectors as arrows from origin
-                if (A) {
-                  if (dim === 2) {
-                    api.evalCommand(`VectorA = Vector((0,0), (${A[0]},${A[1]}))`);
-                  } else {
-                    api.evalCommand(`VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`);
-                  }
-                  registerGeoObject('VectorA');
-                  createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-                }
-
-                if (B) {
-                  if (dim === 2) {
-                    api.evalCommand(`VectorB = Vector((0,0), (${B[0]},${B[1]}))`);
-                  } else {
-                    api.evalCommand(`VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`);
-                  }
-                  registerGeoObject('VectorB');
-                  createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-                }
-
-                if (C) {
-                  if (dim === 2) {
-                    api.evalCommand(`VectorC = Vector((0,0), (${C[0]},${C[1]}))`);
-                  } else {
-                    api.evalCommand(`VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`);
-                  }
-                  registerGeoObject('VectorC');
-                  createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-                }
-
-                // Add points
-                if (P1) {
-                  if (dim === 2) {
-                    api.evalCommand(`P1 = (${P1[0]}, ${P1[1]})`);
-                  } else {
-                    api.evalCommand(`P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`);
-                  }
-                  registerGeoObject('P1');
-                  createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
-                }
-
-                if (P2) {
-                  if (dim === 2) {
-                    api.evalCommand(`P2 = (${P2[0]}, ${P2[1]})`);
-                  } else {
-                    api.evalCommand(`P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`);
-                  }
-                  registerGeoObject('P2');
-                  createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
-                }
-
-                // Apply styles after a short delay to ensure objects exist
-                setTimeout(() => {
-                  createdObjects.forEach(obj => {
-                    if (obj.type === 'vector') {
-                      setVectorStyle(api, obj.name, obj.color);
-                    } else if (obj.type === 'point') {
-                      setPointStyle(api, obj.name, obj.color);
-                    }
-                  });
-                }, 200);
-              } catch (e) {
-                console.error('Error plotting vectors:', e);
-                showError('Error plotting vectors: ' + e.message);
+            try {
+              const api = await initGeoGebra(dim === 3);
+              
+              // Validate API before using
+              if (!api) {
+                throw new Error('GeoGebra API is null');
               }
-            }).catch(err => {
-              console.error('Failed to initialize GeoGebra:', err);
-              showError('Failed to initialize GeoGebra: ' + err.message);
-            });
+
+              if (typeof api.evalCommand !== 'function') {
+                throw new Error('GeoGebra API evalCommand method not available');
+              }
+
+              // Wait for GeoGebra commands to be fully loaded
+              console.log('Waiting for GeoGebra commands to be ready...');
+              await waitForGeoGebraReady(api);
+              console.log('GeoGebra commands are ready');
+
+              prepareGeoGebra(api);
+
+              // Create all objects first, then apply styles with delay
+              const createdObjects = [];
+
+              // Add vectors as arrows from origin - use safeEvalCommand
+              if (A) {
+                const cmd = dim === 2 
+                  ? `VectorA = Vector((0,0), (${A[0]},${A[1]}))`
+                  : `VectorA = Vector((0,0,0), (${A[0]},${A[1]},${A[2]}))`;
+                await safeEvalCommand(api, cmd);
+                registerGeoObject('VectorA');
+                createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+              }
+
+              if (B) {
+                const cmd = dim === 2 
+                  ? `VectorB = Vector((0,0), (${B[0]},${B[1]}))`
+                  : `VectorB = Vector((0,0,0), (${B[0]},${B[1]},${B[2]}))`;
+                await safeEvalCommand(api, cmd);
+                registerGeoObject('VectorB');
+                createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+              }
+
+              if (C) {
+                const cmd = dim === 2 
+                  ? `VectorC = Vector((0,0), (${C[0]},${C[1]}))`
+                  : `VectorC = Vector((0,0,0), (${C[0]},${C[1]},${C[2]}))`;
+                await safeEvalCommand(api, cmd);
+                registerGeoObject('VectorC');
+                createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+              }
+
+              // Add points
+              if (P1) {
+                const cmd = dim === 2 
+                  ? `P1 = (${P1[0]}, ${P1[1]})`
+                  : `P1 = (${P1[0]}, ${P1[1]}, ${P1[2]})`;
+                await safeEvalCommand(api, cmd);
+                registerGeoObject('P1');
+                createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
+              }
+
+              if (P2) {
+                const cmd = dim === 2 
+                  ? `P2 = (${P2[0]}, ${P2[1]})`
+                  : `P2 = (${P2[0]}, ${P2[1]}, ${P2[2]})`;
+                await safeEvalCommand(api, cmd);
+                registerGeoObject('P2');
+                createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
+              }
+
+              // Apply styles after objects are created
+              // Use a longer delay to ensure GeoGebra has processed the objects
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              for (const obj of createdObjects) {
+                if (obj.type === 'vector') {
+                  await setVectorStyleAsync(api, obj.name, obj.color);
+                } else if (obj.type === 'point') {
+                  await setPointStyleAsync(api, obj.name, obj.color);
+                }
+              }
+              
+            } catch (e) {
+              console.error('Error plotting vectors:', e);
+              showError('Error plotting vectors: ' + e.message);
+            }
 
       const steps = [{
         title: 'GeoGebra Embedded Visualization',
@@ -1999,6 +2162,7 @@ window.ggbOnInit = function() {
               <li>Drag objects to move them</li>
               <li>Use toolbar for additional tools</li>
             </ul>
+            ${dim === 3 && !isWebGLAvailable() ? '<p class="text-warning mt-2"><strong>⚠️ Note:</strong> WebGL may not be fully available. 3D rendering might be limited.</p>' : ''}
           </div>
         `
       }];
@@ -2018,26 +2182,31 @@ window.ggbOnInit = function() {
       showResult('Vector Visualization', summary, steps);
      }
     
-    function plotCoordinateSystem() {
+    async function plotCoordinateSystem() {
       const dim = parseInt(document.getElementById('dimension').value);
 
-      // Initialize GeoGebra applet
-      initGeoGebra(dim === 3).then(api => {
-        try {
-          // Validate API before using
-          if (!api) {
-            throw new Error('GeoGebra API is null');
-          }
+      // Check WebGL availability for 3D mode (warning only, GeoGebra may still work)
+      if (dim === 3 && !isWebGLAvailable()) {
+        console.warn('WebGL is not available. 3D visualization may not work properly.');
+      }
 
-          prepareGeoGebra(api);
-        } catch (e) {
-          console.error('Error initializing coordinate system:', e);
-          showError('Error initializing coordinate system: ' + e.message);
+      // Initialize GeoGebra applet
+      try {
+        const api = await initGeoGebra(dim === 3);
+        
+        // Validate API before using
+        if (!api) {
+          throw new Error('GeoGebra API is null');
         }
-      }).catch(err => {
+
+        // Wait for GeoGebra commands to be ready
+        await waitForGeoGebraReady(api);
+        prepareGeoGebra(api);
+      } catch (err) {
         console.error('Failed to initialize GeoGebra:', err);
         showError('Failed to initialize GeoGebra: ' + err.message);
-      });
+        return;
+      }
 
       const steps = [{
         title: 'Right-Handed Coordinate System',
@@ -2066,116 +2235,113 @@ window.ggbOnInit = function() {
       showResult('Coordinate System', summary, steps);
     }
     
-    function plotOperationResult(operationName, result, inputs = {}) {
+    async function plotOperationResult(operationName, result, inputs = {}) {
       const dim = parseInt(document.getElementById('dimension').value);
       
+      // Check WebGL availability for 3D mode
+      if (dim === 3 && !isWebGLAvailable()) {
+        console.warn('WebGL not available for 3D plotting');
+      }
+      
       // Initialize GeoGebra applet and wait for API
-      initGeoGebra(dim === 3).then(api => {
-        try {
-          // Validate API before using
-          if (!api) {
-            throw new Error('GeoGebra API is null');
-          }
-          
-          if (typeof api.evalCommand !== 'function') {
-            throw new Error('GeoGebra API evalCommand method not available');
-          }
-          
-          prepareGeoGebra(api);
-          
-          // Create all objects first, then apply styles with delay
-          const createdObjects = [];
-          
-          // Add input vectors
-          if (inputs.A) {
-            if (dim === 2) {
-              api.evalCommand(`VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`);
-            } else {
-              api.evalCommand(`VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`);
-            }
-            registerGeoObject('VectorA');
-            createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-          }
-          
-          if (inputs.B) {
-            if (dim === 2) {
-              api.evalCommand(`VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`);
-            } else {
-              api.evalCommand(`VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`);
-            }
-            registerGeoObject('VectorB');
-            createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-          }
-          
-          if (inputs.C) {
-            if (dim === 2) {
-              api.evalCommand(`VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`);
-            } else {
-              api.evalCommand(`VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`);
-            }
-            registerGeoObject('VectorC');
-            createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
-          }
-
-          // Add input points
-          if (inputs.P1) {
-            if (dim === 2) {
-              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`);
-            } else {
-              api.evalCommand(`P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`);
-            }
-            registerGeoObject('P1');
-            createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
-          }
-
-          if (inputs.P2) {
-            if (dim === 2) {
-              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`);
-            } else {
-              api.evalCommand(`P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`);
-            }
-            registerGeoObject('P2');
-            createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
-          }
-
-          // Add result vector in red color
-          if (Array.isArray(result)) {
-            if (dim === 2) {
-              api.evalCommand(`Result = Vector((0,0), (${result[0]},${result[1]}))`);
-            } else {
-              api.evalCommand(`Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`);
-            }
-            registerGeoObject('Result');
-            createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
-          } else if (typeof result === 'object' && result.vec) {
-            if (dim === 2) {
-              api.evalCommand(`Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`);
-            } else {
-              api.evalCommand(`Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`);
-            }
-            registerGeoObject('Result');
-            createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
-          }
-
-          // Apply styles after a short delay to ensure objects exist
-          setTimeout(() => {
-            createdObjects.forEach(obj => {
-              if (obj.type === 'vector') {
-                const thickness = obj.name === 'Result' ? 6 : 5;
-                setVectorStyle(api, obj.name, obj.color, thickness);
-              } else if (obj.type === 'point') {
-                setPointStyle(api, obj.name, obj.color);
-              }
-            });
-          }, 200);
-        } catch (e) {
-          console.error('Error plotting operation result:', e);
-          showError('Error plotting result: ' + e.message);
+      try {
+        const api = await initGeoGebra(dim === 3);
+        
+        // Validate API before using
+        if (!api) {
+          throw new Error('GeoGebra API is null');
         }
-      }).catch(err => {
-        console.error('Failed to initialize GeoGebra:', err);
-        showError('Failed to initialize GeoGebra: ' + err.message);
-      });
+        
+        if (typeof api.evalCommand !== 'function') {
+          throw new Error('GeoGebra API evalCommand method not available');
+        }
+        
+        // Wait for commands to be ready
+        await waitForGeoGebraReady(api);
+        prepareGeoGebra(api);
+        
+        // Create all objects first, then apply styles with delay
+        const createdObjects = [];
+        
+        // Add input vectors
+        if (inputs.A) {
+          const cmd = dim === 2 
+            ? `VectorA = Vector((0,0), (${inputs.A[0]},${inputs.A[1]}))`
+            : `VectorA = Vector((0,0,0), (${inputs.A[0]},${inputs.A[1]},${inputs.A[2]}))`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('VectorA');
+          createdObjects.push({ name: 'VectorA', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+        }
+        
+        if (inputs.B) {
+          const cmd = dim === 2
+            ? `VectorB = Vector((0,0), (${inputs.B[0]},${inputs.B[1]}))`
+            : `VectorB = Vector((0,0,0), (${inputs.B[0]},${inputs.B[1]},${inputs.B[2]}))`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('VectorB');
+          createdObjects.push({ name: 'VectorB', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+        }
+        
+        if (inputs.C) {
+          const cmd = dim === 2
+            ? `VectorC = Vector((0,0), (${inputs.C[0]},${inputs.C[1]}))`
+            : `VectorC = Vector((0,0,0), (${inputs.C[0]},${inputs.C[1]},${inputs.C[2]}))`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('VectorC');
+          createdObjects.push({ name: 'VectorC', type: 'vector', color: GEO_DEFAULT_VECTOR_COLOR });
+        }
+
+        // Add input points
+        if (inputs.P1) {
+          const cmd = dim === 2
+            ? `P1 = (${inputs.P1[0]}, ${inputs.P1[1]})`
+            : `P1 = (${inputs.P1[0]}, ${inputs.P1[1]}, ${inputs.P1[2]})`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('P1');
+          createdObjects.push({ name: 'P1', type: 'point', color: GEO_POINT_P1_COLOR });
+        }
+
+        if (inputs.P2) {
+          const cmd = dim === 2
+            ? `P2 = (${inputs.P2[0]}, ${inputs.P2[1]})`
+            : `P2 = (${inputs.P2[0]}, ${inputs.P2[1]}, ${inputs.P2[2]})`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('P2');
+          createdObjects.push({ name: 'P2', type: 'point', color: GEO_POINT_P2_COLOR });
+        }
+
+        // Add result vector in red color
+        if (Array.isArray(result)) {
+          const cmd = dim === 2
+            ? `Result = Vector((0,0), (${result[0]},${result[1]}))`
+            : `Result = Vector((0,0,0), (${result[0]},${result[1]},${result[2]}))`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('Result');
+          createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
+        } else if (typeof result === 'object' && result.vec) {
+          const cmd = dim === 2
+            ? `Result = Vector((0,0), (${result.vec[0]},${result.vec[1]}))`
+            : `Result = Vector((0,0,0), (${result.vec[0]},${result.vec[1]},${result.vec[2]}))`;
+          await safeEvalCommand(api, cmd);
+          registerGeoObject('Result');
+          createdObjects.push({ name: 'Result', type: 'vector', color: GEO_RESULT_VECTOR_COLOR });
+        }
+
+        // Apply styles after objects are created
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        for (const obj of createdObjects) {
+          if (obj.type === 'vector') {
+            const thickness = obj.name === 'Result' ? 6 : 5;
+            await setVectorStyleAsync(api, obj.name, obj.color, thickness);
+          } else if (obj.type === 'point') {
+            await setPointStyleAsync(api, obj.name, obj.color);
+          }
+        }
+      } catch (e) {
+        console.error('Error plotting operation result:', e);
+        showError('Error plotting result: ' + e.message);
+      }
       
       const steps = [{
         title: 'Operation Result Visualization',
