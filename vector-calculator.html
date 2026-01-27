@@ -438,6 +438,22 @@
     </div>
     
     <div class="vector-input-group">
+      <h4>Points P₃, P₄ (for second line)</h4>
+      <div class="vector-inputs">
+        <div class="vector-input-field">
+          <input type="text" id="p3" placeholder="e.g., 0, 1, 0" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Point <strong>P₃</strong></div>
+          <div class="error-message" id="p3-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="p4" placeholder="e.g., 2, 3, 0" onchange="onInputChange()" oninput="onInputChange()">
+          <div class="vector-input-label">Point <strong>P₄</strong></div>
+          <div class="error-message" id="p4-error"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="vector-input-group">
       <h4>Line Equation (2D only)</h4>
       <div class="controls">
         <div class="control-group">
@@ -502,6 +518,7 @@
     <div class="buttons">
       <button class="btn-operation btn-component" onclick="calculate('convertLineEquation')">🔄 Convert Line Equation Forms</button>
       <button class="btn-operation btn-distance" onclick="calculate('pointToLineEquation')">📏 Distance Point to Line (Equation)</button>
+      <button class="btn-operation btn-angle" onclick="calculate('angleBetweenLines')">∠ Angle Between Lines (P₁P₂ and P₃P₄)</button>
     </div>
     
     <div class="section-header">Exercise Operations</div>
@@ -743,6 +760,17 @@
             result.xValue = p1[0];
           }
           
+          // General form: ax + by + c = 0
+          // Direction vector (dx, dy) is parallel to the line
+          // Normal vector (-dy, dx) is perpendicular to the line
+          // Line equation: -dy(x - p1[0]) + dx(y - p1[1]) = 0
+          // Expanding: -dy*x + dy*p1[0] + dx*y - dx*p1[1] = 0
+          // So: a = -dy, b = dx, c = dy*p1[0] - dx*p1[1]
+          const a = -dy;
+          const b = dx;
+          const c = dy * p1[0] - dx * p1[1];
+          result.general = { a, b, c };
+          
           // Polar form: ρ = x cos(θ) + y sin(θ)
           // First get normal to the line
           const normal = [-dy, dx]; // Perpendicular to direction
@@ -798,6 +826,49 @@
             method: '2D determinant'
           };
         }
+      };
+      
+      // Angle between two lines (given by two points each)
+      const angleBetweenLines = (line1P1, line1P2, line2P1, line2P2) => {
+        if (line1P1.length !== line1P2.length || line1P1.length !== line2P1.length || line1P1.length !== line2P2.length) {
+          throw new Error('All points must have same dimension');
+        }
+        
+        const dir1 = componentFromPoints(line1P1, line1P2);
+        const dir2 = componentFromPoints(line2P1, line2P2);
+        
+        if (isZeroVector(dir1)) throw new Error('Line 1 points must be distinct');
+        if (isZeroVector(dir2)) throw new Error('Line 2 points must be distinct');
+        
+        // Calculate angle between direction vectors
+        const dot = dotProduct(dir1, dir2);
+        const norm1 = vectorNorm(dir1);
+        const norm2 = vectorNorm(dir2);
+        
+        // cos(θ) = |d1·d2| / (|d1||d2|)
+        // Use absolute value to get acute angle (0 to 90 degrees)
+        const cosTheta = Math.abs(dot) / (norm1 * norm2);
+        
+        // Clamp to [-1, 1] to handle numerical errors
+        const clampedCos = Math.max(-1, Math.min(1, cosTheta));
+        const angleRad = Math.acos(clampedCos);
+        const angleDeg = angleRad * 180 / Math.PI;
+        
+        // Check if lines are parallel (cosine is 1)
+        const parallel = Math.abs(clampedCos - 1) < 1e-10;
+        
+        // Check if lines are perpendicular (cosine is 0)
+        const perpendicular = Math.abs(clampedCos) < 1e-10;
+        
+        return {
+          angleRadians: angleRad,
+          angleDegrees: angleDeg,
+          direction1: dir1,
+          direction2: dir2,
+          parallel: parallel,
+          perpendicular: perpendicular,
+          cosine: clampedCos
+        };
       };
       
       // Parse line equation from general form: ax + by + c = 0
@@ -931,6 +1002,7 @@
         areCollinear,
         lineFromPoints,
         distancePointToLine,
+        angleBetweenLines,
         parseLineEquationGeneral,
         parseLineEquationSlopeIntercept,
         convertLineEquation,
@@ -1181,6 +1253,7 @@
           case 'pointToLine': calculatePointToLine(); break;
           case 'convertLineEquation': calculateConvertLineEquation(); break;
           case 'pointToLineEquation': calculatePointToLineEquation(); break;
+          case 'angleBetweenLines': calculateAngleBetweenLines(); break;
         }
       } catch (error) {
         showError(error.message);
@@ -1862,6 +1935,21 @@
       });
       
       if (result.dimension === 2) {
+        // General form: ax + by + c = 0
+        if (result.general) {
+          const a = result.general.a;
+          const b = result.general.b;
+          const c = result.general.c;
+          let generalFormContent = `General form of a line: <strong>ax + by + c = 0</strong><br><br>`;
+          generalFormContent += `<strong>${formatLineEquation(a, b, c)}</strong><br><br>`;
+          generalFormContent += `where a = ${a.toFixed(4)}, b = ${b.toFixed(4)}, c = ${c.toFixed(4)}`;
+          
+          steps.push({
+            title: 'Step 4: General Form',
+            content: generalFormContent
+          });
+        }
+        
         let cartesianContent = '';
         if (result.vertical) {
           cartesianContent = `The line is vertical: <strong>x = ${result.xValue.toFixed(4)}</strong>`;
@@ -1874,7 +1962,7 @@
         }
         
         steps.push({
-          title: 'Step 4: Cartesian (Slope-Intercept) Form',
+          title: 'Step 5: Slope-Intercept Form',
           content: cartesianContent
         });
         
@@ -1884,7 +1972,7 @@
           const thetaDeg = result.polar.thetaDegrees;
           
           steps.push({
-            title: 'Step 5: Polar Form',
+            title: 'Step 6: Polar Form',
             content: `For 2D lines, the polar form is: <strong>ρ = x cos(θ) + y sin(θ)</strong><br>
                       where ρ is the perpendicular distance from origin to the line,<br>
                       and θ is the angle of the perpendicular.<br><br>
@@ -1902,10 +1990,13 @@
       `;
       
       if (result.dimension === 2) {
+        if (result.general) {
+          summaryContent += `<div class="summary-result"><strong>General Form:</strong> ${formatLineEquation(result.general.a, result.general.b, result.general.c)}</div>`;
+        }
         if (result.vertical) {
-          summaryContent += `<div class="summary-result"><strong>Cartesian:</strong> x = ${result.xValue.toFixed(4)}</div>`;
+          summaryContent += `<div class="summary-result"><strong>Slope-Intercept:</strong> x = ${result.xValue.toFixed(4)}</div>`;
         } else {
-          summaryContent += `<div class="summary-result"><strong>Cartesian:</strong> y = ${result.slopeIntercept.slope.toFixed(4)}x + ${result.slopeIntercept.yIntercept.toFixed(4)}</div>`;
+          summaryContent += `<div class="summary-result"><strong>Slope-Intercept:</strong> y = ${result.slopeIntercept.slope.toFixed(4)}x + ${result.slopeIntercept.yIntercept.toFixed(4)}</div>`;
         }
         if (result.polar) {
           summaryContent += `<div class="summary-result"><strong>Polar:</strong> ρ = ${result.polar.rho.toFixed(4)}, θ = ${result.polar.thetaDegrees.toFixed(2)}°</div>`;
@@ -2191,6 +2282,118 @@
       `;
       
       showResult('Distance from Point to Line (Equation)', summary, steps);
+    }
+    
+    function calculateAngleBetweenLines() {
+      const line1P1 = getVectorInput('p1');
+      const line1P2 = getVectorInput('p2');
+      const line2P1 = getVectorInput('p3');
+      const line2P2 = getVectorInput('p4');
+      
+      if (!line1P1 || !line1P2) throw new Error('Please enter points P₁ and P₂ for the first line');
+      if (!line2P1 || !line2P2) throw new Error('Please enter points P₃ and P₄ for the second line');
+      
+      const result = VectorModule.angleBetweenLines(line1P1, line1P2, line2P1, line2P2);
+      
+      const steps = [];
+      
+      // Step 1: Show the lines
+      steps.push({
+        title: 'Step 1: Define the Lines',
+        content: `Line 1 passes through points:<br>
+                  P₁ = ${VectorModule.formatVector(line1P1)}<br>
+                  P₂ = ${VectorModule.formatVector(line1P2)}<br><br>
+                  Line 2 passes through points:<br>
+                  P₃ = ${VectorModule.formatVector(line2P1)}<br>
+                  P₄ = ${VectorModule.formatVector(line2P2)}`
+      });
+      
+      // Step 2: Direction vectors
+      steps.push({
+        title: 'Step 2: Calculate Direction Vectors',
+        content: `Direction vector of Line 1:<br>
+                  d₁ = P₂ - P₁ = ${VectorModule.formatVector(line1P2)} - ${VectorModule.formatVector(line1P1)}<br>
+                  d₁ = ${VectorModule.formatVector(result.direction1)}<br><br>
+                  Direction vector of Line 2:<br>
+                  d₂ = P₄ - P₃ = ${VectorModule.formatVector(line2P2)} - ${VectorModule.formatVector(line2P1)}<br>
+                  d₂ = ${VectorModule.formatVector(result.direction2)}`
+      });
+      
+      // Step 3: Formula
+      steps.push({
+        title: 'Step 3: Angle Formula',
+        content: `The angle θ between two lines is given by:<br>
+                  <strong>cos(θ) = |d₁·d₂| / (|d₁||d₂|)</strong><br><br>
+                  Note: We use the absolute value of the dot product to always get the acute angle (0° to 90°).`
+      });
+      
+      // Step 4: Calculate dot product
+      const dot = VectorModule.dotProduct(result.direction1, result.direction2);
+      steps.push({
+        title: 'Step 4: Calculate Dot Product',
+        content: `d₁·d₂ = ${VectorModule.formatVector(result.direction1)} · ${VectorModule.formatVector(result.direction2)}<br>
+                  = ${result.direction1.map((v, i) => `${v}×${result.direction2[i]}`).join(' + ')}<br>
+                  = ${dot.toFixed(6)}<br>
+                  |d₁·d₂| = ${Math.abs(dot).toFixed(6)}`
+      });
+      
+      // Step 5: Calculate magnitudes
+      const norm1 = VectorModule.vectorNorm(result.direction1);
+      const norm2 = VectorModule.vectorNorm(result.direction2);
+      steps.push({
+        title: 'Step 5: Calculate Magnitudes',
+        content: `|d₁| = √(${result.direction1.map(v => `${v}²`).join(' + ')})<br>
+                  = √(${result.direction1.map(v => v*v).join(' + ')})<br>
+                  = ${norm1.toFixed(6)}<br><br>
+                  |d₂| = √(${result.direction2.map(v => `${v}²`).join(' + ')})<br>
+                  = √(${result.direction2.map(v => v*v).join(' + ')})<br>
+                  = ${norm2.toFixed(6)}`
+      });
+      
+      // Step 6: Calculate angle
+      steps.push({
+        title: 'Step 6: Calculate Angle',
+        content: `cos(θ) = ${Math.abs(dot).toFixed(6)} / (${norm1.toFixed(6)} × ${norm2.toFixed(6)})<br>
+                  cos(θ) = ${result.cosine.toFixed(6)}<br>
+                  θ = arccos(${result.cosine.toFixed(6)})<br>
+                  θ = ${result.angleRadians.toFixed(6)} radians<br>
+                  θ = <strong>${result.angleDegrees.toFixed(4)}°</strong>`
+      });
+      
+      // Summary
+      let summaryContent = `
+        <div class="summary-line"><strong>Line 1:</strong> Through P₁ = ${VectorModule.formatVector(line1P1)} and P₂ = ${VectorModule.formatVector(line1P2)}</div>
+        <div class="summary-line"><strong>Line 2:</strong> Through P₃ = ${VectorModule.formatVector(line2P1)} and P₄ = ${VectorModule.formatVector(line2P2)}</div>
+        <div class="summary-line"><strong>Direction 1:</strong> ${VectorModule.formatVector(result.direction1)}</div>
+        <div class="summary-line"><strong>Direction 2:</strong> ${VectorModule.formatVector(result.direction2)}</div>
+        <div class="summary-result">Angle: <span class="vector-display">${result.angleDegrees.toFixed(4)}° (${result.angleRadians.toFixed(6)} rad)</span></div>
+      `;
+      
+      if (result.parallel) {
+        summaryContent += `<div class="summary-result" style="color: #4CAF50; font-weight: bold;">Lines are PARALLEL</div>`;
+      } else if (result.perpendicular) {
+        summaryContent += `<div class="summary-result" style="color: #2196F3; font-weight: bold;">Lines are PERPENDICULAR</div>`;
+      }
+      
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substring(2, 11);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Lines</button>
+        </div>
+      `;
+      
+      showResult('Angle Between Lines', summaryContent, steps, plotButton);
+      
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          const P1Copy = line1P1;
+          const P2Copy = line1P2;
+          const P3Copy = line2P1;
+          const P4Copy = line2P2;
+          btn.onclick = () => plotOperationResult('Angle Between Lines', null, {P1: P1Copy, P2: P2Copy, P3: P3Copy, P4: P4Copy});
+        }
+      }, 0);
     }
     
     function calculateExercise(exerciseType) {
