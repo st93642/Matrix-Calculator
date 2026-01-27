@@ -627,6 +627,7 @@
       // Check if vectors are collinear
       const areCollinear = (a, b) => {
         if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        if (![2, 3].includes(a.length)) throw new Error('Collinearity check only supported for 2D and 3D vectors');
         
         if (isZeroVector(a) || isZeroVector(b)) {
           return { collinear: true, ratio: null, reason: 'Zero vector is collinear with any vector' };
@@ -718,6 +719,9 @@
       const distancePointToLine = (point, lineP1, lineP2) => {
         if (point.length !== lineP1.length || point.length !== lineP2.length) {
           throw new Error('Point and line points must have same dimension');
+        }
+        if (![2, 3].includes(point.length)) {
+          throw new Error('Distance from point to line only supported for 2D and 3D');
         }
         
         const direction = componentFromPoints(lineP1, lineP2);
