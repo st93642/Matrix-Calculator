@@ -818,15 +818,15 @@
       };
       
       // Parse line equation from slope-intercept form: y = mx + b
-      const parseLineEquationSlopeIntercept = (m, b) => {
+      const parseLineEquationSlopeIntercept = (m, yIntercept) => {
         m = parseFloat(m);
-        b = parseFloat(b);
+        yIntercept = parseFloat(yIntercept);
         
-        if (isNaN(m) || isNaN(b)) {
+        if (isNaN(m) || isNaN(yIntercept)) {
           throw new Error('Slope and y-intercept must be valid numbers');
         }
         
-        return { m, b, form: 'slope-intercept' };
+        return { m, b: yIntercept, form: 'slope-intercept' };
       };
       
       // Convert line equation between different forms
@@ -958,6 +958,67 @@
         generalForm.style.display = 'none';
         slopeForm.style.display = 'flex';
       }
+    }
+    
+    function formatLineEquation(a, b, c) {
+      // Format line equation as ax + by + c = 0 with proper signs
+      let result = '';
+      
+      // First term (a)
+      if (Math.abs(a - 1) < 1e-10) {
+        result = 'x';
+      } else if (Math.abs(a + 1) < 1e-10) {
+        result = '-x';
+      } else {
+        result = `${a}x`;
+      }
+      
+      // Second term (b)
+      if (b >= 0) {
+        if (Math.abs(b - 1) < 1e-10) {
+          result += ' + y';
+        } else {
+          result += ` + ${b}y`;
+        }
+      } else {
+        if (Math.abs(b + 1) < 1e-10) {
+          result += ' - y';
+        } else {
+          result += ` - ${Math.abs(b)}y`;
+        }
+      }
+      
+      // Third term (c)
+      if (c >= 0) {
+        result += ` + ${c}`;
+      } else {
+        result += ` - ${Math.abs(c)}`;
+      }
+      
+      return result + ' = 0';
+    }
+    
+    function formatSlopeIntercept(m, b) {
+      // Format as y = mx + b with proper signs
+      let result = 'y = ';
+      
+      // Slope term
+      if (Math.abs(m - 1) < 1e-10) {
+        result += 'x';
+      } else if (Math.abs(m + 1) < 1e-10) {
+        result += '-x';
+      } else {
+        result += `${m}x`;
+      }
+      
+      // Y-intercept term
+      if (b >= 0) {
+        result += ` + ${b}`;
+      } else {
+        result += ` - ${Math.abs(b)}`;
+      }
+      
+      return result;
     }
     
     function updatePlaceholders(dim) {
@@ -1987,13 +2048,13 @@
         steps.push({
           title: 'Step 1: Original Form (General)',
           content: `Given line equation in general form:<br>
-                    <strong>${lineEq.a}x + ${lineEq.b >= 0 ? '+' : ''}${lineEq.b}y + ${lineEq.c >= 0 ? '+' : ''}${lineEq.c} = 0</strong>`
+                    <strong>${formatLineEquation(lineEq.a, lineEq.b, lineEq.c)}</strong>`
         });
       } else {
         steps.push({
           title: 'Step 1: Original Form (Slope-Intercept)',
           content: `Given line equation in slope-intercept form:<br>
-                    <strong>y = ${lineEq.m}x + ${lineEq.b >= 0 ? '' : ''}${lineEq.b}</strong>`
+                    <strong>${formatSlopeIntercept(lineEq.m, lineEq.b)}</strong>`
         });
       }
       
@@ -2001,7 +2062,7 @@
       steps.push({
         title: 'Step 2: General Form (ax + by + c = 0)',
         content: `Converting to general form:<br>
-                  ${result.general.a}x + ${result.general.b >= 0 ? '+' : ''}${result.general.b}y + ${result.general.c >= 0 ? '+' : ''}${result.general.c} = 0<br>
+                  ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br>
                   Where: a = ${result.general.a}, b = ${result.general.b}, c = ${result.general.c}`
       });
       
@@ -2013,12 +2074,19 @@
                     <strong>x = ${result.xValue.toFixed(4)}</strong>`
         });
       } else {
+        const solveForYRhs = result.general.a >= 0 
+          ? `-${result.general.a}x` 
+          : `${Math.abs(result.general.a)}x`;
+        const solveForYConst = result.general.c >= 0 
+          ? ` - ${result.general.c}` 
+          : ` + ${Math.abs(result.general.c)}`;
+        
         steps.push({
           title: 'Step 3: Slope-Intercept Form (y = mx + b)',
           content: `Converting to slope-intercept form:<br>
-                    From ${result.general.a}x + ${result.general.b}y + ${result.general.c} = 0<br>
-                    Solve for y: ${result.general.b}y = -${result.general.a}x - ${result.general.c}<br>
-                    y = ${result.slopeIntercept.m.toFixed(4)}x + ${result.slopeIntercept.b >= 0 ? '' : ''}${result.slopeIntercept.b.toFixed(4)}<br><br>
+                    From ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br>
+                    Solve for y: ${result.general.b}y = ${solveForYRhs}${solveForYConst}<br>
+                    ${formatSlopeIntercept(result.slopeIntercept.m, result.slopeIntercept.b).replace(/[\d.-]+/g, (m) => parseFloat(m).toFixed(4))}<br><br>
                     Where: slope m = ${result.slopeIntercept.m.toFixed(4)}, y-intercept b = ${result.slopeIntercept.b.toFixed(4)}`
         });
       }
@@ -2043,13 +2111,15 @@
       });
       
       let summaryContent = `
-        <div class="summary-line"><strong>General Form:</strong> ${result.general.a}x + ${result.general.b >= 0 ? '+' : ''}${result.general.b}y + ${result.general.c >= 0 ? '+' : ''}${result.general.c} = 0</div>
+        <div class="summary-line"><strong>General Form:</strong> ${formatLineEquation(result.general.a, result.general.b, result.general.c)}</div>
       `;
       
       if (result.vertical) {
         summaryContent += `<div class="summary-line"><strong>Vertical Line:</strong> x = ${result.xValue.toFixed(4)}</div>`;
       } else {
-        summaryContent += `<div class="summary-line"><strong>Slope-Intercept:</strong> y = ${result.slopeIntercept.m.toFixed(4)}x + ${result.slopeIntercept.b >= 0 ? '' : ''}${result.slopeIntercept.b.toFixed(4)}</div>`;
+        const slopeInterceptFormatted = formatSlopeIntercept(result.slopeIntercept.m, result.slopeIntercept.b)
+          .replace(/[\d.-]+/g, (m) => parseFloat(m).toFixed(4));
+        summaryContent += `<div class="summary-line"><strong>Slope-Intercept:</strong> ${slopeInterceptFormatted}</div>`;
       }
       
       summaryContent += `
@@ -2079,7 +2149,7 @@
         title: 'Step 1: Distance Formula from Point to Line',
         content: `Given:<br>
                   Point: P = ${VectorModule.formatVector(point)}<br>
-                  Line (general form): ${result.general.a}x + ${result.general.b >= 0 ? '+' : ''}${result.general.b}y + ${result.general.c >= 0 ? '+' : ''}${result.general.c} = 0<br><br>
+                  Line (general form): ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br><br>
                   Formula: <strong>d = |ax₀ + by₀ + c| / √(a² + b²)</strong><br>
                   where (x₀, y₀) is the point and ax + by + c = 0 is the line equation.`
       });
@@ -2115,7 +2185,7 @@
       
       const summary = `
         <div class="summary-line"><strong>Point:</strong> ${VectorModule.formatVector(point)}</div>
-        <div class="summary-line"><strong>Line:</strong> ${result.general.a}x + ${result.general.b >= 0 ? '+' : ''}${result.general.b}y + ${result.general.c >= 0 ? '+' : ''}${result.general.c} = 0</div>
+        <div class="summary-line"><strong>Line:</strong> ${formatLineEquation(result.general.a, result.general.b, result.general.c)}</div>
         <div class="summary-line"><strong>Method:</strong> ${result.method}</div>
         <div class="summary-result">Distance: <span class="vector-display">${result.distance.toFixed(6)}</span></div>
       `;
