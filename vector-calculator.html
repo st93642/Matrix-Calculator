@@ -763,9 +763,9 @@
           // General form: ax + by + c = 0
           // Direction vector (dx, dy) is parallel to the line
           // Normal vector (-dy, dx) is perpendicular to the line
-          // Line equation: -dy(x - x1) + dx(y - y1) = 0
-          // Expanding: -dy*x + dy*x1 + dx*y - dx*y1 = 0
-          // So: a = -dy, b = dx, c = dy*x1 - dx*y1
+          // Line equation: -dy(x - p1[0]) + dx(y - p1[1]) = 0
+          // Expanding: -dy*x + dy*p1[0] + dx*y - dx*p1[1] = 0
+          // So: a = -dy, b = dx, c = dy*p1[0] - dx*p1[1]
           const a = -dy;
           const b = dx;
           const c = dy * p1[0] - dx * p1[1];
@@ -854,11 +854,11 @@
         const angleRad = Math.acos(clampedCos);
         const angleDeg = angleRad * 180 / Math.PI;
         
-        // Check if lines are parallel
-        const parallel = Math.abs(Math.abs(dot) - norm1 * norm2) < 1e-10;
+        // Check if lines are parallel (cosine is 1)
+        const parallel = Math.abs(clampedCos - 1) < 1e-10;
         
-        // Check if lines are perpendicular
-        const perpendicular = Math.abs(dot) < 1e-10;
+        // Check if lines are perpendicular (cosine is 0)
+        const perpendicular = Math.abs(clampedCos) < 1e-10;
         
         return {
           angleRadians: angleRad,
