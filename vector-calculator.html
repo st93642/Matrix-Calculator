@@ -2868,7 +2868,7 @@ window.ggbOnInit = function(api) {
         <div class="summary-line"><strong>Operation:</strong> ${operationName}</div>
         <div class="summary-line"><strong>Service:</strong> GeoGebra Embedded ${dim}D</div>
         <div class="summary-line"><strong>Status:</strong> ✓ Plotted</div>
-        <div class="summary-line"><strong>Result:</strong> ${Array.isArray(result) ? VectorModule.formatVector(result) : (result.vec ? VectorModule.formatVector(result.vec) : 'Scalar')}</div>
+        <div class="summary-line"><strong>Result:</strong> ${Array.isArray(result) ? VectorModule.formatVector(result) : (result && result.vec ? VectorModule.formatVector(result.vec) : 'Scalar')}</div>
         <div class="summary-result">Result displayed in red on GeoGebra visualization</div>
       `;
       
