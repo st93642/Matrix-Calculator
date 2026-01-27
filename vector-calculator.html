@@ -450,6 +450,10 @@
       <button class="btn-operation btn-add" onclick="calculate('add')">+ Add/Subtract Vectors</button>
       <button class="btn-operation btn-scalar" onclick="calculate('scalar')">× Scalar Multiply</button>
       <button class="btn-operation btn-distance" onclick="calculate('distance')">📏 Distance P₁P₂</button>
+      <button class="btn-operation btn-distance" onclick="calculate('vectorDistance')">📐 Distance Between Vectors A↔B</button>
+      <button class="btn-operation btn-angle" onclick="calculate('collinear')">⫽ Are Vectors Collinear?</button>
+      <button class="btn-operation btn-component" onclick="calculate('lineFromPoints')">📍 Line Through P₁P₂</button>
+      <button class="btn-operation btn-distance" onclick="calculate('pointToLine')">📏 Distance Point to Line</button>
     </div>
     
     <div class="section-header">Exercise Operations</div>
@@ -613,6 +617,137 @@
         return vectorNorm(vec);
       };
       
+      // Distance between two vectors (from their tips when both start at origin)
+      const vectorDistance = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        const diff = vectorSubtraction(a, b);
+        return vectorNorm(diff);
+      };
+      
+      // Check if vectors are collinear
+      const areCollinear = (a, b) => {
+        if (a.length !== b.length) throw new Error('Vectors must have same dimension');
+        
+        if (isZeroVector(a) || isZeroVector(b)) {
+          return { collinear: true, ratio: null, reason: 'Zero vector is collinear with any vector' };
+        }
+        
+        // For 3D vectors, check if cross product is zero
+        if (a.length === 3) {
+          const cross = crossProduct(a, b);
+          const crossNorm = vectorNorm(cross);
+          if (crossNorm < 1e-10) {
+            // Find the ratio
+            let ratio = null;
+            for (let i = 0; i < a.length; i++) {
+              if (Math.abs(a[i]) > 1e-10) {
+                ratio = b[i] / a[i];
+                break;
+              }
+            }
+            return { collinear: true, ratio, cross };
+          }
+          return { collinear: false, ratio: null, cross };
+        } else {
+          // For 2D vectors, check if determinant is zero
+          const det = a[0] * b[1] - a[1] * b[0];
+          if (Math.abs(det) < 1e-10) {
+            let ratio = null;
+            for (let i = 0; i < a.length; i++) {
+              if (Math.abs(a[i]) > 1e-10) {
+                ratio = b[i] / a[i];
+                break;
+              }
+            }
+            return { collinear: true, ratio, determinant: det };
+          }
+          return { collinear: false, ratio: null, determinant: det };
+        }
+      };
+      
+      // Line from two points: parametric form and polar coordinates
+      const lineFromPoints = (p1, p2) => {
+        if (p1.length !== p2.length) throw new Error('Points must have same dimension');
+        
+        const direction = componentFromPoints(p1, p2);
+        if (isZeroVector(direction)) throw new Error('Points must be distinct');
+        
+        // Parametric form: P = P1 + t * direction
+        const result = {
+          point: p1,
+          direction: direction,
+          dimension: p1.length
+        };
+        
+        // For 2D, also calculate polar form if applicable
+        if (p1.length === 2) {
+          // Convert to slope-intercept form: y = mx + b
+          const dx = direction[0];
+          const dy = direction[1];
+          
+          if (Math.abs(dx) > 1e-10) {
+            const slope = dy / dx;
+            const yIntercept = p1[1] - slope * p1[0];
+            result.slopeIntercept = { slope, yIntercept };
+          } else {
+            result.vertical = true;
+            result.xValue = p1[0];
+          }
+          
+          // Polar form: ρ = x cos(θ) + y sin(θ)
+          // First get normal to the line
+          const normal = [-dy, dx]; // Perpendicular to direction
+          const normalNorm = vectorNorm(normal);
+          const unitNormal = scalarMultiplication(normal, 1 / normalNorm);
+          
+          // Distance from origin to line
+          const rho = Math.abs(dotProduct(unitNormal, p1));
+          const angle = Math.atan2(unitNormal[1], unitNormal[0]);
+          
+          result.polar = {
+            rho: rho,
+            theta: angle,
+            thetaDegrees: angle * 180 / Math.PI
+          };
+        }
+        
+        return result;
+      };
+      
+      // Distance from point to line (line defined by two points)
+      const distancePointToLine = (point, lineP1, lineP2) => {
+        if (point.length !== lineP1.length || point.length !== lineP2.length) {
+          throw new Error('Point and line points must have same dimension');
+        }
+        
+        const direction = componentFromPoints(lineP1, lineP2);
+        if (isZeroVector(direction)) throw new Error('Line points must be distinct');
+        
+        const pointToLineStart = componentFromPoints(lineP1, point);
+        
+        if (point.length === 3) {
+          // For 3D: distance = ||(P - P1) × direction|| / ||direction||
+          const cross = crossProduct(pointToLineStart, direction);
+          const crossNorm = vectorNorm(cross);
+          const directionNorm = vectorNorm(direction);
+          return {
+            distance: crossNorm / directionNorm,
+            cross: cross,
+            method: '3D cross product'
+          };
+        } else {
+          // For 2D: use determinant formula
+          // distance = |det([P-P1, direction])| / ||direction||
+          const det = Math.abs(pointToLineStart[0] * direction[1] - pointToLineStart[1] * direction[0]);
+          const directionNorm = vectorNorm(direction);
+          return {
+            distance: det / directionNorm,
+            determinant: det,
+            method: '2D determinant'
+          };
+        }
+      };
+      
       return {
         validateDimension,
         parseVector,
@@ -628,7 +763,11 @@
         orthogonalProjection,
         scalarTripleProduct,
         componentFromPoints,
-        pointDistance
+        pointDistance,
+        vectorDistance,
+        areCollinear,
+        lineFromPoints,
+        distancePointToLine
       };
     })();
     
@@ -769,6 +908,10 @@
           case 'add': calculateAdd(); break;
           case 'scalar': calculateScalar(); break;
           case 'distance': calculateDistance(); break;
+          case 'vectorDistance': calculateVectorDistance(); break;
+          case 'collinear': calculateCollinear(); break;
+          case 'lineFromPoints': calculateLineFromPoints(); break;
+          case 'pointToLine': calculatePointToLine(); break;
         }
       } catch (error) {
         showError(error.message);
@@ -1252,6 +1395,370 @@
           const P1Copy = P1;
           const P2Copy = P2;
           btn.onclick = () => plotOperationResult('Point Distance', null, {P1: P1Copy, P2: P2Copy});
+        }
+      }, 0);
+    }
+    
+    function calculateVectorDistance() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.vectorDistance(A, B);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Vector Distance Formula',
+        content: `For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  Distance between vectors = |A - B|<br>
+                  This is the Euclidean distance between the tips of the vectors when both start at the origin.`
+      });
+      
+      const diff = VectorModule.vectorSubtraction(A, B);
+      steps.push({
+        title: 'Step 2: Calculate Vector Difference',
+        content: `A - B = ${VectorModule.formatVector(A)} - ${VectorModule.formatVector(B)}<br>
+                  = (${A.map((v, i) => `${v} - ${B[i]}`).join(', ')})<br>
+                  = ${VectorModule.formatVector(diff)}`
+      });
+      
+      steps.push({
+        title: 'Step 3: Calculate Norm of Difference',
+        content: `|A - B| = √(${diff.map(v => `${v}²`).join(' + ')})<br>
+                  = √(${diff.map(v => v * v).join(' + ')})<br>
+                  = √${diff.reduce((sum, v) => sum + v * v, 0)}<br>
+                  = <strong>${result.toFixed(6)}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>
+        <div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Distance Between Vectors</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.toFixed(6)}</span></div>
+      `;
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Vectors A and B</button>
+        </div>
+      `;
+
+      showResult('Vector Distance', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          const ACopy = A;
+          const BCopy = B;
+          btn.onclick = () => plotOperationResult('Vector Distance', null, {A: ACopy, B: BCopy});
+        }
+      }, 0);
+    }
+    
+    function calculateCollinear() {
+      const A = getVectorInput('vecA');
+      const B = getVectorInput('vecB');
+      
+      if (!A || !B) throw new Error('Please enter vectors A and B');
+      
+      const result = VectorModule.areCollinear(A, B);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Collinearity Definition',
+        content: `Two vectors are <strong>collinear</strong> if one is a scalar multiple of the other.<br>
+                  For vectors A = ${VectorModule.formatVector(A)} and B = ${VectorModule.formatVector(B)}<br>
+                  ${A.length === 3 ? 'In 3D: Vectors are collinear if their cross product is zero (A × B = 0)' : 
+                    'In 2D: Vectors are collinear if their determinant is zero'}`
+      });
+      
+      if (result.collinear && result.reason) {
+        steps.push({
+          title: 'Step 2: Zero Vector Check',
+          content: result.reason
+        });
+      } else if (A.length === 3) {
+        const cross = result.cross;
+        steps.push({
+          title: 'Step 2: Calculate Cross Product',
+          content: `A × B = (${A[1]}×${B[2]} - ${A[2]}×${B[1]}, ${A[2]}×${B[0]} - ${A[0]}×${B[2]}, ${A[0]}×${B[1]} - ${A[1]}×${B[0]})<br>
+                    = ${VectorModule.formatVector(cross)}<br>
+                    ||A × B|| = ${VectorModule.vectorNorm(cross).toFixed(6)}`
+        });
+        
+        if (result.collinear) {
+          steps.push({
+            title: 'Step 3: Conclusion',
+            content: `Since ||A × B|| ≈ 0, the vectors <strong>are collinear</strong>.<br>
+                      ${result.ratio !== null ? `B = ${result.ratio.toFixed(4)} × A` : ''}`
+          });
+        } else {
+          steps.push({
+            title: 'Step 3: Conclusion',
+            content: `Since ||A × B|| ≠ 0, the vectors <strong>are NOT collinear</strong>.`
+          });
+        }
+      } else {
+        const det = result.determinant;
+        steps.push({
+          title: 'Step 2: Calculate Determinant',
+          content: `det([A, B]) = a₁b₂ - a₂b₁<br>
+                    = ${A[0]}×${B[1]} - ${A[1]}×${B[0]}<br>
+                    = ${(A[0] * B[1]).toFixed(4)} - ${(A[1] * B[0]).toFixed(4)}<br>
+                    = ${det.toFixed(6)}`
+        });
+        
+        if (result.collinear) {
+          steps.push({
+            title: 'Step 3: Conclusion',
+            content: `Since det ≈ 0, the vectors <strong>are collinear</strong>.<br>
+                      ${result.ratio !== null ? `B = ${result.ratio.toFixed(4)} × A` : ''}`
+          });
+        } else {
+          steps.push({
+            title: 'Step 3: Conclusion',
+            content: `Since det ≠ 0, the vectors <strong>are NOT collinear</strong>.`
+          });
+        }
+      }
+      
+      const summary = `
+        <div class="summary-line"><strong>Vector A:</strong> ${VectorModule.formatVector(A)}</div>
+        <div class="summary-line"><strong>Vector B:</strong> ${VectorModule.formatVector(B)}</div>
+        <div class="summary-line"><strong>Operation:</strong> Collinearity Test</div>
+        <div class="summary-result">Result: <span class="vector-display">${result.collinear ? 'COLLINEAR ✓' : 'NOT COLLINEAR ✗'}</span></div>
+      `;
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Vectors A and B</button>
+        </div>
+      `;
+
+      showResult('Collinearity Test', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          const ACopy = A;
+          const BCopy = B;
+          btn.onclick = () => plotOperationResult('Collinearity Test', null, {A: ACopy, B: BCopy});
+        }
+      }, 0);
+    }
+    
+    function calculateLineFromPoints() {
+      const P1 = getVectorInput('p1');
+      const P2 = getVectorInput('p2');
+      
+      if (!P1 || !P2) throw new Error('Please enter points P₁ and P₂');
+      
+      const result = VectorModule.lineFromPoints(P1, P2);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Parametric Form',
+        content: `For points P₁ = ${VectorModule.formatVector(P1)} and P₂ = ${VectorModule.formatVector(P2)}<br>
+                  A line through two points can be expressed in parametric form:<br>
+                  <strong>P(t) = P₁ + t × (P₂ - P₁)</strong><br>
+                  where t is a parameter (t ∈ ℝ)`
+      });
+      
+      const direction = result.direction;
+      steps.push({
+        title: 'Step 2: Direction Vector',
+        content: `Direction vector: d = P₂ - P₁<br>
+                  d = ${VectorModule.formatVector(P2)} - ${VectorModule.formatVector(P1)}<br>
+                  d = ${VectorModule.formatVector(direction)}`
+      });
+      
+      let parametricEq = `P(t) = ${VectorModule.formatVector(P1)} + t × ${VectorModule.formatVector(direction)}`;
+      if (P1.length === 3) {
+        parametricEq += `<br><br>Component form:<br>`;
+        parametricEq += `x(t) = ${P1[0]} + ${direction[0]}t<br>`;
+        parametricEq += `y(t) = ${P1[1]} + ${direction[1]}t<br>`;
+        parametricEq += `z(t) = ${P1[2]} + ${direction[2]}t`;
+      } else {
+        parametricEq += `<br><br>Component form:<br>`;
+        parametricEq += `x(t) = ${P1[0]} + ${direction[0]}t<br>`;
+        parametricEq += `y(t) = ${P1[1]} + ${direction[1]}t`;
+      }
+      
+      steps.push({
+        title: 'Step 3: Parametric Equation',
+        content: parametricEq
+      });
+      
+      if (result.dimension === 2) {
+        let cartesianContent = '';
+        if (result.vertical) {
+          cartesianContent = `The line is vertical: <strong>x = ${result.xValue.toFixed(4)}</strong>`;
+        } else {
+          const m = result.slopeIntercept.slope;
+          const b = result.slopeIntercept.yIntercept;
+          cartesianContent = `Slope-intercept form: <strong>y = ${m.toFixed(4)}x + ${b.toFixed(4)}</strong><br>`;
+          cartesianContent += `Slope: m = ${m.toFixed(4)}<br>`;
+          cartesianContent += `Y-intercept: b = ${b.toFixed(4)}`;
+        }
+        
+        steps.push({
+          title: 'Step 4: Cartesian (Slope-Intercept) Form',
+          content: cartesianContent
+        });
+        
+        if (result.polar) {
+          const rho = result.polar.rho;
+          const theta = result.polar.theta;
+          const thetaDeg = result.polar.thetaDegrees;
+          
+          steps.push({
+            title: 'Step 5: Polar Form',
+            content: `For 2D lines, the polar form is: <strong>ρ = x cos(θ) + y sin(θ)</strong><br>
+                      where ρ is the perpendicular distance from origin to the line,<br>
+                      and θ is the angle of the perpendicular.<br><br>
+                      ρ = ${rho.toFixed(6)}<br>
+                      θ = ${theta.toFixed(6)} radians = ${thetaDeg.toFixed(2)}°<br><br>
+                      <strong>Polar equation: ${rho.toFixed(4)} = x cos(${thetaDeg.toFixed(2)}°) + y sin(${thetaDeg.toFixed(2)}°)</strong>`
+          });
+        }
+      }
+      
+      let summaryContent = `
+        <div class="summary-line"><strong>Point P₁:</strong> ${VectorModule.formatVector(P1)}</div>
+        <div class="summary-line"><strong>Point P₂:</strong> ${VectorModule.formatVector(P2)}</div>
+        <div class="summary-line"><strong>Direction:</strong> ${VectorModule.formatVector(direction)}</div>
+      `;
+      
+      if (result.dimension === 2) {
+        if (result.vertical) {
+          summaryContent += `<div class="summary-result"><strong>Cartesian:</strong> x = ${result.xValue.toFixed(4)}</div>`;
+        } else {
+          summaryContent += `<div class="summary-result"><strong>Cartesian:</strong> y = ${result.slopeIntercept.slope.toFixed(4)}x + ${result.slopeIntercept.yIntercept.toFixed(4)}</div>`;
+        }
+        if (result.polar) {
+          summaryContent += `<div class="summary-result"><strong>Polar:</strong> ρ = ${result.polar.rho.toFixed(4)}, θ = ${result.polar.thetaDegrees.toFixed(2)}°</div>`;
+        }
+      }
+      
+      const summary = summaryContent;
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Line</button>
+        </div>
+      `;
+
+      showResult('Line Through Two Points', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          const P1Copy = P1;
+          const P2Copy = P2;
+          btn.onclick = () => plotOperationResult('Line Through Points', null, {P1: P1Copy, P2: P2Copy});
+        }
+      }, 0);
+    }
+    
+    function calculatePointToLine() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      
+      // For this operation, we'll use:
+      // - Vector A as the point
+      // - Points P1 and P2 to define the line
+      const point = getVectorInput('vecA');
+      const lineP1 = getVectorInput('p1');
+      const lineP2 = getVectorInput('p2');
+      
+      if (!point) throw new Error('Please enter the point in Vector A field');
+      if (!lineP1 || !lineP2) throw new Error('Please enter line points in P₁ and P₂ fields');
+      
+      const result = VectorModule.distancePointToLine(point, lineP1, lineP2);
+      const direction = VectorModule.componentFromPoints(lineP1, lineP2);
+      
+      const steps = [];
+      steps.push({
+        title: 'Step 1: Distance from Point to Line Formula',
+        content: `Given:<br>
+                  Point: Q = ${VectorModule.formatVector(point)}<br>
+                  Line through: P₁ = ${VectorModule.formatVector(lineP1)} and P₂ = ${VectorModule.formatVector(lineP2)}<br><br>
+                  ${dim === 3 ? 
+                    'For 3D: distance = ||(Q - P₁) × d|| / ||d||' : 
+                    'For 2D: distance = |det(Q - P₁, d)| / ||d||'}<br>
+                  where d is the direction vector of the line.`
+      });
+      
+      steps.push({
+        title: 'Step 2: Calculate Direction Vector',
+        content: `d = P₂ - P₁ = ${VectorModule.formatVector(lineP2)} - ${VectorModule.formatVector(lineP1)}<br>
+                  d = ${VectorModule.formatVector(direction)}<br>
+                  ||d|| = ${VectorModule.vectorNorm(direction).toFixed(6)}`
+      });
+      
+      const pointToLineStart = VectorModule.componentFromPoints(lineP1, point);
+      steps.push({
+        title: 'Step 3: Calculate Vector from Line Point to Target Point',
+        content: `v = Q - P₁ = ${VectorModule.formatVector(point)} - ${VectorModule.formatVector(lineP1)}<br>
+                  v = ${VectorModule.formatVector(pointToLineStart)}`
+      });
+      
+      if (dim === 3) {
+        steps.push({
+          title: 'Step 4: Calculate Cross Product',
+          content: `v × d = ${VectorModule.formatVector(pointToLineStart)} × ${VectorModule.formatVector(direction)}<br>
+                    = ${VectorModule.formatVector(result.cross)}<br>
+                    ||v × d|| = ${VectorModule.vectorNorm(result.cross).toFixed(6)}`
+        });
+        
+        steps.push({
+          title: 'Step 5: Calculate Distance',
+          content: `distance = ||v × d|| / ||d||<br>
+                    = ${VectorModule.vectorNorm(result.cross).toFixed(6)} / ${VectorModule.vectorNorm(direction).toFixed(6)}<br>
+                    = <strong>${result.distance.toFixed(6)}</strong>`
+        });
+      } else {
+        steps.push({
+          title: 'Step 4: Calculate Determinant',
+          content: `det(v, d) = v₁d₂ - v₂d₁<br>
+                    = ${pointToLineStart[0]}×${direction[1]} - ${pointToLineStart[1]}×${direction[0]}<br>
+                    = ${result.determinant.toFixed(6)}`
+        });
+        
+        steps.push({
+          title: 'Step 5: Calculate Distance',
+          content: `distance = |det(v, d)| / ||d||<br>
+                    = ${result.determinant.toFixed(6)} / ${VectorModule.vectorNorm(direction).toFixed(6)}<br>
+                    = <strong>${result.distance.toFixed(6)}</strong>`
+        });
+      }
+      
+      const summary = `
+        <div class="summary-line"><strong>Point:</strong> ${VectorModule.formatVector(point)}</div>
+        <div class="summary-line"><strong>Line through:</strong> ${VectorModule.formatVector(lineP1)} and ${VectorModule.formatVector(lineP2)}</div>
+        <div class="summary-line"><strong>Method:</strong> ${result.method}</div>
+        <div class="summary-result">Distance: <span class="vector-display">${result.distance.toFixed(6)}</span></div>
+      `;
+
+      const plotButtonId = 'plotBtn_' + Math.random().toString(36).substr(2, 9);
+      const plotButton = `
+        <div class="plot-buttons">
+          <button id="${plotButtonId}" class="btn-operation btn-viz" style="margin: 5px;">📊 Plot Point and Line</button>
+        </div>
+      `;
+
+      showResult('Distance from Point to Line', summary, steps, plotButton);
+
+      setTimeout(() => {
+        const btn = document.getElementById(plotButtonId);
+        if (btn) {
+          const pointCopy = point;
+          const P1Copy = lineP1;
+          const P2Copy = lineP2;
+          btn.onclick = () => plotOperationResult('Point to Line Distance', null, {point: pointCopy, P1: P1Copy, P2: P2Copy});
         }
       }, 0);
     }
