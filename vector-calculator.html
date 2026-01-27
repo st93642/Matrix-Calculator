@@ -437,6 +437,48 @@
       </div>
     </div>
     
+    <div class="vector-input-group">
+      <h4>Line Equation (2D only)</h4>
+      <div class="controls">
+        <div class="control-group">
+          <label>Line Form:</label>
+          <select id="lineForm" onchange="onLineFormChange()">
+            <option value="general">General: ax + by + c = 0</option>
+            <option value="slope-intercept">Slope-Intercept: y = mx + b</option>
+          </select>
+        </div>
+      </div>
+      <div class="vector-inputs" id="lineGeneralForm">
+        <div class="vector-input-field">
+          <input type="text" id="lineA" placeholder="e.g., 2">
+          <div class="vector-input-label">Coefficient <strong>a</strong></div>
+          <div class="error-message" id="lineA-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="lineB" placeholder="e.g., -3">
+          <div class="vector-input-label">Coefficient <strong>b</strong></div>
+          <div class="error-message" id="lineB-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="lineC" placeholder="e.g., 5">
+          <div class="vector-input-label">Constant <strong>c</strong></div>
+          <div class="error-message" id="lineC-error"></div>
+        </div>
+      </div>
+      <div class="vector-inputs" id="lineSlopeForm" style="display: none;">
+        <div class="vector-input-field">
+          <input type="text" id="lineM" placeholder="e.g., 2">
+          <div class="vector-input-label">Slope <strong>m</strong></div>
+          <div class="error-message" id="lineM-error"></div>
+        </div>
+        <div class="vector-input-field">
+          <input type="text" id="lineBIntercept" placeholder="e.g., 5">
+          <div class="vector-input-label">Y-intercept <strong>b</strong></div>
+          <div class="error-message" id="lineBIntercept-error"></div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Operation Buttons -->
     <div class="section-header">Basic Operations</div>
     <div class="buttons">
@@ -454,6 +496,12 @@
       <button class="btn-operation btn-angle" onclick="calculate('collinear')">⫽ Are Vectors Collinear?</button>
       <button class="btn-operation btn-component" onclick="calculate('lineFromPoints')">📍 Line Through P₁P₂</button>
       <button class="btn-operation btn-distance" onclick="calculate('pointToLine')">📏 Distance Point to Line</button>
+    </div>
+    
+    <div class="section-header">Line Equation Operations (2D)</div>
+    <div class="buttons">
+      <button class="btn-operation btn-component" onclick="calculate('convertLineEquation')">🔄 Convert Line Equation Forms</button>
+      <button class="btn-operation btn-distance" onclick="calculate('pointToLineEquation')">📏 Distance Point to Line (Equation)</button>
     </div>
     
     <div class="section-header">Exercise Operations</div>
@@ -752,6 +800,117 @@
         }
       };
       
+      // Parse line equation from general form: ax + by + c = 0
+      const parseLineEquationGeneral = (a, b, c) => {
+        a = parseFloat(a);
+        b = parseFloat(b);
+        c = parseFloat(c);
+        
+        if (isNaN(a) || isNaN(b) || isNaN(c)) {
+          throw new Error('Line coefficients must be valid numbers');
+        }
+        
+        if (Math.abs(a) < 1e-10 && Math.abs(b) < 1e-10) {
+          throw new Error('Coefficients a and b cannot both be zero');
+        }
+        
+        return { a, b, c, form: 'general' };
+      };
+      
+      // Parse line equation from slope-intercept form: y = mx + b
+      const parseLineEquationSlopeIntercept = (m, yIntercept) => {
+        m = parseFloat(m);
+        yIntercept = parseFloat(yIntercept);
+        
+        if (isNaN(m) || isNaN(yIntercept)) {
+          throw new Error('Slope and y-intercept must be valid numbers');
+        }
+        
+        return { m, b: yIntercept, form: 'slope-intercept' };
+      };
+      
+      // Convert line equation between different forms
+      const convertLineEquation = (lineEq) => {
+        const result = { original: lineEq };
+        
+        if (lineEq.form === 'general') {
+          // General form: ax + by + c = 0
+          const { a, b, c } = lineEq;
+          
+          result.general = { a, b, c };
+          
+          // Convert to slope-intercept: y = mx + b
+          if (Math.abs(b) > 1e-10) {
+            const m = -a / b;
+            const yIntercept = -c / b;
+            result.slopeIntercept = { m, b: yIntercept };
+            result.hasSlope = true;
+          } else {
+            // Vertical line: x = -c/a
+            result.vertical = true;
+            result.xValue = -c / a;
+            result.hasSlope = false;
+          }
+          
+          // Parametric form: point on line + direction vector
+          // Direction vector perpendicular to normal (a, b)
+          result.direction = [-b, a];
+          
+          // Find a point on the line
+          if (Math.abs(b) > 1e-10) {
+            // Set x = 0, solve for y: y = -c/b
+            result.point = [0, -c / b];
+          } else {
+            // Set y = 0, solve for x: x = -c/a
+            result.point = [-c / a, 0];
+          }
+          
+          // Normal vector
+          result.normal = [a, b];
+          
+        } else if (lineEq.form === 'slope-intercept') {
+          // Slope-intercept form: y = mx + b
+          const { m, b: yIntercept } = lineEq;
+          
+          result.slopeIntercept = { m, b: yIntercept };
+          result.hasSlope = true;
+          
+          // Convert to general form: mx - y + b = 0
+          result.general = { a: m, b: -1, c: yIntercept };
+          
+          // Parametric form
+          result.point = [0, yIntercept];
+          result.direction = [1, m];
+          
+          // Normal vector (perpendicular to direction)
+          result.normal = [m, -1];
+        }
+        
+        return result;
+      };
+      
+      // Distance from point to line (line given by equation)
+      const distancePointToLineEquation = (point, lineEq) => {
+        if (point.length !== 2) {
+          throw new Error('Point must be 2D for line equation distance');
+        }
+        
+        const converted = convertLineEquation(lineEq);
+        const { a, b, c } = converted.general;
+        
+        // Formula: d = |ax₀ + by₀ + c| / √(a² + b²)
+        const numerator = Math.abs(a * point[0] + b * point[1] + c);
+        const denominator = Math.sqrt(a * a + b * b);
+        
+        return {
+          distance: numerator / denominator,
+          numerator,
+          denominator,
+          general: { a, b, c },
+          method: 'General form formula'
+        };
+      };
+      
       return {
         validateDimension,
         parseVector,
@@ -771,7 +930,11 @@
         vectorDistance,
         areCollinear,
         lineFromPoints,
-        distancePointToLine
+        distancePointToLine,
+        parseLineEquationGeneral,
+        parseLineEquationSlopeIntercept,
+        convertLineEquation,
+        distancePointToLineEquation
       };
     })();
     
@@ -781,6 +944,81 @@
       clearResults();
       const dim = parseInt(document.getElementById('dimension').value);
       updatePlaceholders(dim);
+    }
+    
+    function onLineFormChange() {
+      const form = document.getElementById('lineForm').value;
+      const generalForm = document.getElementById('lineGeneralForm');
+      const slopeForm = document.getElementById('lineSlopeForm');
+      
+      if (form === 'general') {
+        generalForm.style.display = 'flex';
+        slopeForm.style.display = 'none';
+      } else {
+        generalForm.style.display = 'none';
+        slopeForm.style.display = 'flex';
+      }
+    }
+    
+    function formatLineEquation(a, b, c) {
+      // Format line equation as ax + by + c = 0 with proper signs
+      let result = '';
+      
+      // First term (a)
+      if (Math.abs(a - 1) < 1e-10) {
+        result = 'x';
+      } else if (Math.abs(a + 1) < 1e-10) {
+        result = '-x';
+      } else {
+        result = `${a}x`;
+      }
+      
+      // Second term (b)
+      if (b >= 0) {
+        if (Math.abs(b - 1) < 1e-10) {
+          result += ' + y';
+        } else {
+          result += ` + ${b}y`;
+        }
+      } else {
+        if (Math.abs(b + 1) < 1e-10) {
+          result += ' - y';
+        } else {
+          result += ` - ${Math.abs(b)}y`;
+        }
+      }
+      
+      // Third term (c)
+      if (c >= 0) {
+        result += ` + ${c}`;
+      } else {
+        result += ` - ${Math.abs(c)}`;
+      }
+      
+      return result + ' = 0';
+    }
+    
+    function formatSlopeIntercept(m, b) {
+      // Format as y = mx + b with proper signs
+      let result = 'y = ';
+      
+      // Slope term
+      if (Math.abs(m - 1) < 1e-10) {
+        result += 'x';
+      } else if (Math.abs(m + 1) < 1e-10) {
+        result += '-x';
+      } else {
+        result += `${m}x`;
+      }
+      
+      // Y-intercept term
+      if (b >= 0) {
+        result += ` + ${b}`;
+      } else {
+        result += ` - ${Math.abs(b)}`;
+      }
+      
+      return result;
     }
     
     function updatePlaceholders(dim) {
@@ -834,6 +1072,31 @@
         return VectorModule.parseVector(input, dim);
       } catch (error) {
         throw new Error(`${fieldId.toUpperCase()}: ${error.message}`);
+      }
+    }
+    
+    function getLineEquationInput() {
+      const form = document.getElementById('lineForm').value;
+      
+      if (form === 'general') {
+        const a = document.getElementById('lineA').value.trim();
+        const b = document.getElementById('lineB').value.trim();
+        const c = document.getElementById('lineC').value.trim();
+        
+        if (!a || !b || !c) {
+          throw new Error('Please enter all line coefficients (a, b, c) for general form');
+        }
+        
+        return VectorModule.parseLineEquationGeneral(a, b, c);
+      } else {
+        const m = document.getElementById('lineM').value.trim();
+        const b = document.getElementById('lineBIntercept').value.trim();
+        
+        if (!m || !b) {
+          throw new Error('Please enter slope (m) and y-intercept (b) for slope-intercept form');
+        }
+        
+        return VectorModule.parseLineEquationSlopeIntercept(m, b);
       }
     }
     
@@ -916,6 +1179,8 @@
           case 'collinear': calculateCollinear(); break;
           case 'lineFromPoints': calculateLineFromPoints(); break;
           case 'pointToLine': calculatePointToLine(); break;
+          case 'convertLineEquation': calculateConvertLineEquation(); break;
+          case 'pointToLineEquation': calculatePointToLineEquation(); break;
         }
       } catch (error) {
         showError(error.message);
@@ -1765,6 +2030,167 @@
           btn.onclick = () => plotOperationResult('Point to Line Distance', null, {point: pointCopy, P1: P1Copy, P2: P2Copy});
         }
       }, 0);
+    }
+    
+    function calculateConvertLineEquation() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      if (dim !== 2) {
+        throw new Error('Line equation operations are only available for 2D. Please set dimension to 2D.');
+      }
+      
+      const lineEq = getLineEquationInput();
+      const result = VectorModule.convertLineEquation(lineEq);
+      
+      const steps = [];
+      
+      // Step 1: Show original form
+      if (lineEq.form === 'general') {
+        steps.push({
+          title: 'Step 1: Original Form (General)',
+          content: `Given line equation in general form:<br>
+                    <strong>${formatLineEquation(lineEq.a, lineEq.b, lineEq.c)}</strong>`
+        });
+      } else {
+        steps.push({
+          title: 'Step 1: Original Form (Slope-Intercept)',
+          content: `Given line equation in slope-intercept form:<br>
+                    <strong>${formatSlopeIntercept(lineEq.m, lineEq.b)}</strong>`
+        });
+      }
+      
+      // Step 2: Convert to general form
+      steps.push({
+        title: 'Step 2: General Form (ax + by + c = 0)',
+        content: `Converting to general form:<br>
+                  ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br>
+                  Where: a = ${result.general.a}, b = ${result.general.b}, c = ${result.general.c}`
+      });
+      
+      // Step 3: Convert to slope-intercept or vertical line
+      if (result.vertical) {
+        steps.push({
+          title: 'Step 3: Vertical Line',
+          content: `This is a vertical line (slope is undefined):<br>
+                    <strong>x = ${result.xValue.toFixed(4)}</strong>`
+        });
+      } else {
+        const solveForYRhs = result.general.a >= 0 
+          ? `-${result.general.a}x` 
+          : `${Math.abs(result.general.a)}x`;
+        const solveForYConst = result.general.c >= 0 
+          ? ` - ${result.general.c}` 
+          : ` + ${Math.abs(result.general.c)}`;
+        
+        steps.push({
+          title: 'Step 3: Slope-Intercept Form (y = mx + b)',
+          content: `Converting to slope-intercept form:<br>
+                    From ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br>
+                    Solve for y: ${result.general.b}y = ${solveForYRhs}${solveForYConst}<br>
+                    ${formatSlopeIntercept(result.slopeIntercept.m, result.slopeIntercept.b).replace(/[\d.-]+/g, (m) => parseFloat(m).toFixed(4))}<br><br>
+                    Where: slope m = ${result.slopeIntercept.m.toFixed(4)}, y-intercept b = ${result.slopeIntercept.b.toFixed(4)}`
+        });
+      }
+      
+      // Step 4: Parametric form
+      steps.push({
+        title: 'Step 4: Parametric Form',
+        content: `Parametric equation of the line:<br>
+                  <strong>P(t) = ${VectorModule.formatVector(result.point)} + t × ${VectorModule.formatVector(result.direction)}</strong><br><br>
+                  Component form:<br>
+                  x(t) = ${result.point[0].toFixed(4)} + ${result.direction[0].toFixed(4)}t<br>
+                  y(t) = ${result.point[1].toFixed(4)} + ${result.direction[1].toFixed(4)}t<br><br>
+                  Where: Point on line = ${VectorModule.formatVector(result.point)}, Direction = ${VectorModule.formatVector(result.direction)}`
+      });
+      
+      // Step 5: Normal vector
+      steps.push({
+        title: 'Step 5: Normal Vector',
+        content: `Normal vector (perpendicular to the line):<br>
+                  <strong>n = ${VectorModule.formatVector(result.normal)}</strong><br><br>
+                  The normal vector is perpendicular to the direction vector and points away from the line.`
+      });
+      
+      let summaryContent = `
+        <div class="summary-line"><strong>General Form:</strong> ${formatLineEquation(result.general.a, result.general.b, result.general.c)}</div>
+      `;
+      
+      if (result.vertical) {
+        summaryContent += `<div class="summary-line"><strong>Vertical Line:</strong> x = ${result.xValue.toFixed(4)}</div>`;
+      } else {
+        const slopeInterceptFormatted = formatSlopeIntercept(result.slopeIntercept.m, result.slopeIntercept.b)
+          .replace(/[\d.-]+/g, (m) => parseFloat(m).toFixed(4));
+        summaryContent += `<div class="summary-line"><strong>Slope-Intercept:</strong> ${slopeInterceptFormatted}</div>`;
+      }
+      
+      summaryContent += `
+        <div class="summary-line"><strong>Parametric:</strong> P(t) = ${VectorModule.formatVector(result.point)} + t × ${VectorModule.formatVector(result.direction)}</div>
+        <div class="summary-line"><strong>Normal Vector:</strong> ${VectorModule.formatVector(result.normal)}</div>
+      `;
+      
+      showResult('Line Equation Conversion', summaryContent, steps);
+    }
+    
+    function calculatePointToLineEquation() {
+      const dim = parseInt(document.getElementById('dimension').value);
+      if (dim !== 2) {
+        throw new Error('Line equation operations are only available for 2D. Please set dimension to 2D.');
+      }
+      
+      const point = getVectorInput('vecA');
+      if (!point) throw new Error('Please enter the point in Vector A field');
+      
+      const lineEq = getLineEquationInput();
+      const result = VectorModule.distancePointToLineEquation(point, lineEq);
+      
+      const steps = [];
+      
+      // Step 1: Show the formula
+      steps.push({
+        title: 'Step 1: Distance Formula from Point to Line',
+        content: `Given:<br>
+                  Point: P = ${VectorModule.formatVector(point)}<br>
+                  Line (general form): ${formatLineEquation(result.general.a, result.general.b, result.general.c)}<br><br>
+                  Formula: <strong>d = |ax₀ + by₀ + c| / √(a² + b²)</strong><br>
+                  where (x₀, y₀) is the point and ax + by + c = 0 is the line equation.`
+      });
+      
+      // Step 2: Substitute values
+      steps.push({
+        title: 'Step 2: Substitute Point Coordinates',
+        content: `Substituting P = (${point[0]}, ${point[1]}) into the formula:<br>
+                  Numerator: |a×x₀ + b×y₀ + c|<br>
+                  = |${result.general.a}×${point[0]} + ${result.general.b}×${point[1]} + ${result.general.c}|<br>
+                  = |${result.general.a * point[0]} + ${result.general.b * point[1]} + ${result.general.c}|<br>
+                  = |${result.general.a * point[0] + result.general.b * point[1] + result.general.c}|<br>
+                  = <strong>${result.numerator.toFixed(6)}</strong>`
+      });
+      
+      // Step 3: Calculate denominator
+      steps.push({
+        title: 'Step 3: Calculate Denominator',
+        content: `Denominator: √(a² + b²)<br>
+                  = √(${result.general.a}² + ${result.general.b}²)<br>
+                  = √(${result.general.a * result.general.a} + ${result.general.b * result.general.b})<br>
+                  = √${result.general.a * result.general.a + result.general.b * result.general.b}<br>
+                  = <strong>${result.denominator.toFixed(6)}</strong>`
+      });
+      
+      // Step 4: Final distance
+      steps.push({
+        title: 'Step 4: Calculate Distance',
+        content: `Distance: d = numerator / denominator<br>
+                  = ${result.numerator.toFixed(6)} / ${result.denominator.toFixed(6)}<br>
+                  = <strong>${result.distance.toFixed(6)}</strong>`
+      });
+      
+      const summary = `
+        <div class="summary-line"><strong>Point:</strong> ${VectorModule.formatVector(point)}</div>
+        <div class="summary-line"><strong>Line:</strong> ${formatLineEquation(result.general.a, result.general.b, result.general.c)}</div>
+        <div class="summary-line"><strong>Method:</strong> ${result.method}</div>
+        <div class="summary-result">Distance: <span class="vector-display">${result.distance.toFixed(6)}</span></div>
+      `;
+      
+      showResult('Distance from Point to Line (Equation)', summary, steps);
     }
     
     function calculateExercise(exerciseType) {
